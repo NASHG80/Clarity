@@ -1,0 +1,430 @@
+[
+  {
+    "_id": "route_001",
+    "origin": "Mumbai",
+    "destination": "Goa",
+    "mode": "train",
+    "operator": "Indian Railways (Vande Bharat Express - 22229)",
+    "distance_km": 586,
+    "cost_inr": 1815,
+    "duration_minutes": 465,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 586,
+      "emission_factor": 0.03,
+      "co2e_kg": 17.58
+    },
+    "accessibility": {
+      "value": "high",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "station_access",
+        "station": "CSMT Mumbai",
+        "distance_m": 250,
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "train",
+        "service": "22229 CSMT MAO Vande Bharat",
+        "duration_minutes": 465,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_002",
+    "origin": "Mumbai",
+    "destination": "Goa",
+    "mode": "train",
+    "operator": "Indian Railways (Tejas Express - 22119)",
+    "distance_km": 586,
+    "cost_inr": 1250,
+    "duration_minutes": 540,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 586,
+      "emission_factor": 0.03,
+      "co2e_kg": 17.58
+    },
+    "accessibility": {
+      "value": "moderate",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "station_access",
+        "station": "CSMT Mumbai",
+        "distance_m": 200,
+        "accessible": null,
+        "data_state": "not_verified"
+      },
+      {
+        "type": "train",
+        "service": "22119 Tejas Express",
+        "duration_minutes": 540,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_003",
+    "origin": "Mumbai",
+    "destination": "Goa",
+    "mode": "flight",
+    "operator": "Domestic Airline (BOM to GOI/GOX direct)",
+    "distance_km": 435,
+    "cost_inr": 4200,
+    "duration_minutes": 165,
+    "emissions": {
+      "method": "route_benchmark",
+      "co2e_kg": 87.0,
+      "benchmark_kg": 100.0,
+      "reduction_pct": 13.0
+    },
+    "accessibility": {
+      "value": "high",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "airport_terminal",
+        "airport": "BOM Terminal 2",
+        "distance_m": 500,
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "flight",
+        "duration_minutes": 75,
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "baggage_arrival",
+        "airport": "GOI Dabolim / GOX Mopa",
+        "distance_m": 350,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_004",
+    "origin": "Mumbai",
+    "destination": "Goa",
+    "mode": "bus",
+    "operator": "Intercity Multi-Axle AC Sleeper",
+    "distance_km": 560,
+    "cost_inr": 1100,
+    "duration_minutes": 780,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 560,
+      "emission_factor": 0.05,
+      "co2e_kg": 28.0
+    },
+    "accessibility": {
+      "value": "low",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "boarding_point",
+        "station": "Vashi Highway / Borivali",
+        "accessible": null,
+        "data_state": "not_verified"
+      },
+      {
+        "type": "bus",
+        "duration_minutes": 780,
+        "accessible": false,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_005",
+    "origin": "Mumbai",
+    "destination": "Goa",
+    "mode": "car",
+    "operator": "Private / Solo Car Drive via NH 66",
+    "distance_km": 550,
+    "cost_inr": 6500,
+    "duration_minutes": 600,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 550,
+      "emission_factor": 0.17,
+      "co2e_kg": 93.5
+    },
+    "accessibility": {
+      "value": "moderate",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "car_drive",
+        "duration_minutes": 600,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_006",
+    "origin": "Delhi",
+    "destination": "Mumbai",
+    "mode": "train",
+    "operator": "Indian Railways (Mumbai Rajdhani - 12952)",
+    "distance_km": 1384,
+    "cost_inr": 2850,
+    "duration_minutes": 930,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 1384,
+      "emission_factor": 0.03,
+      "co2e_kg": 41.52
+    },
+    "accessibility": {
+      "value": "high",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "station_access",
+        "station": "New Delhi NDLS",
+        "distance_m": 300,
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "train",
+        "service": "12952 Mumbai Rajdhani",
+        "duration_minutes": 930,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_007",
+    "origin": "Delhi",
+    "destination": "Mumbai",
+    "mode": "flight",
+    "operator": "Domestic Airline (DEL to BOM nonstop)",
+    "distance_km": 1148,
+    "cost_inr": 5500,
+    "duration_minutes": 225,
+    "emissions": {
+      "method": "route_benchmark",
+      "co2e_kg": 155.0,
+      "benchmark_kg": 172.2,
+      "reduction_pct": 10.0
+    },
+    "accessibility": {
+      "value": "high",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "airport_terminal",
+        "airport": "DEL Terminal 3",
+        "distance_m": 600,
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "flight",
+        "duration_minutes": 135,
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "airport_exit",
+        "airport": "BOM Terminal 2",
+        "distance_m": 450,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_008",
+    "origin": "Delhi",
+    "destination": "Mumbai",
+    "mode": "car",
+    "operator": "Private Drive via NE4 / Delhi-Mumbai Expressway",
+    "distance_km": 1350,
+    "cost_inr": 14000,
+    "duration_minutes": 1080,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 1350,
+      "emission_factor": 0.17,
+      "co2e_kg": 229.5
+    },
+    "accessibility": {
+      "value": "moderate",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "car_drive",
+        "duration_minutes": 1080,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_009",
+    "origin": "Delhi",
+    "destination": "Goa",
+    "mode": "flight",
+    "operator": "Domestic Airline (DEL to GOI/GOX nonstop)",
+    "distance_km": 1515,
+    "cost_inr": 6800,
+    "duration_minutes": 250,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 1515,
+      "emission_factor": 0.15,
+      "co2e_kg": 227.25
+    },
+    "accessibility": {
+      "value": "high",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "airport_terminal",
+        "airport": "DEL Terminal 3",
+        "distance_m": 500,
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "flight",
+        "duration_minutes": 160,
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "airport_exit",
+        "airport": "GOX Mopa / GOI Dabolim",
+        "distance_m": 400,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_010",
+    "origin": "Delhi",
+    "destination": "Goa",
+    "mode": "train",
+    "operator": "Indian Railways (Goa Express - 12780)",
+    "distance_km": 1910,
+    "cost_inr": 3100,
+    "duration_minutes": 1740,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 1910,
+      "emission_factor": 0.03,
+      "co2e_kg": 57.3
+    },
+    "accessibility": {
+      "value": "moderate",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "station_access",
+        "station": "Hazrat Nizamuddin NZM",
+        "distance_m": 350,
+        "accessible": null,
+        "data_state": "not_verified"
+      },
+      {
+        "type": "train",
+        "service": "12780 Goa Express",
+        "duration_minutes": 1740,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_011",
+    "origin": "Madgaon",
+    "destination": "Panaji",
+    "mode": "bus",
+    "operator": "Kadamba Transport Corporation (Electric AC Shuttle)",
+    "distance_km": 34,
+    "cost_inr": 80,
+    "duration_minutes": 55,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 34,
+      "emission_factor": 0.05,
+      "co2e_kg": 1.7
+    },
+    "accessibility": {
+      "value": "high",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "bus_boarding",
+        "station": "Madgaon KTC Bus Stand",
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "bus",
+        "service": "Kadamba EV Low-Floor AC Shuttle",
+        "duration_minutes": 55,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  },
+  {
+    "_id": "route_012",
+    "origin": "Dabolim",
+    "destination": "Panaji",
+    "mode": "car",
+    "operator": "Airport Prepaid Taxi",
+    "distance_km": 38,
+    "cost_inr": 1400,
+    "duration_minutes": 50,
+    "emissions": {
+      "method": "estimated",
+      "distance_km": 38,
+      "emission_factor": 0.17,
+      "co2e_kg": 6.46
+    },
+    "accessibility": {
+      "value": "moderate",
+      "data_state": "reported"
+    },
+    "segments": [
+      {
+        "type": "taxi_boarding",
+        "accessible": true,
+        "data_state": "reported"
+      },
+      {
+        "type": "car_drive",
+        "duration_minutes": 50,
+        "accessible": true,
+        "data_state": "reported"
+      }
+    ]
+  }
+]

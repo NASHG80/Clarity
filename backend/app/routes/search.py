@@ -115,9 +115,17 @@ async def search_transport(req: TransportSearchRequest) -> TransportSearchRespon
         
         # Pydantic will validate the strict schema.
         try:
-            # Pop internal fields
-            cand.pop("source", None)
-            final_results.append(TransportResult(**cand))
+            final_results.append(TransportResult(
+                id=cand_id,
+                mode=cand["mode"],
+                cost_inr=cand["cost_inr"],
+                duration_minutes=cand["duration_minutes"],
+                emissions=cand["emissions"],
+                accessibility=cand["accessibility"],
+                personal_match_pct=cand.get("personal_match_pct"),
+                trade_off_summary=cand.get("trade_off_summary", []),
+                segments=cand.get("segments", [])
+            ))
         except Exception as e:
             # Skip invalid candidates
             pass
@@ -192,8 +200,18 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
         cand["trade_off_summary"] = _build_trade_off_summary(trade_offs_data, cand_id)
         
         try:
-            cand.pop("source", None)
-            final_results.append(HotelResult(**cand))
+            final_results.append(HotelResult(
+                id=cand_id,
+                translations=cand.get("translations"),
+                city=cand.get("city"),
+                price_inr_per_night=cand.get("price_inr_per_night"),
+                star_rating=cand.get("star_rating"),
+                data_state=cand["data_state"],
+                accessibility_items=cand.get("accessibility_items", []),
+                sustainability_items=cand.get("sustainability_items", []),
+                personal_match_pct=cand.get("personal_match_pct"),
+                trade_off_summary=cand.get("trade_off_summary", [])
+            ))
         except Exception:
             pass
         

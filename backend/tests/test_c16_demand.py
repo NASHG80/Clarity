@@ -22,6 +22,18 @@ class FakeCollection:
                 return doc
         return None
         
+    def find(self, query):
+        results = []
+        for doc in self.data:
+            match = True
+            for k, v in query.items():
+                if doc.get(k) != v:
+                    match = False
+                    break
+            if match:
+                results.append(doc)
+        return results
+        
     def insert_one(self, doc):
         self.data.append(doc)
         
@@ -106,6 +118,8 @@ class FakeDB:
             {"_id": "hotel_demo", "data_state": "demo_synthetic"},
         ])
         
+        self.transport_routes = FakeCollection([])
+        
         self.search_requests = FakeCollection([
             {"_id": "req_1", "search_type": "transport", "accessibility_required": ["roll_in_shower"], "timestamp": recent},
             {"_id": "req_2", "search_type": "accommodation", "accessibility_required": ["roll_in_shower", "elevator"], "timestamp": recent},
@@ -130,7 +144,8 @@ def mock_get_db():
     with patch("app.db.mongo.get_db", return_value=fake_db):
         # We need to also patch the routes if they imported get_db directly
         with patch("app.routes.business.get_db", return_value=fake_db, create=True):
-            yield
+            with patch("app.routes.search.get_db", return_value=fake_db, create=True):
+                yield
 
 def test_1_search_transport_persists():
     resp = client.post("/api/search/transport", json={

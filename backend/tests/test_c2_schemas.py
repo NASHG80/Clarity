@@ -139,10 +139,39 @@ def test_emissions_invalid_method():
 # 7a. C1 stub transport response passes its model
 # ---------------------------------------------------------------------------
 def test_transport_stub_response_passes_model():
-    resp = client.post(
-        "/api/search/transport",
-        json={"origin": "Mumbai", "destination": "Goa"},
-    )
+    from unittest.mock import patch
+    
+    dummy_data = [
+        {
+            "_id": "t1", "origin": "Mumbai", "destination": "Goa", "mode": "train",
+            "operator": "IR", "distance_km": 500, "cost_inr": 1000, "duration_minutes": 600,
+            "departure_time": "2026-09-30T10:00:00Z", "arrival_time": "2026-09-30T20:00:00Z",
+            "emissions": {"method": "estimated", "co2e_kg": 15.0, "distance_km": 500, "emission_factor": 0.03},
+            "accessibility": {"value": "high", "data_state": "reported"},
+            "segments": []
+        },
+        {
+            "_id": "t2", "origin": "Mumbai", "destination": "Goa", "mode": "flight",
+            "operator": "Air", "distance_km": 500, "cost_inr": 5000, "duration_minutes": 60,
+            "departure_time": "2026-09-30T12:00:00Z", "arrival_time": "2026-09-30T13:00:00Z",
+            "emissions": {"method": "estimated", "co2e_kg": 50.0, "distance_km": 500, "emission_factor": 0.1},
+            "accessibility": {"value": "low", "data_state": "reported"},
+            "segments": []
+        }
+    ]
+    
+    with patch("app.routes.search.get_db") as mock_get_db:
+        mock_db = mock_get_db.return_value
+        mock_db.transport_routes.find.return_value = dummy_data
+        
+        # Also mock the live APIs so they don't block or return empty
+        with patch("app.routes.search.fetch_serpapi_flights", return_value=[]), \
+             patch("app.routes.search.fetch_railradar_trains", return_value=[]):
+            
+            resp = client.post(
+                "/api/search/transport",
+                json={"origin": "Mumbai", "destination": "Goa"},
+            )
     assert resp.status_code == 200
     data = resp.json()
     assert "results" in data
