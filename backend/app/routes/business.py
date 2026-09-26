@@ -16,7 +16,11 @@ Rules (AGENTS.md / API_CONTRACT.md):
   - demand gaps feed the Opportunity Detector.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, File, UploadFile, HTTPException, Form
+import os
+import time
+import hashlib
+import httpx
 
 from app.models.schemas import (
     AnalyticsFunnel,
@@ -35,8 +39,17 @@ from app.models.schemas import (
     OnboardResponse,
     Opportunity,
     OpportunitiesResponse,
+    OpportunitiesResponse,
     RequirementSearchCount,
+    AIAnalyticsSummaryRequest,
+    AIAnalyticsSummaryResponse,
+    AIAnalyticsInsight,
 )
+import logging
+import json
+from groq import AsyncGroq
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Business & Explore"])
 
@@ -59,6 +72,56 @@ async def onboard_business(payload: OnboardRequest) -> OnboardResponse:
         data_state=DataState.reported,
         note="C1 stub — not persisted. All items will be stored as 'reported' per contract.",
     )
+
+
+@router.post("/api/business/upload-photo")
+async def upload_photo(file: UploadFile = File(...), bucket: str = Form("general")):
+    """Upload photo proxy to Cloudinary.
+    
+    Implements secure backend proxy to Cloudinary to avoid exposing API secrets in browser code.
+    Uploads to a specific folder 'Clarity/{bucket}'.
+    """
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME")
+    api_key = os.getenv("CLOUDINARY_API_KEY")
+    api_secret = os.getenv("CLOUDINARY_API_SECRET")
+    
+    if not all([cloud_name, api_key, api_secret]):
+        raise HTTPException(status_code=500, detail="Cloudinary configuration missing on server")
+        
+    timestamp = str(int(time.time()))
+    folder = f"Clarity/{bucket}"
+    
+    # Generate Cloudinary signature
+    # Signature formula: sha1(folder=folder&timestamp=timestamp{api_secret})
+    string_to_sign = f"folder={folder}&timestamp={timestamp}{api_secret}"
+    signature = hashlib.sha1(string_to_sign.encode('utf-8')).hexdigest()
+    
+    cloudinary_url = f"https://api.cloudinary.com/v1_1/{cloud_name}/image/upload"
+    
+    try:
+        file_bytes = await file.read()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Failed to read file")
+        
+    data = {
+        "api_key": api_key,
+        "timestamp": timestamp,
+        "signature": signature,
+        "folder": folder
+    }
+    
+    files = {
+        "file": (file.filename or "image.jpg", file_bytes, file.content_type or "image/jpeg")
+    }
+    
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(cloudinary_url, data=data, files=files, timeout=30.0)
+        
+        if not resp.is_success:
+            raise HTTPException(status_code=resp.status_code, detail=f"Cloudinary error: {resp.text}")
+            
+        result = resp.json()
+        return {"url": result.get("secure_url"), "public_id": result.get("public_id"), "bucket": bucket}
 
 
 from fastapi import HTTPException
@@ -302,3 +365,80 @@ async def explore_city(city: str) -> ExploreResponse:
             ),
         ],
     )
+@router.post("/api/business/{business_id}/analytics/ai-summary", response_model=AIAnalyticsSummaryResponse)
+async def get_ai_analytics_summary(business_id: str, payload: AIAnalyticsSummaryRequest) -> AIAnalyticsSummaryResponse:
+    """Generate an AI summary of the business's current analytics, demand, and opportunities."""
+    
+    # 1. Fetch all available data
+    analytics_data = await get_analytics(business_id)
+    demand_data = await get_demand(business_id)
+    opportunities_data = await get_opportunities(business_id)
+    
+    # 2. Prepare the context for the LLM
+    context = {
+        "business_id": business_id,
+        "is_demo_data": analytics_data.is_demo_data,
+        "period": analytics_data.period,
+        "analytics": analytics_data.model_dump(),
+        "demand": demand_data.model_dump(),
+        "opportunities": opportunities_data.model_dump()
+    }
+    
+    # 3. Setup Groq
+    api_key = os.getenv("GROQ_API_KEY")
+    model_name = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+    
+    if not api_key:
+        logger.warning("GROQ_API_KEY not configured. Returning stubbed AI response.")
+        return AIAnalyticsSummaryResponse(
+            summary="AI insights are currently disabled (missing GROQ_API_KEY).",
+            key_findings=[AIAnalyticsInsight(title="Config Missing", description="Please configure GROQ_API_KEY.")],
+            demand_insights=[],
+            data_gaps=[],
+            opportunities=[],
+            next_actions=[]
+        )
+        
+    client = AsyncGroq(api_key=api_key)
+    
+    system_prompt = """You are a highly analytical business intelligence assistant for a hospitality platform.
+Your task is to summarize the provided analytics data for a hotel/property owner.
+
+CRITICAL RULES:
+1. ONLY use the data provided in the JSON context. DO NOT invent metrics or numbers.
+2. Distinguish facts from interpretation.
+3. NEVER claim causation from correlation (e.g. "Because of X, Y happened"). Only say "Correlation observed" or "Associated with".
+4. If is_demo_data is true, clearly mention that this is "Demo data" in the summary.
+5. "not_verified" means the business hasn't provided reliable information yet, it does NOT mean they don't have the feature.
+6. Return a valid JSON matching this exact structure:
+{
+  "summary": "High level 1-2 sentence executive summary.",
+  "key_findings": [ {"title": "Short title", "description": "1 sentence insight"} ],
+  "demand_insights": [ {"title": "Short title", "description": "1 sentence insight"} ],
+  "data_gaps": [ {"title": "Short title", "description": "1 sentence insight"} ],
+  "opportunities": [ {"title": "Short title", "description": "1 sentence insight"} ],
+  "next_actions": [ {"title": "Action", "description": "What to do next"} ]
+}"""
+
+    # 4. Call Groq
+    try:
+        response = await client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": json.dumps(context)}
+            ],
+            temperature=0.1,
+            response_format={"type": "json_object"}
+        )
+        
+        content = response.choices[0].message.content
+        if content:
+            raw = AIAnalyticsSummaryResponse.model_validate_json(content)
+            return raw
+            
+    except Exception as e:
+        logger.error(f"Groq analytics summary failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate AI analytics summary.")
+        
+    raise HTTPException(status_code=500, detail="Empty AI response.")

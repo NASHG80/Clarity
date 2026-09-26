@@ -449,6 +449,25 @@ class BusinessAnalyticsResponse(BaseModel):
     signals: List[AnalyticsSignal] = Field(default_factory=list)
 
 
+class AIAnalyticsInsight(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str
+    description: str
+
+
+class AIAnalyticsSummaryRequest(_StrictBase):
+    period: str = "this_week"
+
+
+class AIAnalyticsSummaryResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    summary: str
+    key_findings: List[AIAnalyticsInsight]
+    demand_insights: List[AIAnalyticsInsight]
+    data_gaps: List[AIAnalyticsInsight]
+    opportunities: List[AIAnalyticsInsight]
+    next_actions: List[AIAnalyticsInsight]
+
 # ===========================================================================
 # BUSINESS — GET /api/business/{id}/demand
 # ===========================================================================

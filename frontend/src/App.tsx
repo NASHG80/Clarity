@@ -4,8 +4,7 @@ import HomePage from './shared/homepage';
 import OnboardingPage from './b2b/pages/OnboardingPage';
 
 import ListingTablePage from './b2b/pages/ListingTablePage';
-import ListingEditorPage from './b2b/pages/ListingEditorPage';
-import PhotoUploadPage from './b2b/pages/PhotoUploadPage';
+import ListingPreviewPage from './b2b/pages/ListingPreviewPage';
 
 import DashboardPage from './b2b/pages/DashboardPage';
 import AnalyticsDashboardPage from './b2b/pages/AnalyticsDashboardPage';
@@ -21,8 +20,7 @@ export default function App() {
 
         <Route path="/b2b" element={<B2bLayout />}>
           <Route path="listings" element={<ListingTablePage />} />
-          <Route path="listings/editor" element={<ListingEditorPage />} />
-          <Route path="photos" element={<PhotoUploadPage />} />
+          <Route path="listings/:id" element={<ListingPreviewPage />} />
           <Route path="opportunity-detector" element={<DashboardPage />} />
           <Route path="analytics" element={<AnalyticsDashboardPage />} />
           <Route path="verification-inbox" element={<VerificationInboxPage />} />

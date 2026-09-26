@@ -2,8 +2,36 @@
 export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000";
 
 // =============================================================================
-// B2B — AI Inspection & Confirmation (C11/C13)
+// B2B — AI Inspection & Confirmation (C11/C13) & Photo Upload (B7/B8)
 // =============================================================================
+
+export interface PhotoUploadResponse {
+  url: string;
+  public_id: string;
+  bucket: string;
+}
+
+/**
+ * Proxies the photo to backend, which uploads to Cloudinary securely.
+ * This ensures Cloudinary secrets are never exposed to the frontend.
+ */
+export const uploadPhotoToCloudinary = async (file: File, bucket: string): Promise<PhotoUploadResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('bucket', bucket);
+
+  const response = await fetch(`${API_BASE_URL}/api/business/upload-photo`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Upload failed: ${response.status} ${errorText}`);
+  }
+
+  return await response.json();
+};
 
 import { Detection } from '../b2b/components/onboarding/AiAnalysisStep';
 
@@ -140,12 +168,27 @@ export const confirmDetections = async (
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(items),
+      body: JSON.stringify({ detections: items }),
     });
 
     if (response.ok) {
       const data = await response.json();
-      return data;
+      
+      // Transform backend schema to frontend expected format
+      const updatedChecklistItems: string[] = [];
+      (data.confirmed_labels || []).forEach((label: string) => {
+        const mapped = mapDetectionLabelToChecklistKey(label);
+        if (mapped && !updatedChecklistItems.includes(mapped)) {
+          updatedChecklistItems.push(mapped);
+        }
+      });
+
+      return {
+        success: data.status === 'processed',
+        confirmed_count: (data.confirmed_labels || []).length,
+        rejected_count: (data.rejected_labels || []).length,
+        updated_checklist_items: updatedChecklistItems
+      };
     }
 
     if (response.status === 404 || response.status === 501) {
@@ -394,6 +437,74 @@ export const getAnalytics = async (businessId: string): Promise<AnalyticsRespons
   } catch (error: any) {
     if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
       return await mockGetAnalytics(businessId);
+    }
+    throw error;
+  }
+};
+
+export interface AIAnalyticsInsight {
+  title: string;
+  description: string;
+}
+
+export interface AIAnalyticsSummaryResponse {
+  summary: string;
+  key_findings: AIAnalyticsInsight[];
+  demand_insights: AIAnalyticsInsight[];
+  data_gaps: AIAnalyticsInsight[];
+  opportunities: AIAnalyticsInsight[];
+  next_actions: AIAnalyticsInsight[];
+}
+
+export const mockGetAiAnalyticsSummary = async (businessId: string): Promise<AIAnalyticsSummaryResponse> => {
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  if (businessId === 'error_case') {
+    throw new Error('Deterministic network timeout');
+  }
+
+  return {
+    summary: "Your property is seeing strong demand for accessibility, but missing verification is causing detail viewers to drop off.",
+    key_findings: [
+      { title: "High Conversion to Detail", description: "70.5% of listing opens result in a detail view." },
+      { title: "Drop-off at Save", description: "Only 16% of detail viewers save the listing." }
+    ],
+    demand_insights: [
+      { title: "Step-free Entrance", description: "Most searched accessibility requirement in your area." }
+    ],
+    data_gaps: [
+      { title: "Roll-in Shower", description: "214 recent searches while your property remains not verified." }
+    ],
+    opportunities: [
+      { title: "Confirm Accessibility", description: "Add roll-in shower info to capture lost demand." }
+    ],
+    next_actions: [
+      { title: "Update Listing", description: "Go to Onboarding and complete the Accessibility section." }
+    ]
+  };
+};
+
+export const getAiAnalyticsSummary = async (businessId: string, period: string = 'this_week'): Promise<AIAnalyticsSummaryResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/business/${businessId}/analytics/ai-summary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ period }),
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    }
+    
+    if (response.status === 404 || response.status === 501) {
+      return await mockGetAiAnalyticsSummary(businessId);
+    }
+    throw new Error(`Failed to fetch AI analytics with status ${response.status}`);
+  } catch (error: any) {
+    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
+      return await mockGetAiAnalyticsSummary(businessId);
     }
     throw error;
   }
@@ -882,6 +993,11 @@ export interface ListingDetailResponse {
   accessibility_items: AccommodationItem[];
   sustainability_items: AccommodationItem[];
   confirmations: ConfirmationData[];
+  amenities?: string[];
+  rooms?: any[];
+  rules?: any;
+  address?: string;
+  location?: { lat: number; lng: number };
 }
 
 export async function getListingDetail(id: string): Promise<ListingDetailResponse> {
