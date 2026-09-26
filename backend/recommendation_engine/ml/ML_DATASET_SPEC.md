@@ -1,4 +1,4 @@
-﻿# ML Re-Ranker Dataset Specification
+# ML Re-Ranker Dataset Specification
 > **Person D — ML Data Support Document**
 > Generated: 2026-09-26 | Traced from actual implementation, not inferred.
 
@@ -174,7 +174,30 @@ It is NOT a real traveler preference, booking outcome, or observed user behavior
 
 ## 6. sklearn Version Status
 
-  Installed version : 1.8.0
-  Artifact version  : 1.9.0
-  Compatible        : NO (InconsistentVersionWarning on load)
-  Action required   : C-OWNED FOLLOW-UP - Retrain model.pkl on sklearn 1.8.0
+  Runtime version : 1.9.0
+  Artifact version : 1.9.0  (retrained 2026-09-26 on D's JSONL dataset)
+  Compatible       : YES
+  Load warning     : NONE
+  Action required  : NONE
+
+## 7. Missing-Data Handling Fix (C follow-up, 2026-09-26)
+
+  Previous code in features.py used `score or 0.0` (Python truthiness test).
+  Bug: a genuine verified score of exactly 0.0 is falsy, so `0.0 or 0.0` treats
+  a real zero identically to None at the code-intent level.
+
+  Fix applied: _score_to_float() helper with explicit `is not None` identity check.
+    None  -> 0.0  (missing/not_verified — explicit path)
+    0.0   -> 0.0  (genuine verified zero — now uses correct code path)
+    0.5   -> 0.5  (normal score — unchanged)
+
+  Numeric output to Ridge is IDENTICAL in all cases.
+  9-feature interface UNCHANGED. Dataset UNCHANGED. No retraining required.
+
+  REMAINING DOCUMENTED LIMITATION (unchanged, not hidden):
+    The Ridge model still cannot distinguish None-derived-0.0 from
+    verified-zero-derived-0.0 in the feature vector alone.
+    This is acceptable for a prototype stretch feature.
+    f8_state_prio (0=not_verified, 4=verified) provides an orthogonal signal.
+    No accessibility inference is made from 0.0. See CAVEAT 1 above.
+
