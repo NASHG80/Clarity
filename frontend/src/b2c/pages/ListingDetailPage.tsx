@@ -15,7 +15,7 @@ const IsolatedDataStateBadge = ({ state }: { state: string }) => {
   const { t } = useTranslation('b2c');
   return (
     <div className="flex flex-col gap-1 items-end">
-      <DataStateBadge />
+      <DataStateBadge state={state} />
       {state === 'demo_synthetic' && (
         <span className="text-[10px] font-bold text-[#E88D67] uppercase bg-[#E88D67]/10 px-1.5 py-0.5 rounded">
           {t('results.badgeDemo', 'DEMO')}

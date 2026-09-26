@@ -23,6 +23,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Mic,
@@ -222,6 +223,7 @@ export interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => {
   const { t: tI18n, i18n } = useTranslation('b2c');
+  const navigate = useNavigate();
 
   const [currentLang, setCurrentLang] = useState<Language>(() => {
     return (localStorage.getItem('clarity_lang') as Language) || 'en';

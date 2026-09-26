@@ -325,3 +325,23 @@ Community verification submission — moves an item toward
 `community_confirmed` once a confirmation threshold (config value,
 e.g. 3) is met, computed by the recommendation engine, not hardcoded
 in the frontend.
+
+## GET /api/business/{id}/verification-inbox (NEW for B19)
+```json
+{
+  "pending_submissions": [
+    {
+      "id": "sub_001",
+      "item_label": "roll_in_shower",
+      "submission_type": "confirmation",
+      "created_at": "2026-09-26T10:00:00Z",
+      "property_data_state": "not_verified"
+    }
+  ]
+}
+```
+
+## POST /api/business/{id}/verification-inbox/{submission_id}/respond (NEW for B19)
+Request: `{ "action": "accept" }` or `{ "action": "dispute" }`
+Response: `{ "success": true, "status": "accepted" }`
+Business responds to an individual traveler submission. Updates the submission status to `accepted` or `disputed`. Backend domain logic is responsible for updating the `confirmations` aggregate collection and potentially moving `data_state` toward `community_confirmed` when the threshold is reached.

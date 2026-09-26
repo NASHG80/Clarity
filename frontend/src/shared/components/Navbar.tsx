@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Globe, ArrowRight, Leaf } from 'lucide-react';
+import { Globe, ArrowUpRight, Leaf, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+export interface NavItem {
+  label: string;
+  href: string;
+}
 
-export default function Navbar() {
+export function Navbar({ navItems, brandName }: { navItems?: NavItem[], brandName?: string }) {
   const { t, i18n } = useTranslation('b2c');
   const navigate = useNavigate();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
@@ -36,17 +40,37 @@ export default function Navbar() {
         </div>
 
         {/* Center Links */}
-        <nav className="hidden md:flex items-center gap-8 text-[13px] font-semibold text-[#26382D]/80">
-          <button onClick={() => navigate('/explore/Goa')} className="hover:text-[#26382D] transition-colors cursor-pointer">{t('home.nav.explore', 'Explore')}</button>
-          <button onClick={() => navigate('/')} className="hover:text-[#26382D] transition-colors cursor-pointer">{t('home.nav.planTrip', 'Plan a Trip')}</button>
-          <button className="hover:text-[#26382D] transition-colors cursor-pointer">Accessibility</button>
-          <button className="hover:text-[#26382D] transition-colors cursor-pointer">Sustainability</button>
-          <button className="hover:text-[#26382D] transition-colors cursor-pointer">{t('home.nav.forBusinesses', 'For Businesses')}</button>
+        <nav className="hidden md:flex items-center gap-9 text-[15px] font-medium tracking-wide text-[#26382D]/85">
+          <button 
+            onClick={() => navigate('/')} 
+            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
+          >
+            {t('home.nav.planTrip', 'Plan a Trip')}
+          </button>
+          <button 
+            onClick={() => navigate('/explore/Goa')} 
+            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
+          >
+            {t('home.nav.explore', 'Explore')}
+          </button>
+          <button 
+            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
+          >
+            {t('home.nav.trips', 'Trips')}
+          </button>
         </nav>
 
-        {/* Right: Action Button & Language */}
-        <div className="hidden md:flex items-center gap-4 text-sm">
-          
+        {/* Right: For Businesses + Language Switcher */}
+        <div className="hidden md:flex items-center gap-5 text-sm">
+          <button
+            className="text-[14px] font-medium text-[#26382D]/75 hover:text-[#26382D] transition-colors flex items-center gap-1.5 py-1.5 px-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] cursor-pointer"
+          >
+            <span>{t('home.nav.forBusinesses', 'For Businesses')}</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#7C9278]" />
+          </button>
+
+          <span className="w-[1px] h-4 bg-[#D8C9BE]" aria-hidden="true" />
+
           {/* Language Switcher */}
           <div className="relative mr-2">
             <button
@@ -100,8 +124,9 @@ export default function Navbar() {
             START PLANNING <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-
       </div>
     </header>
   );
 }
+
+export default Navbar;

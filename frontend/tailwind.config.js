@@ -5,7 +5,7 @@ export default {
     extend: {
       fontFamily: {
         serif: ['"Cormorant Garamond"', 'serif'],
-        sans: ['"DM Sans"', 'sans-serif'],
+        sans: ['"DM Sans"', '"Noto Sans Devanagari"', 'sans-serif'],
       },
       colors: {
         warmIvory: '#F1EDE9',

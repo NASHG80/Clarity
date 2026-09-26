@@ -107,7 +107,6 @@ export default function JourneySegmentTimeline({ segments }: JourneySegmentTimel
 
                 {/* Data State Badge (Person B component integration) */}
                 <div className="scale-90 origin-right">
-                  {/* @ts-expect-error ignoring prop errors since Person B hasn't defined them yet */}
                   <DataStateBadge state={dataState} />
                 </div>
               </div>
