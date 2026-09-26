@@ -1,0 +1,142 @@
+[
+  {
+    "_id": "exp_001",
+    "city": "Goa",
+    "translations": {
+      "en": { "name": "Accessible Beach Walk — Miramar", "description": "A step-free paved pathway offering easy access along the Miramar coastline." },
+      "hi": { "name": "सुलभ समुद्र तट की सैर — मिरामार", "description": "मिरामार तट के किनारे आसान पहुंच प्रदान करने वाला एक कदम-मुक्त पक्का मार्ग।" },
+      "mr": { "name": "सुलभ बीच वॉक — मिरामार", "description": "मिरामार किनारपट्टीवर सोयीस्कर प्रवेश प्रदान करणारा एक पायऱ्या-मुक्त पक्का मार्ग." }
+    },
+    "accessibility": { "value": "step_free_path", "data_state": "community_confirmed" },
+    "environmental_impact": { "value": "low", "data_state": "reported" },
+    "cost_inr": 0,
+    "duration_minutes": 60,
+    "distance_km": 2.1
+  },
+  {
+    "_id": "exp_002",
+    "city": "Goa",
+    "translations": {
+      "en": { "name": "Old Goa Heritage Walk", "description": "A historic walking tour through the ancient churches of Old Goa." },
+      "hi": { "name": "ओल्ड गोवा हेरिटेज वॉक", "description": "ओल्ड गोवा के प्राचीन चर्चों के माध्यम से एक ऐतिहासिक पैदल यात्रा।" },
+      "mr": { "name": "ओल्ड गोवा हेरिटेज वॉक", "description": "जुन्या गोव्यातील प्राचीन चर्चमधून जाणारी एक ऐतिहासिक पायी सहल." }
+    },
+    "accessibility": { "value": null, "data_state": "not_verified" },
+    "environmental_impact": { "value": null, "data_state": "not_verified" },
+    "cost_inr": 500,
+    "duration_minutes": 120,
+    "distance_km": 3.0
+  },
+  {
+    "_id": "exp_003",
+    "city": "Goa",
+    "translations": {
+      "en": { "name": "Spice Plantation Tour", "description": "Guided eco-tour at a sustainable organic spice plantation." },
+      "hi": { "name": "मसाला बागान यात्रा", "description": "एक टिकाऊ जैविक मसाला बागान में निर्देशित इको-टूर।" },
+      "mr": { "name": "मसाला मळा सहल", "description": "एका शाश्वत सेंद्रिय मसाला मळ्यात मार्गदर्शित इको-टूर." }
+    },
+    "accessibility": { "value": "partial_access", "data_state": "reported" },
+    "environmental_impact": { "value": "low", "data_state": "verified" },
+    "cost_inr": 800,
+    "duration_minutes": 150,
+    "distance_km": 1.5
+  },
+  {
+    "_id": "exp_004",
+    "city": "Goa",
+    "translations": {
+      "en": { "name": "Dudhsagar Waterfalls Jeep Safari", "description": "An adventurous jeep ride through the Bhagwan Mahaveer Sanctuary." },
+      "hi": { "name": "दूधसागर जलप्रपात जीप सफारी", "description": "भगवान महावीर अभयारण्य के माध्यम से एक साहसिक जीप सवारी।" },
+      "mr": { "name": "दूधसागर धबधबा जीप सफारी", "description": "भगवान महावीर अभयारण्यातून एक साहसी जीप सफारी." }
+    },
+    "accessibility": { "value": null, "data_state": "not_verified" },
+    "environmental_impact": { "value": "high", "data_state": "community_confirmed" },
+    "cost_inr": 1500,
+    "duration_minutes": 240,
+    "distance_km": 15.0
+  },
+  {
+    "_id": "exp_005",
+    "city": "Delhi",
+    "translations": {
+      "en": { "name": "Red Fort Wheelchair Tour", "description": "Specially designed tour covering the accessible areas of the iconic Red Fort." },
+      "hi": { "name": "लाल किला व्हीलचेयर यात्रा", "description": "प्रतिष्ठित लाल किले के सुलभ क्षेत्रों को कवर करने वाली विशेष रूप से डिज़ाइन की गई यात्रा।" },
+      "mr": { "name": "लाल किल्ला व्हीलचेअर सहल", "description": "प्रतिष्ठित लाल किल्ल्याच्या सुलभ भागांना भेट देणारी विशेष रचना केलेली सहल." }
+    },
+    "accessibility": { "value": "step_free_path", "data_state": "verified" },
+    "environmental_impact": { "value": null, "data_state": "not_verified" },
+    "cost_inr": 150,
+    "duration_minutes": 90,
+    "distance_km": 1.2
+  },
+  {
+    "_id": "exp_006",
+    "city": "Delhi",
+    "translations": {
+      "en": { "name": "Chandni Chowk Food Walk", "description": "Explore the narrow lanes and culinary delights of Old Delhi." },
+      "hi": { "name": "चांदनी चौक फूड वॉक", "description": "पुरानी दिल्ली की संकरी गलियों और पाक व्यंजनों का अन्वेषण करें।" },
+      "mr": { "name": "चांदणी चौक फूड वॉक", "description": "जुन्या दिल्लीतील अरुंद गल्ल्या आणि खाद्यपदार्थांचा आस्वाद घ्या." }
+    },
+    "accessibility": { "value": null, "data_state": "not_verified" },
+    "environmental_impact": { "value": null, "data_state": "not_verified" },
+    "cost_inr": 1200,
+    "duration_minutes": 180,
+    "distance_km": 2.5
+  },
+  {
+    "_id": "exp_007",
+    "city": "Delhi",
+    "translations": {
+      "en": { "name": "Lodhi Gardens Picnic", "description": "A relaxing afternoon in the historic and serene Lodhi Gardens." },
+      "hi": { "name": "लोधी गार्डन पिकनिक", "description": "ऐतिहासिक और शांत लोधी गार्डन में एक आरामदेह दोपहर।" },
+      "mr": { "name": "लोधी गार्डन्स पिकनिक", "description": "ऐतिहासिक आणि शांत लोधी गार्डन्समध्ये एक आरामदायी दुपार." }
+    },
+    "accessibility": { "value": "step_free_path", "data_state": "reported" },
+    "environmental_impact": { "value": "low", "data_state": "reported" },
+    "cost_inr": 0,
+    "duration_minutes": 120,
+    "distance_km": 3.0
+  },
+  {
+    "_id": "exp_008",
+    "city": "Mumbai",
+    "translations": {
+      "en": { "name": "Gateway of India Promenade", "description": "A scenic accessible stroll near Mumbai's most famous landmark." },
+      "hi": { "name": "गेटवे ऑफ इंडिया प्रॉमनेड", "description": "मुंबई के सबसे प्रसिद्ध मील के पत्थर के पास एक सुंदर सुलभ टहलना।" },
+      "mr": { "name": "गेटवे ऑफ इंडिया प्रॉमनेड", "description": "मुंबईच्या सर्वात प्रसिद्ध वास्तूजवळ एक सुंदर सुलभ फेरफटका." }
+    },
+    "accessibility": { "value": "step_free_path", "data_state": "reported" },
+    "environmental_impact": { "value": null, "data_state": "not_verified" },
+    "cost_inr": 0,
+    "duration_minutes": 45,
+    "distance_km": 1.0
+  },
+  {
+    "_id": "exp_009",
+    "city": "Mumbai",
+    "translations": {
+      "en": { "name": "Elephanta Caves Ferry & Tour", "description": "A ferry ride and exploration of the ancient Elephanta rock-cut temples." },
+      "hi": { "name": "एलिफेंटा गुफाएं फेरी और यात्रा", "description": "प्राचीन एलिफेंटा रॉक-कट मंदिरों की एक नौका सवारी और अन्वेषण।" },
+      "mr": { "name": "एलिफंटा लेणी फेरी आणि सहल", "description": "प्राचीन एलिफंटा रॉक-कट मंदिरांची फेरी आणि अन्वेषण." }
+    },
+    "accessibility": { "value": null, "data_state": "not_verified" },
+    "environmental_impact": { "value": null, "data_state": "not_verified" },
+    "cost_inr": 850,
+    "duration_minutes": 300,
+    "distance_km": 10.0
+  },
+  {
+    "_id": "exp_010",
+    "city": "Mumbai",
+    "translations": {
+      "en": { "name": "Sanjay Gandhi National Park Safari", "description": "Wildlife safari in the heart of the bustling metropolis." },
+      "hi": { "name": "संजय गांधी राष्ट्रीय उद्यान सफारी", "description": "हलचल भरे महानगर के बीचोबीच वन्यजीव सफारी।" },
+      "mr": { "name": "संजय गांधी राष्ट्रीय उद्यान सफारी", "description": "गजबजलेल्या महानगराच्या मध्यभागी वन्यजीव सफारी." }
+    },
+    "accessibility": { "value": null, "data_state": "not_verified" },
+    "environmental_impact": { "value": "low", "data_state": "reported" },
+    "cost_inr": 400,
+    "duration_minutes": 150,
+    "distance_km": 8.0
+  }
+]

@@ -1,0 +1,49 @@
+[
+  {
+    "_id": "biz_001",
+    "hotel_id": "hotel_001",
+    "onboarding_complete": true,
+    "opportunities": [
+      {
+        "severity": "yellow",
+        "title": "Energy Consumption",
+        "estimate": "45 kWh/room/day",
+        "suggested_action": "Optimize HVAC scheduling for unoccupied rooms",
+        "is_demo_data": true
+      }
+    ]
+  },
+  {
+    "_id": "biz_002",
+    "hotel_id": "hotel_014",
+    "onboarding_complete": true,
+    "opportunities": [
+      {
+        "severity": "red",
+        "title": "Food Waste",
+        "estimate": "18 kg/day",
+        "suggested_action": "Reduce buffet production by ~10%",
+        "is_demo_data": true
+      },
+      {
+        "severity": "red",
+        "title": "Demand gap: roll-in shower",
+        "suggested_action": "Confirm or add this feature",
+        "is_demo_data": true
+      }
+    ]
+  },
+  {
+    "_id": "biz_003",
+    "hotel_id": "hotel_010",
+    "onboarding_complete": false,
+    "opportunities": [
+      {
+        "severity": "red",
+        "title": "Demand gap: step-free entrance",
+        "suggested_action": "Consider installing a ramp to capture more demand",
+        "is_demo_data": true
+      }
+    ]
+  }
+]

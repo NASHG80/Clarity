@@ -22,6 +22,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   Mic,
@@ -48,9 +49,13 @@ import {
   UserCheck,
   AlertCircle,
   FileText,
+  Loader2,
 } from 'lucide-react';
 import heroBgImage from '../assets/images/hero_sustainable_india_travel_1790406163839.jpg';
 import accessibleGoaImg from '../assets/images/accessible_serene_retreat_goa_1790406178105.jpg';
+import Navbar from './components/Navbar';
+import BottomNavBar from './components/BottomNavBar';
+import { extractTripNLU, NLUExtractedData, NLUMissingOrAmbiguousItem } from '../lib/api';
 
 // ==========================================
 // 1. TYPES & MODELS
@@ -77,539 +82,11 @@ export interface ParsedTripDetails {
 // ==========================================
 // 2. I18N DICTIONARIES (EN, HI, MR)
 // ==========================================
-export const translations = {
-  en: {
-    brandName: 'Green & Inclusive Travel',
-    tagline: 'Personalized Travel Decision Engine for sustainable and accessible travel in India',
-    nav: {
-      planTrip: 'Plan a Trip',
-      explore: 'Explore',
-      trips: 'Trips',
-      forBusinesses: 'For Businesses',
-      signIn: 'Sign in',
-      profile: 'Profile',
-      language: 'Language',
-    },
-    hero: {
-      headlinePart1: 'Travel better.',
-      headlinePart2: 'Travel lighter.',
-      headlinePart3: 'Travel inclusively.',
-      supporting: 'Plan trips around what matters to you — accessibility, budget, time, comfort and environmental impact.',
-    },
-    inputCard: {
-      label: 'Tell us about your trip',
-      placeholder: 'Tell us where you\'re going, who\'s traveling, and what you need…',
-      defaultQuery: 'Mumbai to Goa with 2 children and 1 senior. I need a wheelchair, accessible transport and an accessible hotel.',
-      buttonText: 'Find My Options',
-      helperText: 'You can review and edit everything before we search.',
-      charCount: 'chars',
-      clear: 'Clear',
-      voiceInputTooltip: 'Dictate in English, Hindi, or Marathi',
-    },
-    examplePrompts: {
-      heading: 'Try something like',
-      items: [
-        {
-          id: 'prompt-1',
-          label: 'Weekend trip from Mumbai to Goa under ₹20,000',
-          query: 'Weekend trip from Mumbai to Goa under ₹20,000 with low carbon options',
-        },
-        {
-          id: 'prompt-2',
-          label: 'Traveling with my wheelchair-using parent',
-          query: 'Traveling with my wheelchair-using parent from Delhi to Jaipur, step-free hotels and ramped transport',
-        },
-        {
-          id: 'prompt-3',
-          label: 'Low-carbon family trip with minimal walking',
-          query: 'Low-carbon family trip from Bengaluru to Mysore with minimal walking and shaded accessible paths',
-        },
-        {
-          id: 'prompt-4',
-          label: 'Kerala backwaters with step-free boarding',
-          query: 'Kochi to Alleppey for 3 seniors, battery-assisted transfers, step-free eco-resort',
-        }
-      ],
-    },
-    valueProps: {
-      title: 'Built for conscious, comfortable journeys',
-      items: [
-        {
-          symbol: '♿',
-          title: 'Accessibility',
-          description: 'Find options that match your specific accessibility needs — from step-free boarding to roll-in showers.',
-          tag: 'Tailored comfort',
-          badgeState: 'verified' as DataStateType,
-        },
-        {
-          symbol: '🌱',
-          title: 'Lower-impact travel',
-          description: 'Compare estimated emissions and lower-impact alternatives across rail, electric cabs, and eco-certified stays.',
-          tag: '-60% average CO₂',
-          badgeState: 'verified' as DataStateType,
-        },
-        {
-          symbol: '₹',
-          title: 'Practical choices',
-          description: 'Balance cost, time and convenience with transparent fare breakdowns and realistic transfer windows.',
-          tag: 'No hidden trade-offs',
-          badgeState: 'community-confirmed' as DataStateType,
-        },
-        {
-          symbol: '✓',
-          title: 'Clear evidence',
-          description: 'See what is verified, reported, community-confirmed or still unverified so you travel with confidence.',
-          tag: 'Audited data',
-          badgeState: 'verified' as DataStateType,
-        }
-      ]
-    },
-    editorial: {
-      kicker: 'The Decision Philosophy',
-      heading: 'A better way to choose your journey.',
-      supporting: 'We compare travel options across accessibility, cost, time, convenience and environmental impact — so you can understand the trade-offs before you choose.',
-      manifesto: '“True luxury in modern India is knowing that every member of your family can move freely, without friction, while leaving the sacred landscapes we visit undisturbed.”',
-      attribution: 'The Green & Inclusive Travel Charter',
-      bullet1Title: 'Zero Assumptions on Mobility',
-      bullet1Desc: 'We audit doorway widths, curb ramps, battery wheelchair charging points, and station porters across Indian routes.',
-      bullet2Title: 'Carbon Transparency, Simplified',
-      bullet2Desc: 'Calculated using real Indian grid and transit emissions factors, comparing high-speed electric trains like Vande Bharat against domestic flights.',
-    },
-    convergence: {
-      kicker: 'Harmonious Design',
-      title: 'Where accessibility and sustainability meet.',
-      description: 'Often treated as separate priorities, universal accessibility and environmental mindfulness strengthen each other. Shared electric transit, step-free rail hubs, and low-waste architectural stays create more dignified journeys for all travelers.',
-      leftLabel: 'Accessibility',
-      leftDesc: 'Step-free transit · Sensory quiet spaces · Tactile wayfinding · Assistive baggage',
-      rightLabel: 'Sustainability',
-      rightDesc: 'Electrified rail corridors · Zero-single-use stays · Local farm dining · Minimal carbon footprint',
-      centerLabel: 'YOUR JOURNEY',
-      centerSub: 'Thoughtfully curated for India',
-    },
-    business: {
-      heading: 'Make your property easier to discover.',
-      supporting: 'Share your accessibility and sustainability practices, understand traveler demand, and discover opportunities to improve.',
-      cta: 'For Businesses',
-      tagline: 'Join 450+ verified eco-homestays, heritage villas, and transport operators across India.',
-      cardTitle: 'Host & Operator Registry',
-      bullet1: 'Free accessibility and carbon baseline audit guide',
-      bullet2: 'Direct visibility to travelers with specific physical & dietary requirements',
-      button: 'Partner with Us',
-    },
-    reviewModal: {
-      title: 'Review Your Trip Setup',
-      subtitle: 'The engine extracted these parameters from your prompt. Review and adjust anything before discovering options.',
-      routeLabel: 'Route',
-      travelersLabel: 'Travel Party',
-      accessLabel: 'Accessibility Requirements',
-      sustainabilityLabel: 'Sustainability Preferences',
-      confirmAction: 'Continue with these Preferences',
-      toastMessage: 'Setup saved. You are ready to proceed with these verified parameters.',
-    },
-    footer: {
-      brand: 'Green & Inclusive Travel',
-      description: 'A personalized travel decision engine dedicated to low-carbon, universally accessible journeys across India.',
-      planTrip: 'Plan a Trip',
-      explore: 'Explore',
-      forBusinesses: 'For Businesses',
-      about: 'About',
-      copyright: '© 2026 Green & Inclusive Travel Inc. Designed for sustainable and accessible travel in India.',
-    },
-    bottomNav: {
-      search: 'Search',
-      explore: 'Explore',
-      trips: 'Trips',
-      profile: 'Profile',
-    }
-  },
-  hi: {
-    brandName: 'Green & Inclusive Travel',
-    tagline: 'भारत में सतत और सुलभ यात्रा के लिए व्यक्तिगत निर्णय इंजन',
-    nav: {
-      planTrip: 'यात्रा योजना',
-      explore: 'खोजें',
-      trips: 'मेरी यात्राएं',
-      forBusinesses: 'व्यवसायों के लिए',
-      signIn: 'साइन इन करें',
-      profile: 'प्रोफ़ाइल',
-      language: 'भाषा',
-    },
-    hero: {
-      headlinePart1: 'सार्थक यात्रा।',
-      headlinePart2: 'सुलभ यात्रा।',
-      headlinePart3: 'पर्यावरण-हितैषी यात्रा।',
-      supporting: 'अपनी प्राथमिकताओं के अनुसार यात्रा की योजना बनाएं — सुगमता, बजट, समय, आराम और पर्यावरण पर प्रभाव।',
-    },
-    inputCard: {
-      label: 'अपनी यात्रा के बारे में हमें बताएं',
-      placeholder: 'बताएं कि आप कहां जा रहे हैं, कौन साथ है, और आपको क्या आवश्यकताएं हैं…',
-      defaultQuery: 'मुंबई से गोवा 2 बच्चों और 1 वरिष्ठ नागरिक के साथ। मुझे व्हीलचेयर, सुलभ वाहन और सुलभ होटल की आवश्यकता है।',
-      buttonText: 'मेरे विकल्प खोजें',
-      helperText: 'खोज शुरू करने से पहले आप सब कुछ जांच और संपादित कर सकते हैं।',
-      charCount: 'अक्षर',
-      clear: 'साफ़ करें',
-      voiceInputTooltip: 'हिंदी या अंग्रेजी में बोलें',
-    },
-    examplePrompts: {
-      heading: 'इस प्रकार प्रयास करें',
-      items: [
-        {
-          id: 'prompt-1',
-          label: 'मुंबई से गोवा सप्ताहांत यात्रा ₹20,000 के भीतर',
-          query: 'मुंबई से गोवा कम कार्बन उत्सर्जन वाली सप्ताहांत यात्रा ₹20,000 के बजट में',
-        },
-        {
-          id: 'prompt-2',
-          label: 'व्हीलचेयर का उपयोग करने वाले माता-पिता के साथ यात्रा',
-          query: 'दिल्ली से जयपुर व्हीलचेयर-सुलभ होटल और रैंप वाले इलेक्ट्रिक परिवहन के साथ यात्रा',
-        },
-        {
-          id: 'prompt-3',
-          label: 'न्यूनतम पैदल चलने वाली कम-कार्बन पारिवारिक यात्रा',
-          query: 'बेंगलुरु से मैसूर परिवार के साथ न्यूनतम पैदल चलने और सुलभ रास्तों वाली यात्रा',
-        },
-        {
-          id: 'prompt-4',
-          label: 'केरल बैकवाटर्स में सीढ़ी-मुक्त नौकायन',
-          query: 'कोच्चि से अल्लेप्पी 3 वरिष्ठ नागरिकों के लिए, सहायता प्राप्त सुलभ पर्यावरण-अनुकूल आवास',
-        }
-      ],
-    },
-    valueProps: {
-      title: 'सार्थक और आरामदायक यात्राओं के लिए निर्मित',
-      items: [
-        {
-          symbol: '♿',
-          title: 'सुगमता (Accessibility)',
-          description: 'ऐसी यात्रा विकल्प खोजें जो आपकी शारीरिक आवश्यकताओं के अनुरूप हों — सीढ़ी-मुक्त स्टेशन से रोल-इन शॉवर तक।',
-          tag: 'अनुकूलित आराम',
-          badgeState: 'verified' as DataStateType,
-        },
-        {
-          symbol: '🌱',
-          title: 'कम-प्रभाव वाली यात्रा',
-          description: 'ट्रेन, इलेक्ट्रिक कैब और प्रमाणित ईको-स्टे में अनुमानित कार्बन उत्सर्जन की तुलना करें।',
-          tag: '-60% कार्बन कमी',
-          badgeState: 'verified' as DataStateType,
-        },
-        {
-          symbol: '₹',
-          title: 'व्यावहारिक विकल्प',
-          description: 'स्पष्ट किराए और वास्तविक समय के साथ लागत, समय और सुविधा में संतुलन बनाएं।',
-          tag: 'पारदर्शी मूल्य',
-          badgeState: 'community-confirmed' as DataStateType,
-        },
-        {
-          symbol: '✓',
-          title: 'प्रमाणित साक्ष्य',
-          description: 'देखें कि क्या सत्यापित है, समुदाय द्वारा पुष्ट है, ताकि आप पूरे विश्वास के साथ यात्रा करें।',
-          tag: 'सत्यापित विवरण',
-          badgeState: 'verified' as DataStateType,
-        }
-      ]
-    },
-    editorial: {
-      kicker: 'यात्रा दर्शन',
-      heading: 'अपनी यात्रा चुनने का एक बेहतर तरीका।',
-      supporting: 'हम सुगमता, लागत, समय, सुविधा और पर्यावरणीय प्रभाव के आधार पर विकल्पों की तुलना करते हैं — ताकि आप चयन करने से पहले सभी पहलुओं को समझ सकें।',
-      manifesto: '“सच्ची विलासिता यह है कि परिवार का प्रत्येक सदस्य बिना किसी रुकावट के स्वतंत्र रूप से घूम सके, और हमारी प्रकृति पर कोई खरोंच न आए।”',
-      attribution: 'ग्रीन एंड इनक्लूसिव ट्रैवल घोषणापत्र',
-      bullet1Title: 'सुगमता पर पूर्ण ध्यान',
-      bullet1Desc: 'हम भारतीय मार्गों पर दरवाजों की चौड़ाई, रैंप, बैटरी व्हीलचेयर चार्जिंग और कुली सहायता का सत्यापन करते हैं।',
-      bullet2Title: 'सच्ची कार्बन पारदर्शिता',
-      bullet2Desc: 'वंदे भारत जैसी इलेक्ट्रिक ट्रेनों और उड़ानों के वास्तविक उत्सर्जन कारकों की तुलना।',
-    },
-    convergence: {
-      kicker: 'समन्वित दृष्टिकोण',
-      title: 'जहां सुगमता और स्थिरता एक साथ आती हैं।',
-      description: 'सुलभ बुनियादी ढांचा और पर्यावरण-संवेदनशीलता एक दूसरे को मजबूत करते हैं। साझा इलेक्ट्रिक परिवहन, सीढ़ी-मुक्त हब और न्यूनतम-अपशिष्ट आवास सभी के लिए गरिमापूर्ण यात्रा बनाते हैं।',
-      leftLabel: 'सुगमता (Accessibility)',
-      leftDesc: 'सीढ़ी-मुक्त पारगमन · शांत संवेदी क्षेत्र · स्पर्शनीय संकेत · सहायता प्राप्त बैगेज',
-      rightLabel: 'स्थिरता (Sustainability)',
-      rightDesc: 'विद्युतीकृत रेल गलियारे · प्लास्टिक-मुक्त स्टे · स्थानीय जैविक भोजन · न्यूनतम कार्बन',
-      centerLabel: 'आपकी यात्रा',
-      centerSub: 'भारत के लिए विचारपूर्वक डिज़ाइन की गई',
-    },
-    business: {
-      heading: 'अपनी संपत्ति को अधिक यात्रियों तक पहुंचाएं।',
-      supporting: 'अपनी सुलभता और पर्यावरण अनुकूल प्रथाओं को साझा करें, यात्रियों की मांग समझें और सुधार के अवसर खोजें।',
-      cta: 'व्यवसायों के लिए',
-      tagline: 'भारत भर के 450+ सत्यापित ईको-होमस्टे और ऑपरेटरों से जुड़ें।',
-      cardTitle: 'हॉस्पिटैलिटी पार्टनर पोर्टल',
-      bullet1: 'निःशुल्क सुगमता और कार्बन ऑडिट गाइड',
-      bullet2: 'विशिष्ट आवश्यकताओं वाले यात्रियों के लिए सीधी दृश्यता',
-      button: 'हमारे भागीदार बनें',
-    },
-    reviewModal: {
-      title: 'अपनी यात्रा सेटअप की समीक्षा करें',
-      subtitle: 'इंजन ने आपके विवरण से इन आवश्यकताओं की पहचान की है। विकल्प देखने से पहले कुछ भी संपादित कर सकते हैं।',
-      routeLabel: 'मार्ग',
-      travelersLabel: 'यात्री समूह',
-      accessLabel: 'सुगमता आवश्यकताएं',
-      sustainabilityLabel: 'पर्यावरणीय प्राथमिकताएं',
-      confirmAction: 'इन प्राथमिकताओं के साथ आगे बढ़ें',
-      toastMessage: 'सेटअप सुरक्षित हो गया। आप विकल्प देखने के लिए तैयार हैं।',
-    },
-    footer: {
-      brand: 'Green & Inclusive Travel',
-      description: 'भारत भर में कम कार्बन और सार्वभौमिक रूप से सुलभ यात्राओं के लिए समर्पित व्यक्तिगत निर्णय इंजन।',
-      planTrip: 'यात्रा योजना',
-      explore: 'खोजें',
-      forBusinesses: 'व्यवसायों के लिए',
-      about: 'हमारे बारे में',
-      copyright: '© 2026 Green & Inclusive Travel Inc. भारत में सतत एवं सुलभ यात्रा के लिए।',
-    },
-    bottomNav: {
-      search: 'खोजें',
-      explore: 'एक्सप्लोर',
-      trips: 'यात्राएं',
-      profile: 'प्रोफ़ाइल',
-    }
-  },
-  mr: {
-    brandName: 'Green & Inclusive Travel',
-    tagline: 'भारतातील शाश्वत आणि सुलभ प्रवासासाठी वैयक्तिक प्रवास निर्णय इंजिन',
-    nav: {
-      planTrip: 'प्रवास नियोजन',
-      explore: 'शोधा',
-      trips: 'माझे प्रवास',
-      forBusinesses: 'व्यवसायांसाठी',
-      signIn: 'साइन इन',
-      profile: 'प्रोफाइल',
-      language: 'भाषा',
-    },
-    hero: {
-      headlinePart1: 'शाश्वत प्रवास.',
-      headlinePart2: 'हलका प्रवास.',
-      headlinePart3: 'सर्वांसाठी सर्वसमावेशक.',
-      supporting: 'तुमच्या महत्त्वाच्या घटकांनुसार प्रवासाचे नियोजन करा — सुलभता, बजेट, वेळ, आराम आणि पर्यावरणावरील प्रभाव.',
-    },
-    inputCard: {
-      label: 'तुमच्या प्रवासाबद्दल आम्हाला सांगा',
-      placeholder: 'तुम्ही कुठे जात आहात, कोण प्रवास करत आहे आणि तुम्हाला काय हवे आहे ते सांगा…',
-      defaultQuery: 'मुंबई ते गोवा २ लहान मुले आणि १ ज्येष्ठ नागरिकांसह. मला व्हीलचेअर, सुलभ वाहतूक आणि सुलभ हॉटेल हवे आहे.',
-      buttonText: 'माझे पर्याय शोधा',
-      helperText: 'शोध सुरू करण्यापूर्वी तुम्ही सर्व काही तपासू आणि संपादित करू शकता.',
-      charCount: 'अक्षरे',
-      clear: 'पुसा',
-      voiceInputTooltip: 'मराठी किंवा इंग्रजीत बोला',
-    },
-    examplePrompts: {
-      heading: 'असे काहीतरी वापरून पहा',
-      items: [
-        {
-          id: 'prompt-1',
-          label: 'मुंबई ते गोवा वीकेंड ट्रिप ₹२०,००० च्या आत',
-          query: 'मुंबई ते गोवा कमी कार्बन उत्सर्जनासह वीकेंड ट्रिप ₹२०,००० बजेटमध्ये',
-        },
-        {
-          id: 'prompt-2',
-          label: 'व्हीलचेअर वापरणाऱ्या पालकांसह प्रवास',
-          query: 'पालकांसह व्हीलचेअर-सुलभ आणि पायऱ्या नसलेल्या प्रवासाची सोय',
-        },
-        {
-          id: 'prompt-3',
-          label: 'कमी चालणे लागणारा कमी-कार्बन कौटुंबिक प्रवास',
-          query: 'कुटुंबासह कमी चालणे आणि सुलभ मार्ग असलेला पर्यावरणपूरक प्रवास',
-        },
-        {
-          id: 'prompt-4',
-          label: 'कोकण रेल्वेतून निसर्गरम्य आणि सुलभ प्रवास',
-          query: 'मुंबई ते सावंतवाडी पायऱ्या नसलेले बोर्डिंग आणि इको-स्टे',
-        }
-      ],
-    },
-    valueProps: {
-      title: 'जाणीवपूर्वक आणि आरामदायी प्रवासासाठी निर्मित',
-      items: [
-        {
-          symbol: '♿',
-          title: 'सुलभता (Accessibility)',
-          description: 'तुमच्या नेमक्या शारीरिक गरजांनुसार पर्याय शोधा — पायऱ्यांविना बोर्डिंगपासून ते रोल-इन शॉवर्सपर्यंत.',
-          tag: 'अनुकूल आराम',
-          badgeState: 'verified' as DataStateType,
-        },
-        {
-          symbol: '🌱',
-          title: 'कमी प्रभावाचा प्रवास',
-          description: 'रेल्वे, इलेक्ट्रिक वाहने आणि प्रमाणित इको-स्टेच्या कार्बन उत्सर्जनाची पारदर्शक तुलना करा.',
-          tag: '-६०% कार्बन बचत',
-          badgeState: 'verified' as DataStateType,
-        },
-        {
-          symbol: '₹',
-          title: 'व्यावहारिक निवड',
-          description: 'खर्च, वेळ आणि सोय यात समतोल साधा आणि योग्य निर्णय घ्या.',
-          tag: 'पारदर्शक दर',
-          badgeState: 'community-confirmed' as DataStateType,
-        },
-        {
-          symbol: '✓',
-          title: 'स्पष्ट पुरावा',
-          description: 'काय पडताळलेले आहे, काय नोंदवले आहे ते स्पष्टपणे पहा जेणेकरून आत्मविश्वासाने प्रवास करता येईल.',
-          tag: 'सत्यापित माहिती',
-          badgeState: 'verified' as DataStateType,
-        }
-      ]
-    },
-    editorial: {
-      kicker: 'प्रवासाचा दृष्टिकोन',
-      heading: 'तुमचा प्रवास निवडण्याचा एक उत्तम मार्ग.',
-      supporting: 'आम्ही सुलभता, खर्च, वेळ, सोय आणि पर्यावरणीय प्रभाव या सर्वांची तुलना करतो — जेणेकरून तुम्ही विचारपूर्वक निवड करू शकाल.',
-      manifesto: '“खरा प्रवास तोच असतो जिथे कुटुंबातील प्रत्येक व्यक्ती सहजतेने फिरू शकते आणि निसर्गावर कोणतीही हानी पोहोचत नाही.”',
-      attribution: 'ग्रीन अँड इन्क्लुझिव्ह ट्रॅव्हल संकल्प',
-      bullet1Title: 'हालचालीवर पूर्ण विचार',
-      bullet1Desc: 'आम्ही भारतीय मार्गांवरील दारांची रुंदी, रॅम्प, व्हीलचेअर चार्जिंग आणि मदतनीस व्यवस्था तपासतो.',
-      bullet2Title: 'कार्बन पारदर्शकता',
-      bullet2Desc: 'वंदे भारतसारख्या इलेक्ट्रिक ट्रेन्स आणि विमानांच्या उत्सर्जनाची थेट तुलना.',
-    },
-    convergence: {
-      kicker: 'सुसंगत समन्वय',
-      title: 'जिथे सुलभता आणि पर्यावरण-स्नेह एकत्र येतात.',
-      description: 'सुलभता आणि पर्यावरण रक्षण एकमेकांना पूरक आहेत. सामूहिक इलेक्ट्रिक वाहतूक, पायऱ्यांविना रेल्वे हब आणि इको-स्टे सर्वांसाठी सन्मानजनक प्रवास घडवतात.',
-      leftLabel: 'सुलभता (Accessibility)',
-      leftDesc: 'पायऱ्या नसलेला प्रवास · शांत संवेदी जागा · सुलभ मार्गदर्शक खुणा',
-      rightLabel: 'शाश्वतता (Sustainability)',
-      rightDesc: 'विद्युतीकृत रेल्वे मार्ग · प्लास्टिक-मुक्त वास्तव्य · स्थानिक अन्न · कमी कार्बन',
-      centerLabel: 'तुमचा प्रवास',
-      centerSub: 'भारतासाठी जाणीवपूर्वक रचलेला',
-    },
-    business: {
-      heading: 'तुमचे हॉटेल व रिसॉर्ट पर्यटकांपर्यंत पोहोचवा.',
-      supporting: 'तुमच्या सुलभता आणि पर्यावरणपूरक सेवांची नोंद करा, पर्यटकांच्या गरजा समजून घ्या आणि सुधारणा करा.',
-      cta: 'व्यवसायांसाठी',
-      tagline: 'भारतभरातील ४५०+ प्रमाणित इको-स्टे आणि ऑपरेटर्समध्ये सहभागी व्हा.',
-      cardTitle: 'हॉस्पिटॅलिटी पार्टनर नोंदणी',
-      bullet1: 'मोफत सुलभता आणि कार्बन ऑडिट मार्गदर्शक',
-      bullet2: 'विशेष गरजा असलेल्या प्रवाशांपर्यंत थेट पोहोच',
-      button: 'भागीदार व्हा',
-    },
-    reviewModal: {
-      title: 'प्रवास रचनेची पाहणी करा',
-      subtitle: 'तुमच्या वाक्यावरून इंजिनने या घटकांची नोंद घेतली आहे. शोधण्यापूर्वी बदल करू शकता.',
-      routeLabel: 'मार्ग',
-      travelersLabel: 'प्रवासी संख्या',
-      accessLabel: 'सुलभता गरजा',
-      sustainabilityLabel: 'पर्यावरण प्राधान्ये',
-      confirmAction: 'या प्राधान्यांसह पुढे जा',
-      toastMessage: 'माहिती सुरक्षित झाली. तुम्ही पर्याय पाहण्यासाठी तयार आहात.',
-    },
-    footer: {
-      brand: 'Green & Inclusive Travel',
-      description: 'कमी कार्बन आणि सर्वांसाठी सुलभ प्रवासासाठी भारतातील वैयक्तिक प्रवास निर्णय इंजिन.',
-      planTrip: 'प्रवास नियोजन',
-      explore: 'शोधा',
-      forBusinesses: 'व्यवसायांसाठी',
-      about: 'आमच्याबद्दल',
-      copyright: '© २०२६ Green & Inclusive Travel Inc. शाश्वत आणि सुलभ प्रवासासाठी.',
-    },
-    bottomNav: {
-      search: 'शोधा',
-      explore: 'एक्सप्लोर',
-      trips: 'प्रवास',
-      profile: 'प्रोफाइल',
-    }
-  }
-};
-
 // ==========================================
-// 3. NATURAL-LANGUAGE INTENT PARSER
+// 3. NLU EXTRACTION & CLARIFICATION
+// Note: Per AGENTS.md Rule 3, all trip extraction is performed via
+// POST /api/nlu/extract. No client-side regex or heuristics are used.
 // ==========================================
-export function parseNaturalLanguageTrip(text: string): ParsedTripDetails {
-  const lower = text.toLowerCase();
-
-  let origin = 'Mumbai';
-  let destination = 'Goa';
-
-  if (lower.includes('from') && lower.includes('to')) {
-    const fromIndex = lower.indexOf('from') + 5;
-    const toIndex = lower.indexOf('to', fromIndex);
-    if (toIndex > fromIndex) {
-      origin = text.substring(fromIndex - 5 + 5, toIndex).trim();
-      const rest = text.substring(toIndex + 3).trim();
-      const words = rest.split(/[\s,.]+/);
-      if (words.length > 0 && words[0]) {
-        destination = words[0];
-        if (words[1] && !['with', 'for', 'in', 'under', 'and'].includes(words[1].toLowerCase())) {
-          destination += ' ' + words[1];
-        }
-      }
-    }
-  } else if (lower.includes(' to ')) {
-    const parts = lower.split(' to ');
-    const originPart = parts[0].trim().split(/[\s,.]+/).pop();
-    if (originPart) origin = originPart.charAt(0).toUpperCase() + originPart.slice(1);
-    const destPart = parts[1].trim().split(/[\s,.]+/)[0];
-    if (destPart) destination = destPart.charAt(0).toUpperCase() + destPart.slice(1);
-  }
-
-  let adults = 1;
-  let children = 0;
-  let seniors = 0;
-  let wheelchairUsers = 0;
-
-  const childMatch = lower.match(/(\d+)\s*(children|child|kids|kid|मुले|बच्चे)/);
-  if (childMatch) {
-    children = parseInt(childMatch[1], 10);
-  } else if (lower.includes('child') || lower.includes('kid')) {
-    children = 1;
-  }
-
-  const seniorMatch = lower.match(/(\d+)\s*(seniors?|senior citizens?|parent|elderly|वृद्ध|वरिष्ठ|आजी|आजोबा)/);
-  if (seniorMatch) {
-    seniors = parseInt(seniorMatch[1], 10);
-  } else if (lower.includes('senior') || lower.includes('parent') || lower.includes('elder')) {
-    seniors = 1;
-  }
-
-  if (lower.includes('wheelchair') || lower.includes('व्हीलचेयर') || lower.includes('step-free') || lower.includes('रॅम्प')) {
-    wheelchairUsers = 1;
-  }
-
-  const accessibilityNeeds: string[] = [];
-  if (lower.includes('wheelchair') || lower.includes('व्हीलचेयर')) accessibilityNeeds.push('Wheelchair ramp access');
-  if (lower.includes('transport') || lower.includes('वाहन') || lower.includes('गाडी')) accessibilityNeeds.push('Accessible ground transfers (hydraulic / low floor)');
-  if (lower.includes('hotel') || lower.includes('accommodation') || lower.includes('हॉटेल')) accessibilityNeeds.push('Roll-in shower & step-free room entrance');
-  if (lower.includes('minimal walking') || lower.includes('कमी चालणे') || lower.includes('न्यूनतम पैदल')) accessibilityNeeds.push('Shaded paths & battery buggy transit');
-  if (lower.includes('step-free') || lower.includes('सीढ़ी-मुक्त')) accessibilityNeeds.push('Dedicated railway porter & platform hoist');
-
-  if (accessibilityNeeds.length === 0) {
-    accessibilityNeeds.push('Step-free main corridor', 'Visual & tactile wayfinding');
-  }
-
-  const sustainabilityGoals: string[] = [];
-  if (lower.includes('low-carbon') || lower.includes('low carbon') || lower.includes('कम कार्बन') || lower.includes('कमी कार्बन')) {
-    sustainabilityGoals.push('High-speed electrified rail priority (Vande Bharat / Tejas)');
-  }
-  if (lower.includes('eco') || lower.includes('green') || lower.includes('पर्यावरण')) {
-    sustainabilityGoals.push('Zero-single-use plastic certified stay');
-  }
-  sustainabilityGoals.push('Solar-powered regional EV cab transfers');
-  sustainabilityGoals.push('Locally sourced regional culinary partners');
-
-  let budgetEstimated: string | undefined = undefined;
-  const budgetMatch = lower.match(/₹?\s*(\d{1,3}(?:,\d{2,3})*|\d+)\s*(?:rs|inr|रुपये)?/);
-  if (budgetMatch && (lower.includes('₹') || lower.includes('under') || lower.includes('budget') || lower.includes('बजेट') || lower.includes('रुपये'))) {
-    budgetEstimated = `₹${budgetMatch[1]}`;
-  } else if (lower.includes('20,000') || lower.includes('20000')) {
-    budgetEstimated = '₹20,000';
-  }
-
-  return {
-    origin: origin.charAt(0).toUpperCase() + origin.slice(1),
-    destination: destination.charAt(0).toUpperCase() + destination.slice(1),
-    travelers: {
-      adults: Math.max(1, adults),
-      children,
-      seniors,
-      wheelchairUsers: Math.max(wheelchairUsers, seniors > 0 && lower.includes('wheelchair') ? 1 : wheelchairUsers),
-    },
-    accessibilityNeeds,
-    sustainabilityGoals,
-    budgetEstimated,
-    duration: '3–4 Days',
-  };
-}
 
 // ==========================================
 // 4. EMBEDDED SUBCOMPONENTS
@@ -678,6 +155,7 @@ export const Modal: React.FC<{
   children: React.ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }> = ({ isOpen, onClose, title, subtitle, children, maxWidth = 'lg' }) => {
+  const { t: tI18n } = useTranslation('b2c');
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) onClose();
@@ -709,7 +187,7 @@ export const Modal: React.FC<{
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-[#26382D]/60 hover:text-[#26382D] p-1.5 rounded-full hover:bg-[#F1EDE9] transition-colors cursor-pointer"
-          aria-label="Close dialog"
+          aria-label={tI18n('accessibility.closeDialog', 'Close dialog')}
         >
           <X className="w-5 h-5" />
         </button>
@@ -737,22 +215,35 @@ export const Modal: React.FC<{
 // ==========================================
 // 5. MAIN HOMEPAGE COMPONENT
 // ==========================================
-export const HomePage: React.FC = () => {
-  const [currentLang, setCurrentLang] = useState<Language>('en');
+export interface HomePageProps {
+  onOpenRequirementForm?: (data?: NLUExtractedData, fallbackNotice?: string) => void;
+}
+
+export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => {
+  const { t: tI18n, i18n } = useTranslation('b2c');
+
+  const [currentLang, setCurrentLang] = useState<Language>(() => {
+    return (localStorage.getItem('clarity_lang') as Language) || 'en';
+  });
   const [tripQuery, setTripQuery] = useState(
     'Mumbai to Goa with 2 children and 1 senior. I need a wheelchair, accessible transport and an accessible hotel.'
   );
-  const [parsedTrip, setParsedTrip] = useState<ParsedTripDetails>(() =>
-    parseNaturalLanguageTrip(
-      'Mumbai to Goa with 2 children and 1 senior. I need a wheelchair, accessible transport and an accessible hotel.'
-    )
-  );
+  
+  // Inline validation state for empty/whitespace prompt
+  const [promptError, setPromptError] = useState<string | null>(null);
+
+  // NLU Extraction and Clarification State (Person A3 & A4)
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isClarificationModalOpen, setIsClarificationModalOpen] = useState(false);
+  const [clarificationQueue, setClarificationQueue] = useState<NLUMissingOrAmbiguousItem[]>([]);
+  const [currentClarificationIndex, setCurrentClarificationIndex] = useState(0);
+  const [clarificationAnswer, setClarificationAnswer] = useState('');
+  const [clarificationError, setClarificationError] = useState<string | null>(null);
+  const [extractedAccumulator, setExtractedAccumulator] = useState<NLUExtractedData | null>(null);
+
   const [isListening, setIsListening] = useState(false);
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
-  const [isEditingSetup, setIsEditingSetup] = useState(false);
-  const [confirmedSetup, setConfirmedSetup] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [mobileActiveTab, setMobileActiveTab] = useState('search');
@@ -763,31 +254,141 @@ export const HomePage: React.FC = () => {
   const [propertyType, setPropertyType] = useState('Eco-Resort / Homestay');
   const [businessSubmitted, setBusinessSubmitted] = useState(false);
 
-  const t = translations[currentLang];
+  const t = tI18n('home', { returnObjects: true }) as any;
 
   const handleLanguageChange = (lang: Language) => {
     setCurrentLang(lang);
+    localStorage.setItem('clarity_lang', lang);
+    i18n.changeLanguage(lang);
     setLangDropdownOpen(false);
-    const currentDefault = translations[currentLang].inputCard.defaultQuery;
+    const currentDefault = t.inputCard.defaultQuery;
     if (tripQuery === currentDefault || !tripQuery.trim()) {
-      const newQuery = translations[lang].inputCard.defaultQuery;
+      // Need to get the other lang's query, but it might be easier to just use i18n directly.
+      const newQuery = i18n.getFixedT(lang, 'b2c')('home.inputCard.defaultQuery');
       setTripQuery(newQuery);
-      setParsedTrip(parseNaturalLanguageTrip(newQuery));
     }
   };
 
-  const handleFindOptions = () => {
-    const parsed = parseNaturalLanguageTrip(tripQuery);
-    setParsedTrip(parsed);
-    setConfirmedSetup(false);
-    setIsEditingSetup(false);
-    setIsReviewModalOpen(true);
+  const handleFindOptions = async () => {
+    if (isExtracting) return;
+
+    // Requirement 3: If prompt is empty or whitespace-only, show translated error and stay on screen
+    if (!tripQuery.trim()) {
+      setPromptError(tI18n('landing.promptEmptyError'));
+      return;
+    }
+
+    setPromptError(null);
+    setIsExtracting(true);
+
+    try {
+      const response = await extractTripNLU(tripQuery);
+      setIsExtracting(false);
+
+      const { extracted, missing_or_ambiguous } = response;
+      setExtractedAccumulator(extracted);
+
+      if (missing_or_ambiguous && missing_or_ambiguous.length > 0) {
+        setClarificationQueue(missing_or_ambiguous);
+        setCurrentClarificationIndex(0);
+        setClarificationAnswer('');
+        setClarificationError(null);
+        setIsClarificationModalOpen(true);
+      } else {
+        if (onOpenRequirementForm) {
+          onOpenRequirementForm(extracted);
+        }
+      }
+    } catch (error) {
+      setIsExtracting(false);
+      // Fallback gracefully to empty Requirement Form per Acceptance Criteria #8
+      if (onOpenRequirementForm) {
+        onOpenRequirementForm(undefined, t.inputCard.errorFallbackNotice);
+      }
+    }
+  };
+
+  const currentClarificationItem = clarificationQueue[currentClarificationIndex] || null;
+
+  const handleAnswerClarification = () => {
+    if (!currentClarificationItem) return;
+
+    // Requirement 4: Validate clarification answers
+    const trimmed = clarificationAnswer.trim();
+    if (!trimmed) {
+      setClarificationError(tI18n('clarification.validationRequired'));
+      return;
+    }
+
+    if (currentClarificationItem.field === 'adult_count') {
+      const count = parseInt(trimmed, 10);
+      if (isNaN(count) || count < 1) {
+        setClarificationError(tI18n('clarification.validationPositiveNumber'));
+        return;
+      }
+    }
+
+    setClarificationError(null);
+
+    const updatedExtracted: NLUExtractedData = {
+      ...(extractedAccumulator || {}),
+    };
+
+    if (currentClarificationItem.field === 'adult_count') {
+      updatedExtracted.adult_count = parseInt(trimmed, 10);
+    } else if (currentClarificationItem.field === 'origin') {
+      updatedExtracted.origin = trimmed;
+    } else if (currentClarificationItem.field === 'destination') {
+      updatedExtracted.destination = trimmed;
+    }
+
+    setExtractedAccumulator(updatedExtracted);
+
+    if (currentClarificationIndex + 1 < clarificationQueue.length) {
+      const nextIdx = currentClarificationIndex + 1;
+      setCurrentClarificationIndex(nextIdx);
+      setClarificationAnswer('');
+      setClarificationError(null);
+    } else {
+      setIsClarificationModalOpen(false);
+      if (onOpenRequirementForm) {
+        onOpenRequirementForm(updatedExtracted);
+      }
+    }
+  };
+
+  const handleSkipClarification = () => {
+    setClarificationError(null);
+    if (currentClarificationIndex + 1 < clarificationQueue.length) {
+      const nextIdx = currentClarificationIndex + 1;
+      setCurrentClarificationIndex(nextIdx);
+      setClarificationAnswer('');
+    } else {
+      setIsClarificationModalOpen(false);
+      if (onOpenRequirementForm) {
+        onOpenRequirementForm(extractedAccumulator || undefined);
+      }
+    }
+  };
+
+  const formatClarificationContext = (promptText: string) => {
+    const parts: string[] = [];
+    if (extractedAccumulator?.children_count) {
+      parts.push(`${extractedAccumulator.children_count} ${t.clarification.childrenLabel}`);
+    }
+    if (extractedAccumulator?.senior_count) {
+      parts.push(`${extractedAccumulator.senior_count} ${t.clarification.seniorLabel}`);
+    }
+    if (parts.length > 0) {
+      return `${t.clarification.foundPrefix} ${parts.join(` ${t.clarification.andLabel} `)}. ${promptText}`;
+    }
+    return promptText;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (tripQuery.trim()) {
+      if (!isExtracting) {
         handleFindOptions();
       }
     }
@@ -800,7 +401,6 @@ export const HomePage: React.FC = () => {
         setIsListening(false);
         if (!tripQuery.trim()) {
           setTripQuery(t.inputCard.defaultQuery);
-          setParsedTrip(parseNaturalLanguageTrip(t.inputCard.defaultQuery));
         }
       }, 2000);
     } else {
@@ -823,9 +423,8 @@ export const HomePage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  return (
-    <div id="top" className="min-h-screen bg-[#F1EDE9] text-[#26382D] flex flex-col font-sans selection:bg-[#7C9278] selection:text-white">
-      
+  const renderMobileHeader = () => (
+    <>
       {/* -------------------------------------- */}
       {/* 1. TOP NAVBAR                          */}
       {/* -------------------------------------- */}
@@ -837,7 +436,7 @@ export const HomePage: React.FC = () => {
             <a 
               href="#top" 
               className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] rounded-md"
-              aria-label="Green & Inclusive Travel Homepage"
+              aria-label={tI18n('accessibility.home', 'Green & Inclusive Travel Homepage')}
             >
               <div className="w-9 h-9 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-xs">
                 <svg className="w-5 h-5 text-[#A9B8A3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -891,7 +490,7 @@ export const HomePage: React.FC = () => {
                 type="button"
                 onClick={() => setLangDropdownOpen(!langDropdownOpen)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[#26382D] text-xs font-semibold tracking-wider hover:bg-[#F8F6F3] border border-transparent hover:border-[#D8C9BE] transition-all focus:outline-none cursor-pointer"
-                aria-label="Language selector"
+                aria-label={tI18n('accessibility.languageSelector', 'Language selector')}
               >
                 <Globe className="w-3.5 h-3.5 text-[#7C9278]" />
                 <span className="uppercase">{currentLang}</span>
@@ -952,7 +551,7 @@ export const HomePage: React.FC = () => {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-[#26382D] hover:bg-[#F8F6F3] transition-colors focus:outline-none"
-              aria-label="Toggle menu"
+              aria-label={tI18n('accessibility.toggleMenu', 'Toggle menu')}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -1020,6 +619,12 @@ export const HomePage: React.FC = () => {
         )}
       </header>
 
+    </>
+  );
+
+  const renderContent = () => (
+    <>
+
       {/* -------------------------------------- */}
       {/* MAIN HOMEPAGE SECTIONS                */}
       {/* -------------------------------------- */}
@@ -1081,12 +686,26 @@ export const HomePage: React.FC = () => {
                     id="trip-natural-input"
                     rows={3}
                     value={tripQuery}
-                    onChange={(e) => setTripQuery(e.target.value)}
+                    readOnly={isExtracting}
+                    onChange={(e) => {
+                      setTripQuery(e.target.value);
+                      if (promptError) setPromptError(null);
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder={t.inputCard.placeholder}
-                    className="w-full bg-transparent text-[#26382D] placeholder-[#26382D]/40 text-base sm:text-lg font-normal leading-relaxed resize-none focus:outline-none border-b border-[#D8C9BE]/50 pb-3"
+                    className={`w-full bg-transparent text-[#26382D] placeholder-[#26382D]/40 text-base sm:text-lg font-normal leading-relaxed resize-none focus:outline-none border-b border-[#D8C9BE]/50 pb-3 ${
+                      isExtracting ? 'opacity-70 cursor-wait' : ''
+                    }`}
                     aria-label={t.inputCard.label}
                   />
+
+                  {/* Inline prompt validation message */}
+                  {promptError && (
+                    <div className="mt-2 text-xs text-[#b91c1c] font-medium flex items-center gap-1.5 animate-in fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-[#b91c1c]" />
+                      <span>{promptError}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Action Bar */}
@@ -1096,12 +715,13 @@ export const HomePage: React.FC = () => {
                   <div className="flex items-center gap-3 text-xs text-[#26382D]/60">
                     <button
                       type="button"
+                      disabled={isExtracting}
                       onClick={toggleVoiceInput}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all text-xs cursor-pointer ${
                         isListening 
                           ? 'bg-[#E8CFC4] border-[#A99587] text-[#26382D] animate-pulse font-medium'
                           : 'border-[#D8C9BE] text-[#26382D]/75 hover:bg-[#F1EDE9] hover:text-[#26382D]'
-                      }`}
+                      } ${isExtracting ? 'opacity-50 cursor-not-allowed' : ''}`}
                       title={t.inputCard.voiceInputTooltip}
                     >
                       <Mic className={`w-3.5 h-3.5 ${isListening ? 'text-[#26382D]' : 'text-[#7C9278]'}`} />
@@ -1113,14 +733,24 @@ export const HomePage: React.FC = () => {
                     </span>
                   </div>
 
-                  {/* 4. PRIMARY CTA: Find My Options */}
+                  {/* 4. PRIMARY CTA: Find My Options with Loading State */}
                   <button
                     type="button"
+                    disabled={isExtracting}
                     onClick={handleFindOptions}
-                    className="group inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#26382D] text-[#F8F6F3] text-sm font-medium tracking-wide hover:bg-[#1d2c23] active:scale-[0.98] transition-all shadow-[0_4px_16px_rgba(38,56,45,0.12)] cursor-pointer"
+                    className="group inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#26382D] text-[#F8F6F3] text-sm font-medium tracking-wide hover:bg-[#1d2c23] active:scale-[0.98] transition-all shadow-[0_4px_16px_rgba(38,56,45,0.12)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <span>{t.inputCard.buttonText}</span>
-                    <ArrowRight className="w-4 h-4 text-[#A9B8A3] group-hover:translate-x-1 transition-transform" />
+                    {isExtracting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-[#A9B8A3]" />
+                        <span>{t.inputCard.analyzingText}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{t.inputCard.buttonText}</span>
+                        <ArrowRight className="w-4 h-4 text-[#A9B8A3] group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </button>
 
                 </div>
@@ -1144,7 +774,7 @@ export const HomePage: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap gap-2.5">
-                {t.examplePrompts.items.map((prompt) => (
+                {t.examplePrompts.items.map((prompt: any) => (
                   <button
                     key={prompt.id}
                     type="button"
@@ -1200,7 +830,7 @@ export const HomePage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {t.valueProps.items.map((item, idx) => (
+              {t.valueProps.items.map((item: any, idx: number) => (
                 <div
                   key={idx}
                   className="bg-[#F8F6F3] rounded-2xl p-6 border border-[#D8C9BE]/60 shadow-[0_4px_16px_rgba(38,56,45,0.03)] hover:border-[#7C9278]/50 hover:shadow-[0_8px_24px_rgba(38,56,45,0.06)] transition-all flex flex-col justify-between group"
@@ -1573,240 +1203,133 @@ export const HomePage: React.FC = () => {
         </div>
       </footer>
 
-      {/* 11. MOBILE BOTTOM NAVIGATION (Fixed at bottom on small screens) */}
-      <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#F8F6F3]/95 backdrop-blur-lg border-t border-[#D8C9BE] px-4 py-2 shadow-[0_-4px_16px_rgba(38,56,45,0.06)]"
-        style={{ maxHeight: '64px' }}
-        aria-label="Mobile Bottom Navigation"
-      >
-        <div className="grid grid-cols-4 items-center h-12">
-          {[
-            { id: 'search', label: t.bottomNav.search, icon: Search, href: '#trip-input' },
-            { id: 'explore', label: t.bottomNav.explore, icon: Compass, href: '#value-propositions' },
-            { id: 'trips', label: t.bottomNav.trips, icon: Bookmark, href: '#editorial-philosophy' },
-            { id: 'profile', label: t.bottomNav.profile, icon: User, href: '#for-businesses' },
-          ].map((item) => {
-            const Icon = item.icon;
-            const isActive = mobileActiveTab === item.id;
-            return (
-              <a
-                key={item.id}
-                href={item.href}
-                onClick={() => setMobileActiveTab(item.id)}
-                className={`flex flex-col items-center justify-center min-h-[44px] min-w-[44px] transition-colors ${
-                  isActive ? 'text-[#26382D] font-semibold' : 'text-[#26382D]/60 hover:text-[#26382D]'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#7C9278]' : 'text-[#A99587]'}`} />
-                <span className="text-[10px] tracking-tight mt-0.5">{item.label}</span>
-              </a>
-            );
-          })}
-        </div>
-      </nav>
+    </>
+  );
+
+  const renderModals = () => (
+    <>
 
       {/* -------------------------------------- */}
-      {/* MODAL 1: TRIP SETUP REVIEW MODAL      */}
+      {/* CLARIFICATION QUESTION MODAL (A4)      */}
+      {/* Asks ONE question at a time from       */}
+      {/* missing_or_ambiguous returned by NLU   */}
       {/* -------------------------------------- */}
       <Modal
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        maxWidth="2xl"
+        isOpen={isClarificationModalOpen}
+        onClose={handleSkipClarification}
+        maxWidth="md"
       >
-        <div className="text-left space-y-2 pb-5 border-b border-[#D8C9BE]/60">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7C9278]">
-            <Sparkles className="w-3.5 h-3.5 text-[#7C9278]" />
-            <span>Step 1: Setup Confirmation</span>
-          </div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-medium text-[#26382D]">
-            {t.reviewModal.title}
-          </h2>
-          <p className="text-xs sm:text-sm text-[#26382D]/75 font-light leading-relaxed">
-            {t.reviewModal.subtitle}
-          </p>
-        </div>
-
-        <div className="mt-4 p-3.5 rounded-xl bg-[#F1EDE9] border border-[#D8C9BE]/50 text-xs text-[#26382D]/85 italic flex items-start justify-between gap-3">
-          <div>
-            <span className="font-semibold not-italic text-[#7C9278] block text-[11px] uppercase tracking-wider mb-0.5">
-              Original Prompt
-            </span>
-            &ldquo;{tripQuery}&rdquo;
-          </div>
-          <button
-            onClick={() => setIsEditingSetup(!isEditingSetup)}
-            className="text-[#26382D] hover:text-[#7C9278] text-[11px] font-semibold flex items-center gap-1 shrink-0 not-italic pt-1 cursor-pointer"
-          >
-            <Edit2 className="w-3 h-3" />
-            <span>{isEditingSetup ? 'Cancel Edit' : 'Adjust'}</span>
-          </button>
-        </div>
-
-        <div className="mt-6 space-y-4 text-left text-sm">
-          {/* Route Section */}
-          <div className="bg-white rounded-2xl p-4 border border-[#D8C9BE]/70">
-            <div className="flex items-center justify-between text-xs text-[#A99587] font-medium uppercase tracking-wider mb-2">
-              <span className="flex items-center gap-1.5 text-[#26382D]">
-                <Train className="w-3.5 h-3.5 text-[#7C9278]" />
-                {t.reviewModal.routeLabel}
-              </span>
-              <DataStateBadge state="verified" label="Direct Corridor" />
-            </div>
-            
-            {isEditingSetup ? (
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <div>
-                  <label className="text-[11px] text-[#A99587]">Origin</label>
-                  <input
-                    type="text"
-                    value={parsedTrip.origin}
-                    onChange={(e) => setParsedTrip({ ...parsedTrip, origin: e.target.value })}
-                    className="w-full mt-1 p-2 text-xs rounded-lg border border-[#D8C9BE] bg-[#F8F6F3]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] text-[#A99587]">Destination</label>
-                  <input
-                    type="text"
-                    value={parsedTrip.destination}
-                    onChange={(e) => setParsedTrip({ ...parsedTrip, destination: e.target.value })}
-                    className="w-full mt-1 p-2 text-xs rounded-lg border border-[#D8C9BE] bg-[#F8F6F3]"
-                  />
-                </div>
+        {currentClarificationItem && (
+          <div className="space-y-5 text-left">
+            <div className="flex items-center justify-between pb-3 border-b border-[#D8C9BE]/60">
+              <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#7C9278]">
+                <Sparkles className="w-3.5 h-3.5 text-[#7C9278]" />
+                <span>{t.clarification.heading}</span>
               </div>
-            ) : (
-              <div className="flex items-center gap-3 text-base font-serif text-[#26382D] font-medium">
-                <span>{parsedTrip.origin}</span>
-                <span className="text-[#7C9278] text-sm font-sans">⟶</span>
-                <span>{parsedTrip.destination}</span>
-                <span className="text-xs font-sans text-[#A99587] font-normal ml-auto">
-                  Est. 580 km
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Travelers */}
-          <div className="bg-white rounded-2xl p-4 border border-[#D8C9BE]/70">
-            <div className="flex items-center justify-between text-xs text-[#A99587] font-medium uppercase tracking-wider mb-2">
-              <span className="flex items-center gap-1.5 text-[#26382D]">
-                <Users className="w-3.5 h-3.5 text-[#7C9278]" />
-                {t.reviewModal.travelersLabel}
+              <span className="text-[11px] font-mono text-[#A99587]">
+                {t.clarification.step} {currentClarificationIndex + 1} {t.clarification.of} {clarificationQueue.length}
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-2 text-xs text-[#26382D]">
-              <span className="px-3 py-1.5 rounded-lg bg-[#F1EDE9] border border-[#D8C9BE]">
-                {parsedTrip.travelers.adults} Adult(s)
-              </span>
-              {parsedTrip.travelers.children > 0 && (
-                <span className="px-3 py-1.5 rounded-lg bg-[#F1EDE9] border border-[#D8C9BE]">
-                  {parsedTrip.travelers.children} Child(ren)
-                </span>
+            {/* Context line + exact prompt */}
+            <div className="p-4 rounded-2xl bg-[#F1EDE9] border border-[#D8C9BE] text-[#26382D] space-y-2">
+              <p className="text-xs text-[#26382D]/75 font-light leading-relaxed">
+                {formatClarificationContext(currentClarificationItem.prompt)}
+              </p>
+              <h3 className="font-serif text-xl sm:text-2xl font-medium text-[#26382D]">
+                {currentClarificationItem.prompt}
+              </h3>
+            </div>
+
+            {/* Answer Input */}
+            <div className="space-y-2">
+              {currentClarificationItem.field === 'adult_count' ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-semibold text-[#26382D]">
+                      {t.clarification.adultsLabel}:
+                    </label>
+                    <div className="flex items-center border border-[#D8C9BE] rounded-xl bg-white overflow-hidden shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const cur = parseInt(clarificationAnswer, 10);
+                          const nextVal = isNaN(cur) ? 1 : Math.max(1, cur - 1);
+                          setClarificationAnswer(String(nextVal));
+                          if (clarificationError) setClarificationError(null);
+                        }}
+                        className="px-3.5 py-2 text-sm font-semibold text-[#26382D] hover:bg-[#F1EDE9] transition-colors cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={clarificationAnswer}
+                        onChange={(e) => {
+                          setClarificationAnswer(e.target.value);
+                          if (clarificationError) setClarificationError(null);
+                        }}
+                        placeholder="e.g. 2"
+                        className="w-16 text-center text-sm font-semibold text-[#26382D] focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const cur = parseInt(clarificationAnswer, 10);
+                          const nextVal = isNaN(cur) ? 1 : cur + 1;
+                          setClarificationAnswer(String(nextVal));
+                          if (clarificationError) setClarificationError(null);
+                        }}
+                        className="px-3.5 py-2 text-sm font-semibold text-[#26382D] hover:bg-[#F1EDE9] transition-colors cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={clarificationAnswer}
+                  onChange={(e) => {
+                    setClarificationAnswer(e.target.value);
+                    if (clarificationError) setClarificationError(null);
+                  }}
+                  placeholder={t.clarification.answerPlaceholder}
+                  className="w-full p-3 text-sm rounded-xl border border-[#D8C9BE] bg-white text-[#26382D] focus:outline-none focus:border-[#7C9278]"
+                />
               )}
-              {parsedTrip.travelers.seniors > 0 && (
-                <span className="px-3 py-1.5 rounded-lg bg-[#F1EDE9] border border-[#D8C9BE]">
-                  {parsedTrip.travelers.seniors} Senior Citizen
-                </span>
-              )}
-              {parsedTrip.travelers.wheelchairUsers > 0 && (
-                <span className="px-3 py-1.5 rounded-lg bg-[#E8CFC4]/50 border border-[#A99587] font-medium text-[#26382D] flex items-center gap-1.5">
-                  <Accessibility className="w-3.5 h-3.5 text-[#26382D]" />
-                  1 Wheelchair User
-                </span>
+
+              {/* Clarification validation message */}
+              {clarificationError && (
+                <div className="text-xs text-[#b91c1c] font-medium flex items-center gap-1.5 animate-in fade-in pt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-[#b91c1c]" />
+                  <span>{clarificationError}</span>
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Accessibility Requirements */}
-          <div className="bg-white rounded-2xl p-4 border border-[#D8C9BE]/70">
-            <div className="flex items-center justify-between text-xs text-[#A99587] font-medium uppercase tracking-wider mb-2">
-              <span className="flex items-center gap-1.5 text-[#26382D]">
-                <Accessibility className="w-3.5 h-3.5 text-[#7C9278]" />
-                {t.reviewModal.accessLabel}
-              </span>
-              <DataStateBadge state="verified" label="Priority Filter" />
-            </div>
-
-            <ul className="space-y-1.5 text-xs text-[#26382D]/85">
-              {parsedTrip.accessibilityNeeds.map((need, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#7C9278]" />
-                  <span>{need}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Sustainability Parameters */}
-          <div className="bg-white rounded-2xl p-4 border border-[#D8C9BE]/70">
-            <div className="flex items-center justify-between text-xs text-[#A99587] font-medium uppercase tracking-wider mb-2">
-              <span className="flex items-center gap-1.5 text-[#26382D]">
-                <Leaf className="w-3.5 h-3.5 text-[#7C9278]" />
-                {t.reviewModal.sustainabilityLabel}
-              </span>
-              <DataStateBadge state="verified" label="-82% Target" />
-            </div>
-
-            <ul className="space-y-1.5 text-xs text-[#26382D]/85">
-              {parsedTrip.sustainabilityGoals.map((goal, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#A9B8A3]" />
-                  <span>{goal}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-8 pt-5 border-t border-[#D8C9BE]/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] text-[#A99587] text-center sm:text-left">
-            {t.inputCard.helperText}
-          </p>
-
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            {isEditingSetup && (
+            {/* Modal Actions */}
+            <div className="pt-3 border-t border-[#D8C9BE]/60 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
               <button
                 type="button"
-                onClick={() => setIsEditingSetup(false)}
-                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#7C9278] text-white text-xs font-semibold hover:bg-[#6c8368] transition-all cursor-pointer"
+                onClick={handleSkipClarification}
+                className="w-full sm:w-auto text-xs text-[#A99587] hover:text-[#26382D] font-medium py-2 px-3 rounded-lg cursor-pointer transition-colors"
               >
-                Save Changes
+                {t.clarification.skipBtn}
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={() => {
-                setConfirmedSetup(true);
-                setTimeout(() => {
-                  setTimeout(() => {
-                    setIsReviewModalOpen(false);
-                    setConfirmedSetup(false);
-                  }, 1600);
-                }, 300);
-              }}
-              className={`w-full sm:w-auto px-7 py-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                confirmedSetup 
-                  ? 'bg-[#7C9278] text-white' 
-                  : 'bg-[#26382D] text-[#F8F6F3] hover:bg-[#1a271f]'
-              }`}
-            >
-              {confirmedSetup ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Preferences Saved!</span>
-                </>
-              ) : (
-                <span>{t.reviewModal.confirmAction}</span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {confirmedSetup && (
-          <div className="mt-4 p-3 rounded-xl bg-[#7C9278]/15 border border-[#7C9278] text-xs text-[#26382D] text-center animate-in fade-in">
-            {t.reviewModal.toastMessage}
+              <button
+                type="button"
+                onClick={handleAnswerClarification}
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#26382D] text-[#F8F6F3] text-xs font-semibold hover:bg-[#1a271f] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <span>{t.clarification.continueBtn}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-[#A9B8A3]" />
+              </button>
+            </div>
           </div>
         )}
       </Modal>
@@ -1949,8 +1472,28 @@ export const HomePage: React.FC = () => {
         </div>
       </Modal>
 
-    </div>
+
+    </>
   );
-};
+
+  return (
+    <>
+      {/* MOBILE LAYOUT */}
+      <div id="top-mobile" className="flex md:hidden min-h-screen bg-[#F1EDE9] text-[#26382D] flex-col font-sans selection:bg-[#7C9278] selection:text-white pb-20">
+        {renderMobileHeader()}
+        {renderContent()}
+        <BottomNavBar />
+        {renderModals()}
+      </div>
+
+      {/* DESKTOP LAYOUT */}
+      <div id="top-desktop" className="hidden md:flex min-h-screen bg-[#F1EDE9] text-[#26382D] flex-col font-sans selection:bg-[#7C9278] selection:text-white">
+        <Navbar />
+        {renderContent()}
+        {renderModals()}
+      </div>
+    </>
+  );
+}
 
 export default HomePage;

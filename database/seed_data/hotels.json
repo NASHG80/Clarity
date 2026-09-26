@@ -1,0 +1,643 @@
+[
+  {
+    "_id": "hotel_001",
+    "city": "Delhi",
+    "price_inr_per_night": 14000,
+    "star_rating": 5,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Andaz Delhi — Aerocity",
+        "description": "Luxury lifestyle hotel near Indira Gandhi International Airport featuring two dedicated accessible rooms, roll-in showers, grab rails, and LEED Gold eco-certification with an on-site glass water bottling plant."
+      },
+      "hi": {
+        "name": "अंदाज़ दिल्ली — एरोसिटी",
+        "description": "इंदिरा गांधी अंतर्राष्ट्रीय हवाई अड्डे के निकट लक्जरी लाइफस्टाइल होटल, जिसमें दो विशेष सुलभ कमरे, रोल-इन शॉवर, ग्रैब रेल और ऑन-साइट ग्लास वाटर बॉटलिंग प्लांट के साथ एलईईडी गोल्ड पर्यावरण-प्रमाणन शामिल है।"
+      },
+      "mr": {
+        "name": "अंदाझ दिल्ली — एरोसिटी",
+        "description": "इंदिरा गांधी आंतरराष्ट्रीय विमानतळाजवळील लक्झरी लाइफस्टाइल हॉटेल, ज्यामध्ये दोन विशेष सुलभ खोल्या, रोल-इन शॉवर, ग्रॅब रेल आणि ऑन-साइट काचेच्या बाटल्यांच्या प्रकल्पासह एलईईडी गोल्ड पर्यावरण-प्रमाणपत्र आहे."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "reported" },
+      { "label": "elevator_access", "value": true, "data_state": "reported" },
+      { "label": "roll_in_shower", "value": true, "data_state": "reported" },
+      { "label": "grab_rails", "value": true, "data_state": "reported" },
+      { "label": "visual_strobe_alarms", "value": null, "data_state": "not_verified" },
+      { "label": "braille_signage", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "leed_gold_certified", "value": true, "data_state": "verified" },
+      { "label": "zero_single_use_plastic_bottles", "value": true, "data_state": "reported" },
+      { "label": "solar_power", "value": true, "data_state": "reported" },
+      { "label": "wastewater_recycling", "value": true, "data_state": "reported" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_002",
+    "city": "Mumbai",
+    "price_inr_per_night": 13500,
+    "star_rating": 5,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "ITC Maratha — Mumbai",
+        "description": "Luxury heritage hotel in Mumbai with certified LEED Platinum and LEED Zero Carbon status, offering 32-inch wide doorway accessible rooms, roll-in showers, and captive wind-powered operations."
+      },
+      "hi": {
+        "name": "आईटीसी मराठा — मुंबई",
+        "description": "मुंबई का लक्जरी हेरिटेज होटल, जो एलईईडी प्लेटिनम और एलईईडी जीरो कार्बन प्रमाणित है। इसमें 32 इंच चौड़े दरवाजों वाले सुलभ कमरे, रोल-इन शॉवर और पवन ऊर्जा से संचालित व्यवस्था है।"
+      },
+      "mr": {
+        "name": "आयटीसी मराठा — मुंबई",
+        "description": "मुंबईतील लक्झरी हेरिटेज हॉटेल, जे एलईईडी प्लॅटिनम आणि एलईईडी झिरो कार्बन प्रमाणित आहे. यामध्ये 32 इंच रुंद दरवाजांच्या सुलभ खोल्या, रोल-इन शॉवर आणि पवन ऊर्जेवर चालणाऱ्या सुविधा आहेत."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "reported" },
+      { "label": "wide_doorways", "value": true, "data_state": "reported" },
+      { "label": "roll_in_shower", "value": true, "data_state": "reported" },
+      { "label": "grab_rails", "value": true, "data_state": "reported" },
+      { "label": "accessible_parking", "value": true, "data_state": "reported" },
+      { "label": "wheelchair_accessible_shuttle", "value": null, "data_state": "not_verified" },
+      { "label": "pool_hoist", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "leed_platinum_certified", "value": true, "data_state": "verified" },
+      { "label": "leed_zero_carbon_certified", "value": true, "data_state": "verified" },
+      { "label": "leed_zero_water_certified", "value": true, "data_state": "verified" },
+      { "label": "renewable_wind_energy", "value": true, "data_state": "reported" },
+      { "label": "zero_single_use_plastic", "value": true, "data_state": "reported" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_003",
+    "city": "Goa",
+    "price_inr_per_night": 16500,
+    "star_rating": 5,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "ITC Grand Goa Resort & Spa",
+        "description": "First LEED Platinum certified beach resort in India, situated along Arossim Beach with dedicated mobility-accessible rooms, roll-in showers, and SunyaAqua zero-mile water."
+      },
+      "hi": {
+        "name": "आईटीसी ग्रैंड गोवा रिसॉर्ट एंड स्पा",
+        "description": "भारत का पहला एलईईडी प्लेटिनम प्रमाणित बीच रिसॉर्ट, जो अरोसिम बीच पर स्थित है। इसमें समर्पित सुलभ कमरे, रोल-इन शॉवर और शून्याक्वा जीरो-माइल वाटर की सुविधा है।"
+      },
+      "mr": {
+        "name": "आयटीसी ग्रँड गोवा रिसॉर्ट आणि स्पा",
+        "description": "अरोसिम बीचवरील भारतातील पहिले एलईईडी प्लॅटिनम प्रमाणित बीच रिसॉर्ट, ज्यामध्ये विशेष सुलभ खोल्या, रोल-इन शॉवर आणि शून्याक्वा झिरो-माइल पाण्याची सुविधा उपलब्ध आहे."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "reported" },
+      { "label": "roll_in_shower", "value": true, "data_state": "reported" },
+      { "label": "grab_rails", "value": true, "data_state": "reported" },
+      { "label": "ramped_public_areas", "value": true, "data_state": "reported" },
+      { "label": "accessible_parking", "value": true, "data_state": "reported" },
+      { "label": "beach_wheelchair_matting", "value": null, "data_state": "not_verified" },
+      { "label": "tactile_pathways", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "leed_platinum_certified", "value": true, "data_state": "verified" },
+      { "label": "zero_mile_water_bottling", "value": true, "data_state": "reported" },
+      { "label": "plastic_free_amenities", "value": true, "data_state": "reported" },
+      { "label": "local_food_sourcing", "value": true, "data_state": "reported" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_004",
+    "city": "Delhi",
+    "price_inr_per_night": 6500,
+    "star_rating": 4,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Lemon Tree Premier — Delhi Airport",
+        "description": "Midscale business hotel in Aerocity with IGBC green building certification, universally accessible rooms featuring wide doorways, low-height vanities, and grab bars."
+      },
+      "hi": {
+        "name": "लेमन ट्री प्रीमियर — दिल्ली एयरपोर्ट",
+        "description": "एरोसिटी में आईजीबीसी ग्रीन बिल्डिंग प्रमाणित मिडस्केल बिजनेस होटल, जिसमें चौड़े दरवाजों, कम ऊंचाई वाले वैनिटी और ग्रैब बार वाले सार्वभौमिक रूप से सुलभ कमरे हैं।"
+      },
+      "mr": {
+        "name": "लेमन ट्री प्रीमियर — दिल्ली विमानतळ",
+        "description": "एरोसिटीमधील आयजीबीसी ग्रीन बिल्डिंग प्रमाणित मिडस्केल व्यावसायिक हॉटेल, ज्यामध्ये रुंद दरवाजे, कमी उंचीचे वॉशबेसिन आणि ग्रॅब बार असलेल्या सुलभ खोल्या आहेत."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "reported" },
+      { "label": "elevator_access", "value": true, "data_state": "reported" },
+      { "label": "wide_doorways", "value": true, "data_state": "reported" },
+      { "label": "low_height_vanity", "value": true, "data_state": "reported" },
+      { "label": "grab_rails", "value": true, "data_state": "reported" },
+      { "label": "emergency_pull_cord", "value": true, "data_state": "reported" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "vibrating_alarm", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "igbc_green_certified", "value": true, "data_state": "verified" },
+      { "label": "zero_single_use_plastic_rooms", "value": true, "data_state": "reported" },
+      { "label": "renewable_energy_procurement", "value": true, "data_state": "reported" },
+      { "label": "wastewater_recycling", "value": true, "data_state": "reported" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_005",
+    "city": "Goa",
+    "price_inr_per_night": 12000,
+    "star_rating": 5,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Alila Diwa Goa — Majorda",
+        "description": "Eco-luxury resort in South Goa certified by EarthCheck, offering dedicated ADA-friendly suites with roll-in showers, indigenous laterite stone architecture, and an automated glass water bottling facility."
+      },
+      "hi": {
+        "name": "अलि‍ला दीवा गोवा — माजोर्डा",
+        "description": "दक्षिण गोवा में अर्थचेक प्रमाणित इको-लक्जरी रिसॉर्ट, जिसमें रोल-इन शॉवर वाले एडीए-अनुकूल कमरे, स्थानीय लैटेराइट पत्थर की वास्तुकला और स्वचालित ग्लास वाटर बॉटलिंग की सुविधा है।"
+      },
+      "mr": {
+        "name": "अलिला दिवा गोवा — माजोर्डा",
+        "description": "दक्षिण गोव्यातील अर्थचेक प्रमाणित इको-लक्झरी रिसॉर्ट, ज्यामध्ये रोल-इन शॉवर असलेल्या एडीए-अनुकूल खोल्या, स्थानिक जांभा दगडाची रचना आणि स्वयंचलित काचेच्या बाटल्यांचा प्रकल्प आहे."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "reported" },
+      { "label": "elevator_access", "value": true, "data_state": "reported" },
+      { "label": "roll_in_shower", "value": true, "data_state": "reported" },
+      { "label": "step_free_circulation_paths", "value": true, "data_state": "reported" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" },
+      { "label": "audio_induction_loop", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "earthcheck_certified", "value": true, "data_state": "verified" },
+      { "label": "automated_glass_bottling_plant", "value": true, "data_state": "reported" },
+      { "label": "refillable_metal_dispensers", "value": true, "data_state": "reported" },
+      { "label": "local_laterite_architecture", "value": true, "data_state": "reported" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_006",
+    "city": "Delhi",
+    "price_inr_per_night": 2800,
+    "star_rating": 3,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Hotel City Star — Paharganj",
+        "description": "Budget hotel on D.B. Gupta Road near New Delhi Railway Station offering elevator access and main road taxi drop-off, with unverified bathroom accessibility."
+      },
+      "hi": {
+        "name": "होटल सिटी स्टार — पहाड़गंज",
+        "description": "नई दिल्ली रेलवे स्टेशन के पास डी.बी. गुप्ता रोड पर बजट होटल, जिसमें लिफ्ट की सुविधा है, लेकिन बाथरूम की सुगमता असत्यापित है।"
+      },
+      "mr": {
+        "name": "हॉटेल सिटी स्टार — पहाडगंज",
+        "description": "नवी दिल्ली रेल्वे स्थानकाजवळ डी.बी. गुप्ता रोडवरील बजेट हॉटेल, ज्यामध्ये लिफ्टची सुविधा आहे, परंतु बाथरूमची सुलभता पडताळलेली नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "reported" },
+      { "label": "elevator_access", "value": true, "data_state": "reported" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" },
+      { "label": "waste_management", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_007",
+    "city": "Delhi",
+    "price_inr_per_night": 4600,
+    "star_rating": 3,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Bloomrooms @ Janpath",
+        "description": "Modern, minimalist budget hotel in central New Delhi near Connaught Place featuring elevator access, with unverified room accessibility specifications."
+      },
+      "hi": {
+        "name": "ब्लूमरूम्स @ जनपथ",
+        "description": "कनॉट प्लेस के पास मध्य नई दिल्ली में आधुनिक, न्यूनतम बजट होटल, जिसमें लिफ्ट की सुविधा है; कमरे की सुगमता विशिष्टताएँ असत्यापित हैं।"
+      },
+      "mr": {
+        "name": "ब्लूमरूम्स @ जनपथ",
+        "description": "कॅनॉट प्लेसजवळ मध्य नवी दिल्लीतील आधुनिक, मिनिमलिस्ट बजेट हॉटेल, ज्यामध्ये लिफ्टची सुविधा आहे; खोलीच्या सुलभतेची माहिती पडताळलेली नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "elevator_access", "value": true, "data_state": "reported" },
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" },
+      { "label": "waste_management", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_008",
+    "city": "Delhi",
+    "price_inr_per_night": 2200,
+    "star_rating": 2,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Hotel Tara Palace — Chandni Chowk",
+        "description": "Traditional budget stay in the historic Chandni Chowk bazaar area of Old Delhi; lacks documented wheelchair accessibility or environmental audit."
+      },
+      "hi": {
+        "name": "होटल तारा पैलेस — चांदनी चौक",
+        "description": "पुरानी दिल्ली के ऐतिहासिक चांदनी चौक बाजार क्षेत्र में पारंपरिक बजट आवास; कोई दस्तावेजी व्हीलचेयर सुगमता या पर्यावरण ऑडिट उपलब्ध नहीं है।"
+      },
+      "mr": {
+        "name": "हॉटेल तारा पॅलेस — चांदणी चौक",
+        "description": "जुनी दिल्लीतील ऐतिहासिक चांदणी चौक परिसरातील पारंपारिक बजेट हॉटेल; कोणतीही व्हीलचेअर सुलभता किंवा पर्यावरण तपासणी उपलब्ध नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "elevator_access", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" },
+      { "label": "waste_management", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_009",
+    "city": "Delhi",
+    "price_inr_per_night": 1800,
+    "star_rating": 2,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Zostel Delhi — Paharganj",
+        "description": "Popular social backpacker hostel with private rooms opposite New Delhi Railway Station; does not advertise mobility accommodations or green certifications."
+      },
+      "hi": {
+        "name": "ज़ोस्टेल दिल्ली — पहाड़गंज",
+        "description": "नई दिल्ली रेलवे स्टेशन के सामने निजी कमरों वाला लोकप्रिय बैकपैकर हॉस्टल; कोई गतिशीलता सुलभता या हरित प्रमाणन विज्ञापित नहीं है।"
+      },
+      "mr": {
+        "name": "झोस्टेल दिल्ली — पहाडगंज",
+        "description": "नवी दिल्ली रेल्वे स्थानकासमोर खाजगी खोल्या असलेले लोकप्रिय बॅकपॅकर हॉस्टेल; कोणतीही व्हीलचेअर सुलभता किंवा हरित प्रमाणपत्र नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "elevator_access", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_010",
+    "city": "Mumbai",
+    "price_inr_per_night": 4800,
+    "star_rating": 3,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Hotel Suba Palace — Colaba",
+        "description": "Mid-budget hotel near Gateway of India in South Mumbai featuring step-free street level entry and elevator service, with unverified bathroom modifications."
+      },
+      "hi": {
+        "name": "होटल सूबा पैलेस — कोलाबा",
+        "description": "दक्षिण मुंबई में गेटवे ऑफ इंडिया के पास मिड-बजट होटल, जिसमें सड़क स्तर से सीढ़ी-मुक्त प्रवेश और लिफ्ट सेवा है; बाथरूम में कोई सत्यापित सुलभ बदलाव नहीं हैं।"
+      },
+      "mr": {
+        "name": "हॉटेल सुबा पॅलेस — कुलाबा",
+        "description": "गेटवे ऑफ इंडियाजवळ दक्षिण मुंबईतील मिड-बजेट हॉटेल, ज्यामध्ये रस्त्यावरून पायऱ्यांशिवाय प्रवेश आणि लिफ्ट सेवा आहे; बाथरूमची सुलभता पडताळलेली नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "reported" },
+      { "label": "elevator_access", "value": true, "data_state": "reported" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" },
+      { "label": "waste_management", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_011",
+    "city": "Mumbai",
+    "price_inr_per_night": 5200,
+    "star_rating": 3,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Residency Hotel Fort — Mumbai",
+        "description": "Comfortable 3-star property in the Fort commercial district near CSMT Station with elevator access to rooms; specific roll-in showers remain unverified."
+      },
+      "hi": {
+        "name": "रेजिडेंसी होटल फोर्ट — मुंबई",
+        "description": "सीएसएमटी स्टेशन के पास फोर्ट वाणिज्यिक क्षेत्र में आरामदायक 3-स्टार होटल, जिसमें कमरों के लिए लिफ्ट की सुविधा है; रोल-इन शॉवर असत्यापित हैं।"
+      },
+      "mr": {
+        "name": "रेसिडेन्सी हॉटेल फोर्ट — मुंबई",
+        "description": "सीएसएमटी स्थानकाजवळ फोर्ट परिसरातील 3-स्टार हॉटेल, ज्यामध्ये खोल्यांसाठी लिफ्टची सोय आहे; रोल-इन शॉवरची माहिती पडताळलेली नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "elevator_access", "value": true, "data_state": "reported" },
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_012",
+    "city": "Mumbai",
+    "price_inr_per_night": 3200,
+    "star_rating": 2,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Hotel City Point — Dadar",
+        "description": "Transit-focused budget hotel near Dadar railway terminus; no documented barrier-free or sustainable practices."
+      },
+      "hi": {
+        "name": "होटल सिटी पॉइंट — दादर",
+        "description": "दादर रेलवे टर्मिनस के पास बजट होटल; कोई प्रलेखित बाधा-मुक्त या पर्यावरण-अनुकूल व्यवस्था उपलब्ध नहीं है।"
+      },
+      "mr": {
+        "name": "हॉटेल सिटी पॉईंट — दादर",
+        "description": "दादर रेल्वे टर्मिनसजवळील बजेट हॉटेल; कोणत्याही अडथळामुक्त किंवा शाश्वत सुविधांची नोंद नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "elevator_access", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_013",
+    "city": "Mumbai",
+    "price_inr_per_night": 5500,
+    "star_rating": 3,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Abode Bombay — Colaba",
+        "description": "Boutique heritage hotel in a restored vintage building in Colaba with antique elevator service; bathroom door widths and zero-threshold showers are unverified."
+      },
+      "hi": {
+        "name": "अबोड बॉम्बे — कोलाबा",
+        "description": "कोलाबा में एक पुनर्निर्मित ऐतिहासिक इमारत में बुटीक हेरिटेज होटल, जिसमें प्राचीन लिफ्ट सेवा है; बाथरूम के दरवाजे की चौड़ाई और शून्य-थ्रेशोल्ड शॉवर असत्यापित हैं।"
+      },
+      "mr": {
+        "name": "अबॉड बॉम्बे — कुलाबा",
+        "description": "कुलाब्यातील एका पुनर्संचयित हेरिटेज इमारतीतील बुटीक हॉटेल, ज्यामध्ये जुनी लिफ्ट सेवा आहे; बाथरूमच्या दाराची रुंदी आणि पायऱ्यांशिवाय शॉवर पडताळलेले नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "elevator_access", "value": true, "data_state": "reported" },
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_014",
+    "city": "Goa",
+    "price_inr_per_night": 3200,
+    "star_rating": 3,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "GTDC Miramar Residency — Panaji",
+        "description": "Government-operated budget residency near Miramar Beach with upgraded barrier-free ground floor rooms and toilet grab rails introduced for the Purple Fest initiative."
+      },
+      "hi": {
+        "name": "जीटीडीसी मिरामार रेजिडेंसी — पणजी",
+        "description": "मिरामार बीच के पास सरकारी बजट आवास, जिसमें पर्पल फेस्ट पहल के तहत भूतल पर बाधा-मुक्त कमरे और शौचालय ग्रैब रेल शामिल किए गए हैं।"
+      },
+      "mr": {
+        "name": "जीटीडीसी मिरामार रेसिडेन्सी — पणजी",
+        "description": "मिरामार बीचजवळील सरकारी बजेट हॉटेल, ज्यामध्ये पर्पल फेस्ट उपक्रमांतर्गत तळमजल्यावर अडथळामुक्त खोल्या आणि टॉयलेट ग्रॅब रेल उपलब्ध करून दिल्या आहेत."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "reported" },
+      { "label": "grab_rails", "value": true, "data_state": "reported" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "elevator_access", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" },
+      { "label": "waste_management", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_015",
+    "city": "Goa",
+    "price_inr_per_night": 3800,
+    "star_rating": 2,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "GTDC Calangute Residency",
+        "description": "Beachside cottage complex on Calangute Beach run by Goa Tourism; public disclosures do not show verified wheelchair-accessible rooms or shower fixtures."
+      },
+      "hi": {
+        "name": "जीटीडीसी कलंगूट रेजिडेंसी",
+        "description": "गोवा पर्यटन द्वारा संचालित कलंगूट बीच पर समुद्रतटीय कॉटेज परिसर; कोई सत्यापित व्हीलचेयर सुलभ कमरे या शॉवर की सुविधा प्रलेखित नहीं है।"
+      },
+      "mr": {
+        "name": "जीटीडीसी कलंगूट रेसिडेन्सी",
+        "description": "गोवा पर्यटनाद्वारे चालवले जाणारे कलंगूट बीचवरील कॉटेज कॉम्प्लेक्स; व्हीलचेअर सुलभ खोल्या किंवा शॉवर सुविधांची कोणतीही नोंद नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_016",
+    "city": "Goa",
+    "price_inr_per_night": 4200,
+    "star_rating": 3,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Santana Beach Resort — Candolim",
+        "description": "Family-run mid-budget resort in Candolim set amidst gardens; ground floor rooms are available but roll-in showers and grab rails are not verified."
+      },
+      "hi": {
+        "name": "सैन्टाना बीच रिसॉर्ट — कैंडोलिम",
+        "description": "कैंडोलिम में बगीचों के बीच स्थित पारिवारिक मिड-बजट रिसॉर्ट; भूतल पर कमरे उपलब्ध हैं लेकिन रोल-इन शॉवर और ग्रैब रेल असत्यापित हैं।"
+      },
+      "mr": {
+        "name": "सँटाना बीच रिसॉर्ट — कांदोळी",
+        "description": "कांदोळी येथील बागांमध्ये वसलेले कौटुंबिक मिड-बजेट रिसॉर्ट; तळमजल्यावरील खोल्या उपलब्ध आहेत परंतु रोल-इन शॉवर आणि ग्रॅब रेल पडताळलेले नाहीत."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_017",
+    "city": "Goa",
+    "price_inr_per_night": 2400,
+    "star_rating": 2,
+    "data_state": "reported",
+    "translations": {
+      "en": {
+        "name": "Castle House — Calangute",
+        "description": "Budget hotel with garden and pool in North Goa; no published accessibility accommodations or environmental certifications."
+      },
+      "hi": {
+        "name": "कैसल हाउस — कलंगूट",
+        "description": "उत्तर गोवा में बगीचे और पूल के साथ बजट होटल; कोई प्रकाशित सुगमता व्यवस्था या पर्यावरणीय प्रमाणन नहीं है।"
+      },
+      "mr": {
+        "name": "कॅसल हाऊस — कलंगूट",
+        "description": "उत्तर गोव्यातील बाग आणि पूल असलेले बजेट हॉटेल; कोणत्याही सुलभता सुविधा किंवा पर्यावरणीय प्रमाणपत्रांची नोंद नाही."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": null, "data_state": "not_verified" },
+      { "label": "roll_in_shower", "value": null, "data_state": "not_verified" },
+      { "label": "grab_rails", "value": null, "data_state": "not_verified" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_power", "value": null, "data_state": "not_verified" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  },
+  {
+    "_id": "hotel_synthetic_001",
+    "city": "Goa",
+    "price_inr_per_night": 2900,
+    "star_rating": 3,
+    "data_state": "demo_synthetic",
+    "translations": {
+      "en": {
+        "name": "[DEMO SYNTHETIC] Palm Grove Accessible Stay",
+        "description": "Hypothetical budget accessible property for rehearsal demo queries requiring a sub-₹3,500 stay with verified roll-in shower and step-free access in Goa."
+      },
+      "hi": {
+        "name": "[डेमो सिंथेटिक] पाम ग्रोव एक्सेसिबल स्टे",
+        "description": "गोवा में ₹3,500 से कम बजट और रोल-इन शॉवर वाले पूर्वाभ्यास डेमो प्रश्नों के लिए काल्पनिक बजट सुलभ आवास।"
+      },
+      "mr": {
+        "name": "[डेमो सिंथेटिक] पाम ग्रोव्ह ॲक्सेसिबल स्टे",
+        "description": "गोव्यामध्ये ₹3,500 पेक्षा कमी बजेट आणि रोल-इन शॉवर आवश्यक असलेल्या डेमोसाठी काल्पनिक बजेट सुलभ हॉटेल."
+      }
+    },
+    "accessibility_items": [
+      { "label": "step_free_entrance", "value": true, "data_state": "demo_synthetic" },
+      { "label": "roll_in_shower", "value": true, "data_state": "demo_synthetic" },
+      { "label": "grab_rails", "value": true, "data_state": "demo_synthetic" }
+    ],
+    "sustainability_items": [
+      { "label": "solar_water_heating", "value": true, "data_state": "demo_synthetic" }
+    ],
+    "photos": [
+      "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "confirmations": []
+  }
+]

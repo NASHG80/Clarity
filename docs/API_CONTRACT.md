@@ -14,7 +14,7 @@ header may be passed for future use but is not required in v1.
 ## POST /api/nlu/extract  (NEW)
 Request:
 ```json
-{ "text": "I am planning to go from Mumbai to Goa with 2 children and 1 senior citizen. I need a wheelchair, accessible transport and accessible accommodation." }
+{ "text": "I am planning to go from Mumbai to Goa for 3 nights with 2 children and 1 senior citizen. I need a wheelchair, accessible transport and accessible accommodation." }
 ```
 Response:
 ```json
@@ -22,6 +22,7 @@ Response:
   "extracted": {
     "origin": "Mumbai",
     "destination": "Goa",
+    "nights": 3,
     "children_count": 2,
     "senior_count": 1,
     "accessibility_flags": ["wheelchair", "accessible_transport", "accessible_accommodation"]
@@ -68,6 +69,7 @@ Response:
         "emission_factor": 0.03
       },
       "accessibility": { "value": "high", "data_state": "demo_synthetic" },
+      "source": "seeded",
       "personal_match_pct": 91,
       "trade_off_summary": [
         "Meets your accessibility requirement",
@@ -100,24 +102,112 @@ based, always includes `distance_km` + `emission_factor`) or
 `"route_benchmark"` (includes `benchmark_kg` + `reduction_pct`).
 Never combine both in one object.
 
+Persistence Side Effect (C16): This endpoint asynchronously persists valid search requests containing a non-empty `accessibility_required` list to the `search_requests` collection for demand analytics. The request/response shapes remain unchanged.
+
 ## POST /api/search/accommodation
-Same shape as transport search, plus `destination_city`. Response:
-array of hotel cards with `accessibility_items` / `sustainability_items`
-as arrays of `{ label, data_state, value }` — never a merged score.
+Request (Transport Search shape + `destination_city`):
+```json
+{
+  "origin": "Mumbai",
+  "destination": "Goa",
+  "destination_city": "Goa",
+  "budget_max": 12000,
+  "time_max_hours": 6,
+  "accessibility_required": ["step_free", "wheelchair_accessible_room"],
+  "weights": { "environmental": 0.4, "accessibility": 0.4, "affordability": 0.1, "convenience": 0.1 },
+  "include_unverified": false
+}
+```
+Response:
+```json
+{
+  "results": [
+    {
+      "id": "hotel_001",
+      "translations": {
+        "en": { "name": "Andaz Delhi Aerocity", "description": "..." },
+        "hi": { "name": "...", "description": "..." },
+        "mr": { "name": "...", "description": "..." }
+      },
+      "city": "Delhi",
+      "price_inr_per_night": 14000,
+      "star_rating": 5,
+      "photos": ["url1", "url2"],
+      "data_state": "reported",
+      "accessibility_items": [
+        { "label": "step_free_entrance", "data_state": "reported", "value": true },
+        { "label": "roll_in_shower", "data_state": "not_verified", "value": null }
+      ],
+      "sustainability_items": [
+        { "label": "solar_power", "data_state": "not_verified", "value": null }
+      ]
+    }
+  ]
+}
+```
+Note: `data_state` must be maintained strictly per item per the integrity rules. Do not create a merged score. `demo_synthetic` can appear at the root level (`data_state`) or item level. The frontend must safely fall back to `en` if a `translations` key is missing. No emissions fields are supported for accommodations.
+
+Persistence Side Effect (C16): This endpoint asynchronously persists valid search requests containing a non-empty `accessibility_required` list to the `search_requests` collection for demand analytics. The request/response shapes remain unchanged.
 
 ## GET /api/listings/{id}
-Full detail: overview, full accessibility/sustainability checklist
-(each item with `data_state`), reviews/confirmations count, and
-`translations: { en: {...}, hi: {...}, mr: {...} }` for name/description
-where available (missing language falls back to `en`).
+Response schema:
+```json
+{
+  "id": "hotel_014",
+  "translations": {
+    "en": {
+      "name": "Accessible Serene Retreat",
+      "description": "A fully accessible property..."
+    },
+    "hi": { "name": "...", "description": "..." },
+    "mr": { "name": "...", "description": "..." }
+  },
+  "city": "Goa",
+  "price_inr_per_night": 4500,
+  "star_rating": 4,
+  "photos": ["https://..."],
+  "data_state": "reported",
+  "accessibility_items": [
+    { "label": "step_free_entrance", "data_state": "reported", "value": true },
+    { "label": "roll_in_shower", "data_state": "community_confirmed", "value": true }
+  ],
+  "sustainability_items": [
+    { "label": "solar_power", "data_state": "not_verified", "value": null }
+  ],
+  "confirmations": [
+    { "item_label": "roll_in_shower", "confirmed_by_count": 4, "disputed_count": 0 }
+  ]
+}
+```
+Note: Missing translation languages must safely fall back to `en`. Missing fields default to null. No merged score is permitted. `demo_synthetic` may appear at the root `data_state` or on individual items. The `confirmations` array provides traveler verification data in lieu of text reviews.
 
 ## POST /api/listings  (admin/manual listing tool)
 Requires an explicit `data_state` on submission (`reported` or
 `demo_synthetic` only — never `verified` from this endpoint).
 
 ## GET /api/explore/{city}
-Experience cards: `{ accessibility, environmental_impact, cost_inr,
-duration_minutes, distance_km, data_state, translations }`.
+Response schema:
+```json
+{
+  "results": [
+    {
+      "id": "exp_001",
+      "translations": {
+        "en": { "name": "Accessible beach walk — Miramar", "description": "A fully step-free coastal experience." },
+        "hi": { "name": "...", "description": "..." },
+        "mr": { "name": "...", "description": "..." }
+      },
+      "accessibility": { "value": "step_free_path", "data_state": "community_confirmed" },
+      "environmental_impact": { "value": "low", "data_state": "reported" },
+      "cost_inr": 0,
+      "duration_minutes": 60,
+      "distance_km": 2.1,
+      "data_state": "demo_synthetic"
+    }
+  ]
+}
+```
+Note: Returns `{ "results": [...] }`. Missing `translations` languages must visibly fall back to `en`. `data_state` is preserved at both the root level and on individual `accessibility`/`environmental_impact` items. Missing or `not_verified` items must retain a `null` value and never be scored or inferred. `photos` are deliberately excluded from this contract.
 
 ## POST /api/business/onboard
 Self-assessment submission. All items stored with
@@ -210,7 +300,17 @@ reportable info").
 ```
 
 ## POST /api/booking/create-order  (NEW)
-Request: `{ amount_inr, currency: "INR", receipt_id }`.
+Request:
+```json
+{
+  "amount_inr": 12300,
+  "currency": "INR",
+  "receipt_id": "8432a559-00f7-4148-be8e-1f7d5c5890ad"
+}
+```
+* `receipt_id`: A standard UUID v4 string generated by the frontend using `crypto.randomUUID()` (or equivalent). This is a **transient identifier** for the Razorpay order request only. The backend treats it as an opaque string and passes it directly to Razorpay. It does **not** persist in the database, does **not** represent a confirmed reservation or inventory allocation, and is not trusted as evidence of payment.
+* `amount_inr`: Must exactly equal the computed `tripTotal` from the frontend A17 summary. No hidden taxes, fees, discounts, or inventory charges may be added by the frontend.
+
 Response: Razorpay test-mode order object (`order_id`, `amount`, `currency`).
 
 ## POST /api/booking/verify-payment  (NEW)

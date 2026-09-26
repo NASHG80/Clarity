@@ -18,7 +18,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
-        
+
         <Route path="/b2b" element={<B2bLayout />}>
           <Route path="listings" element={<ListingTablePage />} />
           <Route path="listings/editor" element={<ListingEditorPage />} />

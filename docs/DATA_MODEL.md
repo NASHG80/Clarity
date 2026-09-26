@@ -72,15 +72,16 @@ For modes with a defensible benchmark (e.g. flights), set
   "_id": "exp_001",
   "city": "Goa",
   "translations": {
-    "en": { "name": "Accessible beach walk — Miramar" },
-    "hi": { "name": "..." },
-    "mr": { "name": "..." }
+    "en": { "name": "Accessible beach walk — Miramar", "description": "A fully step-free coastal experience." },
+    "hi": { "name": "...", "description": "..." },
+    "mr": { "name": "...", "description": "..." }
   },
   "accessibility": { "value": "step_free_path", "data_state": "community_confirmed" },
   "environmental_impact": { "value": "low", "data_state": "reported" },
   "cost_inr": 0,
   "duration_minutes": 60,
-  "distance_km": 2.1
+  "distance_km": 2.1,
+  "data_state": "demo_synthetic"
 }
 ```
 
@@ -162,6 +163,18 @@ numbers on-demand via a MongoDB aggregation pipeline over
 maintaining separate pre-aggregated documents, unless query latency
 becomes a real problem in testing — if so, fall back to a daily
 materialized `analytics_daily_summary` collection.
+
+## Collection: search_requests  (NEW for C16)
+```json
+{
+  "_id": "req_001",
+  "search_type": "accommodation",
+  "accessibility_required": ["roll_in_shower", "step_free_entrance"],
+  "timestamp": "2026-09-26T10:00:00Z"
+}
+```
+`search_type` enum: `transport` or `accommodation`.
+Only valid search requests containing a non-empty `accessibility_required` list are persisted. Labels are stored exactly as submitted, without expansion or inference. No user, session, destination mapping, or business tracking is recorded here. The `timestamp` field supports the C16 "recent" aggregation window (defined as a rolling 7-day UTC lookback matching C15).
 
 ## Seed dataset composition (`database/seed.py`)
 - 5 real, researched anchor properties (mix of luxury + budget),
