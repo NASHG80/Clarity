@@ -22,9 +22,9 @@ export function AiAnalysisReviewStep({
 
   // Flatten the photo selection into a single array for easier iteration
   const allPhotos = useMemo(() => {
-    return (Object.keys(photoSelection) as PhotoBucketId[]).flatMap(bucket => 
-      photoSelection[bucket]
-    );
+    return (Object.keys(photoSelection) as PhotoBucketId[])
+      .flatMap(bucket => photoSelection[bucket])
+      .filter(p => p.isAccessibility);
   }, [photoSelection]);
 
   // Only review photos that have successfully completed analysis

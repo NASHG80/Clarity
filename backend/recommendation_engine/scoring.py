@@ -202,3 +202,48 @@ def calculate_sub_scores(candidates: List[Any]) -> List[Dict[str, Optional[float
         })
         
     return results
+
+
+def apply_sustainability_boost(
+    candidates: List[Any],
+    sub_scores_list: List[Dict[str, Optional[float]]],
+    sustainability_preferred: Optional[List[str]],
+    boost_per_match: float = 0.15,
+) -> List[Dict[str, Optional[float]]]:
+    """Boost the environmental sub-score for candidates with matching sustainability items.
+
+    Rules (AGENTS.md §2.1, §2.2):
+      - This is a soft ranking preference ONLY — never a hard filter.
+      - Only sustainability_items with data_state != 'not_verified' are eligible for boosting.
+      - 'not_verified' items are never boosted — their value is null/omitted and carries
+        no positive evidence.
+      - The boost is additive on the environmental sub-score, capped at 1.0.
+      - If sustainability_preferred is empty or None, the list is returned unchanged.
+      - If a candidate has no environmental sub-score (None), it stays None — we do not
+        fabricate an environmental score merely because sustainability items matched.
+      - Zero hotel results will never be caused solely by a sustainability preference.
+    """
+    if not sustainability_preferred:
+        return sub_scores_list
+
+    preferred_set = set(sustainability_preferred)
+    result = []
+
+    for cand, scores in zip(candidates, sub_scores_list):
+        new_scores = dict(scores)
+        items = _get_field(cand, "sustainability_items") or []
+
+        bonus = 0.0
+        for item in items:
+            label = _get_field(item, "label")
+            state = _get_field(item, "data_state")
+            # Only boost verified evidence — not_verified items are never boosted.
+            if label in preferred_set and state not in (None, "not_verified", DataState.not_verified):
+                bonus += boost_per_match
+
+        if bonus > 0.0 and new_scores.get("environmental") is not None:
+            new_scores["environmental"] = min(1.0, new_scores["environmental"] + bonus)
+
+        result.append(new_scores)
+
+    return result

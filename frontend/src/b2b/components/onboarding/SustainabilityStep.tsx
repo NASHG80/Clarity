@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../../shared/components/Button';
-import { SustainabilityFeatureKey } from '../../../shared/constants/sustainability';
-import { Check } from 'lucide-react';
+import { Check, X, Search } from 'lucide-react';
 
-export type SustainabilityData = Record<SustainabilityFeatureKey, boolean>;
+export type SustainabilityData = Record<string, boolean>;
 
 interface SustainabilityStepProps {
   value: SustainabilityData;
@@ -13,51 +12,64 @@ interface SustainabilityStepProps {
   onBack: () => void;
 }
 
+const PREDEFINED_PRACTICES = [
+  { key: 'solar_power', label: 'Solar power' },
+  { key: 'waste_program', label: 'Waste program' },
+  { key: 'water_program', label: 'Water program' },
+  { key: 'local_sourcing', label: 'Local sourcing' },
+  { key: 'rainwater_harvesting', label: 'Rainwater harvesting' },
+  { key: 'ev_charging', label: 'EV charging powered by renewable energy' },
+  { key: 'composting', label: 'Composting' },
+];
+
 export function SustainabilityStep({ value, onChange, onContinue, onBack }: SustainabilityStepProps) {
   const { t } = useTranslation();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const toggleFeature = (key: SustainabilityFeatureKey) => {
+  const toggleFeature = (key: string) => {
     onChange({
       ...value,
       [key]: !value[key]
     });
   };
 
-  const practices = [
-    { 
-      key: 'solar_power' as SustainabilityFeatureKey, 
-      label: t('onboarding.sustainability.solarPower', 'Solar power'),
-      description: t('onboarding.sustainability.solarPowerDesc', 'Renewable energy generation or dedicated carbon-free energy sources.')
-    },
-    { 
-      key: 'waste_program' as SustainabilityFeatureKey, 
-      label: t('onboarding.sustainability.wasteProgram', 'Waste program'),
-      description: t('onboarding.sustainability.wasteProgramDesc', 'Active recycling, composting, or single-use plastic reduction initiatives.')
-    },
-    { 
-      key: 'water_program' as SustainabilityFeatureKey, 
-      label: t('onboarding.sustainability.waterProgram', 'Water program'),
-      description: t('onboarding.sustainability.waterProgramDesc', 'Water-efficient fixtures or structured linen/towel reuse programs.')
-    },
-    { 
-      key: 'local_sourcing' as SustainabilityFeatureKey, 
-      label: t('onboarding.sustainability.localSourcing', 'Local sourcing'),
-      description: t('onboarding.sustainability.localSourcingDesc', 'Food, beverages, or amenities sourced from local suppliers and producers.')
-    },
-  ];
-
-  const handleContinue = () => {
-    onContinue();
+  const removeFeature = (key: string) => {
+    const updated = { ...value };
+    delete updated[key];
+    onChange(updated);
   };
 
+  const addCustomFeature = () => {
+    const clean = searchQuery.trim();
+    if (!clean) return;
+    
+    // Check if it exists exactly (case-insensitive)
+    const exists = Object.keys(value).find(k => k.toLowerCase() === clean.toLowerCase());
+    if (!exists) {
+      onChange({ ...value, [clean]: true });
+    }
+    setSearchQuery('');
+  };
+
+  const predefinedKeys = PREDEFINED_PRACTICES.map(f => f.key);
+  const customFeatures = Object.keys(value).filter(k => !predefinedKeys.includes(k) && value[k]);
+  
+  const filteredPredefined = useMemo(() => {
+    const lowerQ = searchQuery.toLowerCase();
+    return PREDEFINED_PRACTICES.filter(f => 
+      f.label.toLowerCase().includes(lowerQ) || 
+      t(`onboarding.sustainability.${f.key}`, f.label).toLowerCase().includes(lowerQ)
+    );
+  }, [searchQuery, t]);
+
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300">
+    <div className="w-full max-w-3xl mx-auto space-y-8 animate-in fade-in duration-300">
       <div>
         <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#26382D] mb-2">
           {t('onboarding.sustainability.title', 'Sustainability Practices')}
         </h2>
         <p className="text-sm sm:text-base text-[#26382D]/70 mb-5">
-          {t('onboarding.sustainability.subtitle', 'Tell travelers about sustainability practices your property currently provides.')}
+          {t('onboarding.sustainability.subtitle', 'Select or add sustainability practices your property currently provides.')}
         </p>
         <div className="inline-flex items-start sm:items-center gap-3 bg-[#F8F6F3] border border-[#D8C9BE] px-4 py-3 rounded-xl shadow-sm">
            <span className="text-[10px] font-bold text-[#7C9278] uppercase tracking-widest bg-[#7C9278]/10 px-2 py-1 rounded mt-0.5 sm:mt-0">
@@ -69,43 +81,95 @@ export function SustainabilityStep({ value, onChange, onContinue, onBack }: Sust
         </div>
       </div>
 
-      <fieldset className="bg-[#F8F6F3] p-5 sm:p-7 rounded-2xl shadow-[0_4px_16px_rgba(38,56,45,0.03)] border border-[#D8C9BE]/50 h-full flex flex-col">
-        <legend className="sr-only">{t('onboarding.sustainability.legend', 'Sustainability practices selection')}</legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {practices.map(item => (
-            <label 
-              key={item.key} 
-              className={`flex items-start gap-4 p-4 sm:p-5 rounded-xl border transition-all cursor-pointer group
-                ${value[item.key] ? 'bg-[#7C9278]/10 border-[#7C9278]' : 'bg-white border-[#D8C9BE]/50 hover:border-[#7C9278]/50'}
-              `}
-            >
-              <div className="relative flex items-start pt-1">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer"
-                  checked={value[item.key]}
-                  onChange={() => toggleFeature(item.key)}
-                  aria-label={item.label}
-                  aria-describedby={`desc-${item.key}`}
-                />
-                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-[#7C9278] peer-focus-visible:ring-offset-2
-                  ${value[item.key] ? 'bg-[#7C9278] border-[#7C9278]' : 'bg-white border-2 border-[#D8C9BE] group-hover:border-[#7C9278]'}
-                `}>
-                   {value[item.key] && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
-                </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className={`text-base select-none leading-snug ${value[item.key] ? 'font-semibold text-[#26382D]' : 'font-medium text-[#26382D]/80'}`}>
-                  {item.label}
-                </span>
-                <span id={`desc-${item.key}`} className="text-sm text-[#26382D]/60 leading-snug">
-                  {item.description}
-                </span>
-              </div>
-            </label>
-          ))}
+      <div className="bg-[#F8F6F3] p-5 sm:p-7 rounded-2xl shadow-[0_4px_16px_rgba(38,56,45,0.03)] border border-[#D8C9BE]/50 space-y-6">
+        
+        {/* Search / Add Input */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-[#26382D]/40" />
+          </div>
+          <input
+            type="text"
+            className="w-full h-12 pl-10 pr-24 rounded-xl border border-[#D8C9BE] focus:border-[#7C9278] focus:ring-1 focus:ring-[#7C9278] focus:outline-none bg-white text-[#26382D]"
+            placeholder={t('onboarding.sustainability.searchPlaceholder', 'Search sustainability features...')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomFeature();
+              }
+            }}
+          />
+          <div className="absolute inset-y-0 right-1 flex items-center">
+             <button
+                type="button"
+                onClick={addCustomFeature}
+                className="px-3 py-1.5 text-sm font-medium bg-[#7C9278]/10 text-[#7C9278] rounded-lg hover:bg-[#7C9278]/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278]"
+             >
+                {t('onboarding.sustainability.add', 'Add')}
+             </button>
+          </div>
         </div>
-      </fieldset>
+
+        {/* Common Features */}
+        <div>
+          <h3 className="text-sm font-semibold text-[#26382D] uppercase tracking-wider mb-3">
+            {t('onboarding.sustainability.commonPractices', 'Common practices')}
+          </h3>
+          {filteredPredefined.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {filteredPredefined.map(f => {
+                const isSelected = value[f.key];
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => toggleFeature(f.key)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full border text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278]
+                      ${isSelected ? 'bg-[#7C9278] border-[#7C9278] text-white' : 'bg-white border-[#D8C9BE] text-[#26382D] hover:border-[#7C9278]/50'}
+                    `}
+                  >
+                    {isSelected && <Check className="w-3.5 h-3.5" strokeWidth={3} />}
+                    {t(`onboarding.sustainability.${f.key}`, f.label)}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-[#26382D]/50 italic">
+               {t('onboarding.sustainability.noMatch', 'No matching practice. Add it as a custom practice.')}
+            </p>
+          )}
+        </div>
+
+        {/* Custom Features Added */}
+        {customFeatures.length > 0 && (
+          <div className="pt-4 border-t border-[#D8C9BE]/50">
+            <h3 className="text-sm font-semibold text-[#26382D] uppercase tracking-wider mb-3">
+              {t('onboarding.sustainability.addedByYou', 'Added by you')}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {customFeatures.map(feat => (
+                <div key={feat} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#26382D] text-white text-sm">
+                  <span>{feat}</span>
+                  <button 
+                    type="button"
+                    onClick={() => removeFeature(feat)}
+                    className="ml-1 p-0.5 rounded-full hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    aria-label={t('onboarding.sustainability.removeCustom', 'Remove custom practice')}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-[#26382D]/50 mt-3">
+              {t('onboarding.sustainability.customCount', { count: customFeatures.length, defaultValue: '{{count}} custom practice(s) added' })}
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="pt-6 border-t border-[#D8C9BE]/50 flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
         <button 
@@ -114,8 +178,8 @@ export function SustainabilityStep({ value, onChange, onContinue, onBack }: Sust
         >
           {t('onboarding.back', 'Back')}
         </button>
-        <Button variant="primary" onClick={handleContinue} className="w-full sm:w-auto px-10">
-          {t('onboarding.completeOnboarding', 'Complete Onboarding')}
+        <Button variant="primary" onClick={onContinue} className="w-full sm:w-auto px-10">
+          {t('onboarding.continue', 'Continue')}
         </Button>
       </div>
     </div>

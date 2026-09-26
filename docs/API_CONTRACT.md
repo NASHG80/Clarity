@@ -115,9 +115,20 @@ Request (Transport Search shape + `destination_city`):
   "time_max_hours": 6,
   "accessibility_required": ["step_free", "wheelchair_accessible_room"],
   "weights": { "environmental": 0.4, "accessibility": 0.4, "affordability": 0.1, "convenience": 0.1 },
-  "include_unverified": false
+  "include_unverified": false,
+  "arrival_date": "2026-10-12",
+  "departure_date": "2026-10-16",
+  "sustainability_preferred": ["solar_power", "waste_program"]
 }
 ```
+`arrival_date` and `departure_date` are optional ISO 8601 date strings (YYYY-MM-DD).
+When supplied, they are passed to the live hotel search (SerpAPI) instead of the default +7/+9 day fallback.
+`departure_date` must be strictly after `arrival_date`; the backend returns 422 if violated.
+`sustainability_preferred` is an optional list of sustainability label strings.
+It acts as a **ranking preference only**, never a hard filter.
+Hotels with matching verified/reported sustainability items receive a small score boost
+on the `environmental` axis. `not_verified` items are never boosted.
+Zero results will never be caused solely by a sustainability preference.
 Response:
 ```json
 {
@@ -345,3 +356,149 @@ in the frontend.
 Request: `{ "action": "accept" }` or `{ "action": "dispute" }`
 Response: `{ "success": true, "status": "accepted" }`
 Business responds to an individual traveler submission. Updates the submission status to `accepted` or `disputed`. Backend domain logic is responsible for updating the `confirmations` aggregate collection and potentially moving `data_state` toward `community_confirmed` when the threshold is reached.
+
+---
+
+## POST /api/auth/signup (NEW)
+Request:
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword",
+  "role": "customer",
+  "location": "28.6139, 77.2090"
+}
+```
+Note: `location` is optional and typically only provided for `role: "customer"`. Valid roles are `"customer"` or `"business"`.
+
+Response:
+```json
+{
+  "user_id": "usr_abc123",
+  "role": "customer",
+  "token": "mock_jwt_token",
+  "is_first_time": true
+}
+```
+
+## POST /api/auth/login (NEW)
+Request:
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+Response:
+```json
+{
+  "user_id": "usr_abc123",
+  "role": "customer",
+  "token": "mock_jwt_token",
+  "is_first_time": false
+}
+```
+
+---
+
+## POST /api/trips/create  (NEW — Customer Dashboard)
+Creates a new trip planning session for an authenticated customer.
+Ownership: the backend verifies `user_id` exists in the `users` collection.
+```json
+{
+  "user_id": "usr_abc123",
+  "destination": "Goa",
+  "adults": 2,
+  "children": 1,
+  "rooms": 1,
+  "arrival_date": "2026-10-12",
+  "departure_date": "2026-10-16"
+}
+```
+Response:
+```json
+{ "trip_id": "trip_abc12345", "phase": "BASICS_SAVED", "created_at": "2026-09-27T00:00:00Z" }
+```
+Errors: 401 if user_id unknown; 422 if adults < 1, rooms < 1, or arrival_date >= departure_date.
+
+## GET /api/trips/active  (NEW — Customer Dashboard)
+Returns the customer's most recently updated trip, or null if none exists.
+Query param: `user_id` (required).
+Response:
+```json
+{ "trip": { "trip_id": "trip_abc12345", "destination": "Goa", "adults": 2, "phase": "RESULTS", ... } }
+```
+Or: `{ "trip": null }` when no trip exists for this user.
+
+## PATCH /api/trips/{trip_id}/state  (NEW — Customer Dashboard)
+Partial update of mutable trip planning fields. Only supplied fields are updated.
+`user_id` is required for ownership enforcement (403 if trip belongs to another user).
+```json
+{
+  "user_id": "usr_abc123",
+  "accessibility_required": ["wheelchair_accessible_room", "step_free_entrance"],
+  "sustainability_preferred": ["solar_power"],
+  "budget_max": 8000,
+  "weights": { "environmental": 0.3, "accessibility": 0.4, "affordability": 0.2, "convenience": 0.1 },
+  "phase": "RESULTS",
+  "last_search_result_count": 8
+}
+```
+Response: `{ "trip_id": "trip_abc12345", "last_updated": "2026-09-27T00:15:00Z" }`
+
+## POST /api/trips/{trip_id}/interactions  (NEW — Customer Dashboard)
+Records one immutable customer planning-memory event.
+`client_event_id` in payload enables idempotent retry — safe to call multiple times with the same ID.
+This is DISTINCT from `POST /api/analytics/events` (B2B business funnel data — different collection, different schema, different event taxonomy).
+```json
+{
+  "user_id": "usr_abc123",
+  "session_id": "sess_uvw01234",
+  "event_type": "search_performed",
+  "payload": {
+    "client_event_id": "ce_01929abc",
+    "accessibility_required": ["wheelchair_accessible_room"],
+    "sustainability_preferred": ["solar_power"],
+    "budget_max": 8000,
+    "result_count": 8
+  }
+}
+```
+Response: `{ "interaction_id": "int_def45678", "status": "recorded" }`
+Ownership: 403 if trip belongs to another user.
+
+## GET /api/trips/{trip_id}/interactions  (NEW — Customer Dashboard)
+Returns all planning-memory events for a trip in timestamp-ascending order.
+Used by the frontend to reconstruct the Memory Rail on page load/refresh.
+Query param: `user_id` (required for ownership enforcement).
+Response:
+```json
+{
+  "interactions": [
+    { "interaction_id": "int_abc001", "event_type": "trip_basics_submitted", "timestamp": "2026-09-27T00:00:00Z", "payload": { "destination": "Goa", "adults": 2 } },
+    { "interaction_id": "int_abc002", "event_type": "search_performed", "timestamp": "2026-09-27T00:10:00Z", "payload": { "result_count": 8 } }
+  ]
+}
+```
+Ownership: 403 if trip belongs to another user.
+
+### TravelerEventType enum (customer planning memory — NOT analytics_events)
+```
+trip_basics_submitted
+destination_changed
+dates_changed
+traveler_count_changed
+accessibility_filter_selected
+accessibility_filter_removed
+sustainability_filter_selected
+sustainability_filter_removed
+budget_changed
+weight_changed
+persona_preset_applied
+search_performed
+result_viewed
+result_opened
+result_saved
+filter_changed_after_results
+search_refreshed
+```

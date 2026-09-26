@@ -55,9 +55,9 @@ export function AiConfirmationStep({
 
   // Flatten photos with completed analyses
   const completedPhotos = useMemo(() => {
-    const all = (Object.keys(photoSelection) as PhotoBucketId[]).flatMap(bucket => 
-      photoSelection[bucket]
-    );
+    const all = (Object.keys(photoSelection) as PhotoBucketId[])
+      .flatMap(bucket => photoSelection[bucket])
+      .filter(p => p.isAccessibility);
     return all.filter(p => aiAnalysis[p.id]?.status === 'completed');
   }, [photoSelection, aiAnalysis]);
 

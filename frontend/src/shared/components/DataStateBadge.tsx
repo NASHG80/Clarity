@@ -29,7 +29,7 @@ export function DataStateBadge({ state, className = '', label }: DataStateBadgeP
     reported: {
       variant: 'neutral', // Property reported
       icon: <FileText className="w-3.5 h-3.5" />,
-      defaultLabel: t('dataState.reported', 'Reported by property'),
+      defaultLabel: t('dataState.reported', 'Reported'),
     },
     community_confirmed: {
       variant: 'info',
@@ -56,3 +56,5 @@ export function DataStateBadge({ state, className = '', label }: DataStateBadgeP
     </Badge>
   );
 }
+
+export default DataStateBadge;

@@ -341,6 +341,24 @@ class AccommodationSearchRequest(_StrictBase):
     accessibility_required: Optional[List[str]] = Field(default_factory=list)
     weights: Optional[SearchWeights] = None
     include_unverified: Optional[bool] = False
+    # Optional trip-date fields (Customer Dashboard — backwards-compatible)
+    arrival_date: Optional[str] = None    # YYYY-MM-DD; when supplied overrides +7 day fallback
+    departure_date: Optional[str] = None  # YYYY-MM-DD; must be after arrival_date
+    # Sustainability ranking preference (soft boost only — never a hard filter)
+    sustainability_preferred: Optional[List[str]] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def check_dates(self) -> "AccommodationSearchRequest":
+        from datetime import date as _date
+        if self.arrival_date and self.departure_date:
+            try:
+                arr = _date.fromisoformat(self.arrival_date)
+                dep = _date.fromisoformat(self.departure_date)
+            except ValueError as exc:
+                raise ValueError("arrival_date and departure_date must be YYYY-MM-DD") from exc
+            if dep <= arr:
+                raise ValueError("departure_date must be strictly after arrival_date")
+        return self
 
 
 class HotelResult(BaseModel):
@@ -368,13 +386,21 @@ class AccommodationSearchResponse(BaseModel):
 # LISTINGS — GET /api/listings/{id} and POST /api/listings
 # ===========================================================================
 
-class ListingCreateRequest(_StrictBase):
+class ListingCreateRequest(BaseModel):
     """Manual listing creation — only 'reported' or 'demo_synthetic' accepted."""
+    model_config = ConfigDict(extra="ignore")
     data_state: ListingSubmitDataState
     name: Optional[str] = None
     city: Optional[str] = None
+    description: Optional[str] = None
+    address: Optional[str] = None
     price_inr_per_night: Optional[float] = None
     star_rating: Optional[int] = None
+    amenity_items: List[ChecklistItem] = Field(default_factory=list)
+    accessibility_items: List[ChecklistItem] = Field(default_factory=list)
+    sustainability_items: List[ChecklistItem] = Field(default_factory=list)
+    rooms: List[Any] = Field(default_factory=list)
+    rules: Optional[Any] = None
 
 
 class ListingCreateResponse(BaseModel):
@@ -387,7 +413,7 @@ class ListingCreateResponse(BaseModel):
 
 class ListingDetailResponse(BaseModel):
     """Full listing detail — returned by GET /api/listings/{id}."""
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: str
     data_state: DataState
@@ -488,6 +514,25 @@ class BusinessAnalyticsResponse(BaseModel):
     funnel: AnalyticsFunnel
     signals: List[AnalyticsSignal] = Field(default_factory=list)
 
+
+class AIAnalyticsInsight(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: str
+    description: str
+
+
+class AIAnalyticsSummaryRequest(_StrictBase):
+    period: str = "this_week"
+
+
+class AIAnalyticsSummaryResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    summary: str
+    key_findings: List[AIAnalyticsInsight]
+    demand_insights: List[AIAnalyticsInsight]
+    data_gaps: List[AIAnalyticsInsight]
+    opportunities: List[AIAnalyticsInsight]
+    next_actions: List[AIAnalyticsInsight]
 
 # ===========================================================================
 # BUSINESS — GET /api/business/{id}/demand

@@ -3,31 +3,30 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../../../shared/components/Button';
 import { UploadCloud, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 
-export type PhotoBucketId = 'entrance' | 'bathroom' | 'room' | 'parking';
+export type PhotoBucketId = string;
 
-// Represents a file that has been selected locally and passed basic validation.
-// This is strictly local selection state and is separate from future AI-analysis state.
 export interface LocalPhotoAsset {
   id: string;
   bucket: PhotoBucketId;
   file: File;
   previewUrl: string;
-  status: 'ready' | 'failed';
+  status: 'uploading' | 'ready' | 'failed';
   error?: string;
+  isAccessibility?: boolean;
+  cloudUrl?: string;
+  publicId?: string;
 }
 
 export type LocalPhotoSelection = Record<PhotoBucketId, LocalPhotoAsset[]>;
 
-// Note: The canonical contract does NOT currently define limits for file size or format.
-// These fallback rules are implemented here to provide baseline client-side sanity checks.
 export interface FileValidationConfig {
   maxSizeBytes: number;
   allowedTypes: string[];
 }
 
 const DEFAULT_VALIDATION_CONFIG: FileValidationConfig = {
-  maxSizeBytes: 5 * 1024 * 1024, // 5MB fallback
-  allowedTypes: ['image/jpeg', 'image/png'], // standard web image fallback
+  maxSizeBytes: 5 * 1024 * 1024,
+  allowedTypes: ['image/jpeg', 'image/png'],
 };
 
 interface PhotoUploadStepProps {
@@ -47,57 +46,73 @@ export function PhotoUploadStep({
 }: PhotoUploadStepProps) {
   const { t } = useTranslation();
 
-  const handleFiles = (files: FileList | null, bucket: PhotoBucketId) => {
+  const handleFiles = (files: FileList | null, bucket: PhotoBucketId, isAccessibility: boolean) => {
     if (!files || files.length === 0) return;
 
     const newPhotos: LocalPhotoAsset[] = [];
+    const validFiles: { id: string; file: File }[] = [];
     const updatedValue = { ...value };
     
     Array.from(files).forEach((file) => {
       const id = Math.random().toString(36).substring(7);
       
-      // Client-side validation using the configurable limits
       if (!validationConfig.allowedTypes.includes(file.type)) {
         newPhotos.push({
-          id,
-          bucket,
-          file,
-          previewUrl: URL.createObjectURL(file),
-          status: 'failed',
-          error: t('onboarding.photos.errorType', 'Only JPEG and PNG are allowed.')
+          id, bucket, file, previewUrl: URL.createObjectURL(file), status: 'failed',
+          error: t('onboarding.photos.errorType', 'Only JPEG and PNG are allowed.'),
+          isAccessibility
         });
         return;
       }
       
       if (file.size > validationConfig.maxSizeBytes) {
         newPhotos.push({
-          id,
-          bucket,
-          file,
-          previewUrl: URL.createObjectURL(file),
-          status: 'failed',
+          id, bucket, file, previewUrl: URL.createObjectURL(file), status: 'failed',
           error: t('onboarding.photos.errorSize', { 
             defaultValue: `File must be less than ${validationConfig.maxSizeBytes / (1024 * 1024)}MB.`,
             maxSize: validationConfig.maxSizeBytes / (1024 * 1024)
-          })
+          }),
+          isAccessibility
         });
         return;
       }
 
-      // No fake upload simulation - immediately ready
-      const newPhoto: LocalPhotoAsset = {
-        id,
-        bucket,
-        file,
-        previewUrl: URL.createObjectURL(file),
-        status: 'ready'
-      };
-      
-      newPhotos.push(newPhoto);
+      validFiles.push({ id, file });
+      newPhotos.push({
+        id, bucket, file, previewUrl: URL.createObjectURL(file), status: 'uploading', isAccessibility
+      });
     });
 
     updatedValue[bucket] = [...(updatedValue[bucket] || []), ...newPhotos];
     onChange(updatedValue);
+    
+    // Kick off async uploads for valid files
+    validFiles.forEach(async ({ id, file }) => {
+      try {
+        const { uploadPhotoToCloudinary } = await import('../../../lib/api');
+        const res = await uploadPhotoToCloudinary(file, bucket);
+        
+        onChange(prev => {
+          const currentBucket = prev[bucket] || [];
+          return {
+            ...prev,
+            [bucket]: currentBucket.map(p => 
+              p.id === id ? { ...p, status: 'ready', cloudUrl: res.url, publicId: res.public_id } : p
+            )
+          };
+        });
+      } catch (error: any) {
+        onChange(prev => {
+          const currentBucket = prev[bucket] || [];
+          return {
+            ...prev,
+            [bucket]: currentBucket.map(p => 
+              p.id === id ? { ...p, status: 'failed', error: error.message || 'Upload failed' } : p
+            )
+          };
+        });
+      }
+    });
   };
 
   const removePhoto = (bucket: PhotoBucketId, id: string) => {
@@ -110,11 +125,22 @@ export function PhotoUploadStep({
     onChange(updatedValue);
   };
 
-  const buckets: { id: PhotoBucketId; title: string; desc: string }[] = [
+  const generalBuckets = [
     { id: 'entrance', title: t('onboarding.photos.entrance', 'Entrance'), desc: t('onboarding.photos.entranceDesc', 'Show the main entrance and access path.') },
     { id: 'bathroom', title: t('onboarding.photos.bathroom', 'Bathroom'), desc: t('onboarding.photos.bathroomDesc', 'Show bathrooms and washroom areas.') },
     { id: 'room', title: t('onboarding.photos.room', 'Room'), desc: t('onboarding.photos.roomDesc', 'Show rooms and accommodation interiors.') },
     { id: 'parking', title: t('onboarding.photos.parking', 'Parking'), desc: t('onboarding.photos.parkingDesc', 'Show available parking areas.') },
+  ];
+
+  const accessibilityBuckets = [
+    { id: 'acc_entrance', title: t('onboarding.photos.accEntrance', 'Accessible entrance'), desc: 'Main accessible entry points.' },
+    { id: 'acc_ramps', title: t('onboarding.photos.accRamps', 'Ramps'), desc: 'Ramps for mobility access.' },
+    { id: 'acc_elevators', title: t('onboarding.photos.accElevators', 'Elevators'), desc: 'Lifts and elevators.' },
+    { id: 'acc_bathroom', title: t('onboarding.photos.accBathroom', 'Accessible bathroom'), desc: 'Bathrooms with accessible features.' },
+    { id: 'acc_grab_bars', title: t('onboarding.photos.accGrabBars', 'Grab bars / handrails'), desc: 'Support bars.' },
+    { id: 'acc_room', title: t('onboarding.photos.accRoom', 'Accessible room'), desc: 'Wheelchair-accessible rooms.' },
+    { id: 'acc_parking', title: t('onboarding.photos.accParking', 'Accessible parking'), desc: 'Designated parking spots.' },
+    { id: 'acc_other', title: t('onboarding.photos.accOther', 'Other accessibility'), desc: 'Any other accessibility features.' },
   ];
 
   return (
@@ -124,24 +150,55 @@ export function PhotoUploadStep({
           {t('onboarding.photos.title', 'Property Photos')}
         </h2>
         <p className="text-sm sm:text-base text-[#26382D]/70 mb-5">
-          {t('onboarding.photos.subtitle', 'Select photos of your property. These will be shown to travelers and used to verify features.')}
+          {t('onboarding.photos.subtitle', 'Upload photos of your property. Accessibility photos will be analyzed to verify features.')}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {buckets.map(bucket => (
-          <BucketDropzone 
-            key={bucket.id}
-            bucket={bucket.id}
-            title={bucket.title}
-            desc={bucket.desc}
-            photos={value[bucket.id] || []}
-            onFiles={(files: FileList | null) => handleFiles(files, bucket.id)}
-            onRemove={(id: string) => removePhoto(bucket.id, id)}
-            validationConfig={validationConfig}
-            t={t}
-          />
-        ))}
+      <div className="space-y-12">
+        <section>
+          <h3 className="text-xl font-serif font-semibold text-[#26382D] mb-4 border-b border-[#D8C9BE]/50 pb-2">
+            A. General property photos
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {generalBuckets.map(bucket => (
+              <BucketDropzone 
+                key={bucket.id}
+                bucket={bucket.id}
+                title={bucket.title}
+                desc={bucket.desc}
+                photos={value[bucket.id] || []}
+                onFiles={(files: FileList | null) => handleFiles(files, bucket.id, false)}
+                onRemove={(id: string) => removePhoto(bucket.id, id)}
+                validationConfig={validationConfig}
+                t={t}
+              />
+            ))}
+          </div>
+        </section>
+        
+        <section>
+          <h3 className="text-xl font-serif font-semibold text-[#26382D] mb-4 border-b border-[#D8C9BE]/50 pb-2">
+            B. Accessibility photos
+          </h3>
+          <p className="text-sm text-[#26382D]/80 mb-6 bg-[#7C9278]/10 p-3 rounded-xl border border-[#7C9278]/20">
+            These photos will be analyzed by our AI system to detect accessibility features. Please ensure features are clearly visible.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {accessibilityBuckets.map(bucket => (
+              <BucketDropzone 
+                key={bucket.id}
+                bucket={bucket.id}
+                title={bucket.title}
+                desc={bucket.desc}
+                photos={value[bucket.id] || []}
+                onFiles={(files: FileList | null) => handleFiles(files, bucket.id, true)}
+                onRemove={(id: string) => removePhoto(bucket.id, id)}
+                validationConfig={validationConfig}
+                t={t}
+              />
+            ))}
+          </div>
+        </section>
       </div>
 
       <div className="pt-6 border-t border-[#D8C9BE]/50 flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
@@ -151,8 +208,13 @@ export function PhotoUploadStep({
         >
           {t('onboarding.back', 'Back')}
         </button>
-        <Button variant="primary" onClick={onContinue} className="w-full sm:w-auto px-10">
-          {t('onboarding.completeOnboarding', 'Complete Onboarding')}
+        <Button 
+          variant="primary" 
+          onClick={onContinue} 
+          disabled={Object.values(value).flat().some(p => p.status === 'uploading')}
+          className="w-full sm:w-auto px-10"
+        >
+          {t('onboarding.continue', 'Continue')}
         </Button>
       </div>
     </div>
@@ -228,6 +290,15 @@ function BucketDropzone({ title, desc, photos, onFiles, onRemove, validationConf
                   <X className="w-4 h-4" />
                 </button>
               </div>
+              
+              {photo.status === 'uploading' && (
+                <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center backdrop-blur-sm">
+                  <div className="w-6 h-6 border-2 border-[#7C9278] border-t-transparent rounded-full animate-spin mb-2" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#7C9278]">
+                    {t('onboarding.photos.uploading', 'Uploading')}
+                  </span>
+                </div>
+              )}
               
               {photo.status === 'ready' && (
                 <div className="absolute bottom-1 right-1 bg-white rounded-full px-1.5 py-0.5 shadow-sm flex items-center gap-1">

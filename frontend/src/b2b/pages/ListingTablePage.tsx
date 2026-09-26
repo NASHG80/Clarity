@@ -1,91 +1,143 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../shared/components/Button';
-import { Plus, Edit2, Camera, Eye } from 'lucide-react';
+import { Plus, Edit2, Eye, MapPin, Star, Building2, Map } from 'lucide-react';
 import { DataStateBadge } from '../../shared/components/DataStateBadge';
+import { getAllListings, ListingResponse } from '../../lib/api';
 
 export default function ListingTablePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [properties, setProperties] = useState<ListingResponse[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock list of properties
-  const properties = [
-    {
-      id: 'hotel_014',
-      name: 'Andaz Delhi Aerocity',
-      city: 'Delhi',
-      status: 'Active',
-      dataState: 'reported',
-      completion: '85%'
+  useEffect(() => {
+    async function loadProperties() {
+      try {
+        const res = await getAllListings();
+        setProperties(res.reverse());
+      } catch (err) {
+        console.error("Failed to load listings", err);
+      } finally {
+        setLoading(false);
+      }
     }
-  ];
+    loadProperties();
+  }, []);
 
   return (
-    <main className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+    <main className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-[#F1EDE9] min-h-[calc(100vh-64px)]">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-[#D8C9BE]/50 pb-6">
         <div>
           <h1 className="text-3xl font-serif font-bold text-[#26382D]">
-            {t('listings.title', 'Properties')}
+            {t('listings.manageTitle', 'Manage your properties')}
           </h1>
-          <p className="text-[#26382D]/70 mt-1">
-            {t('listings.subtitle', 'Manage your properties, photos, and amenities')}
+          <p className="text-[#26382D]/70 mt-1 text-sm">
+            {t('listings.manageSubtitle', 'Preview exactly how travelers see your listings.')}
           </p>
         </div>
-        <Button 
-          variant="primary" 
-          leftIcon={<Plus className="w-4 h-4" />}
-          onClick={() => navigate('/b2b/listings/editor')}
-        >
-          {t('listings.addProperty', 'Add Property')}
+        <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/onboarding')}>
+          Add Listing
         </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-[#D8C9BE] shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-[#F8F6F3] border-b border-[#D8C9BE]">
-              <th className="px-6 py-4 font-medium text-[#26382D]">{t('listings.tableProperty', 'Property')}</th>
-              <th className="px-6 py-4 font-medium text-[#26382D]">{t('listings.tableLocation', 'Location')}</th>
-              <th className="px-6 py-4 font-medium text-[#26382D]">{t('listings.tableStatus', 'Data State')}</th>
-              <th className="px-6 py-4 font-medium text-[#26382D]">{t('listings.tableCompletion', 'Completion')}</th>
-              <th className="px-6 py-4 font-medium text-[#26382D] text-right">{t('listings.tableActions', 'Actions')}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#D8C9BE]">
-            {properties.map((prop) => (
-              <tr key={prop.id} className="hover:bg-[#F8F6F3]/50 transition-colors">
-                <td className="px-6 py-4">
-                  <p className="font-medium text-[#26382D]">{prop.name}</p>
-                  <p className="text-xs text-[#26382D]/60">ID: {prop.id}</p>
-                </td>
-                <td className="px-6 py-4 text-[#26382D]">{prop.city}</td>
-                <td className="px-6 py-4">
-                  <DataStateBadge state={prop.dataState as any} />
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-full bg-[#E5DFD6] rounded-full h-2 max-w-[80px]">
-                      <div className="bg-[#7C9278] h-2 rounded-full" style={{ width: prop.completion }}></div>
+      {loading ? (
+        <div className="space-y-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="bg-white rounded-2xl border border-[#D8C9BE] h-64 animate-pulse"></div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {properties.map((prop) => (
+            <div key={(prop as any).id || prop._id} className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
+              
+              {/* Left: Image */}
+              <div className="w-full md:w-1/3 h-56 md:h-auto relative bg-[#E5DFD6]">
+                {prop.photos && prop.photos.length > 0 ? (
+                  <img src={prop.photos[0]} alt={prop.translations?.en?.name || 'Property'} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-[#26382D]/40">
+                    <Building2 className="w-12 h-12 mb-2" />
+                    <span className="text-sm font-medium">{t('listings.noPhotos', 'No Photos')}</span>
+                  </div>
+                )}
+                {prop.photos && prop.photos.length > 1 && (
+                  <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-medium">
+                    {prop.photos.length} {t('listings.photosCount', 'Photos')}
+                  </div>
+                )}
+                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-[#26382D] px-3 py-1 rounded-md text-xs font-bold border border-[#D8C9BE]/50 shadow-sm uppercase tracking-wider flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5" />
+                  {t('listings.businessPreviewBadge', 'Business Preview')}
+                </div>
+              </div>
+
+              {/* Center: Details */}
+              <div className="flex-1 p-5 md:p-6 flex flex-col justify-between">
+                <div>
+                  <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2">
+                    <h2 className="text-xl md:text-2xl font-serif font-bold text-[#26382D] line-clamp-1">
+                      {prop.translations?.en?.name || (prop as any).name || 'Unnamed Property'}
+                    </h2>
+                    <div className="shrink-0 mt-1 sm:mt-0">
+                      <DataStateBadge state={prop.data_state as any} />
                     </div>
-                    <span className="text-sm text-[#26382D]/70">{prop.completion}</span>
                   </div>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/b2b/photos?id=${prop.id}`)}>
-                      <Camera className="w-4 h-4 text-[#26382D]/70" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/b2b/listings/editor?id=${prop.id}`)}>
-                      <Edit2 className="w-4 h-4 text-[#26382D]/70" />
+                  
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-[#26382D]/70 mb-4">
+                    {prop.star_rating && (
+                      <div className="flex items-center gap-1 font-medium">
+                        <Star className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
+                        <span>{prop.star_rating} {t('listings.stars', 'Stars')}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span>{prop.city}</span>
+                    </div>
+                  </div>
+
+                  {/* Highlights (Accessibility & Sustainability) */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {prop.accessibility_items?.slice(0, 2).map((item, idx) => (
+                      <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#F8F6F3] text-xs font-medium text-[#26382D] border border-[#D8C9BE]/50">
+                        {item.label.replace(/_/g, ' ')}
+                      </span>
+                    ))}
+                    {prop.sustainability_items?.slice(0, 1).map((item, idx) => (
+                      <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#E8F0E6] text-xs font-medium text-[#26382D] border border-[#7C9278]/20">
+                        {item.label.replace(/_/g, ' ')}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-[#D8C9BE]/30 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                  <div>
+                    {prop.price_inr_per_night && (
+                      <p className="text-2xl font-serif font-bold text-[#26382D]">
+                        ₹{prop.price_inr_per_night.toLocaleString()} <span className="text-sm font-sans font-normal text-[#26382D]/60">/ {t('listings.night', 'night')}</span>
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <Button 
+                      variant="primary"
+                      onClick={() => navigate(`/b2b/listings/${prop.id}`)}
+                      className="flex-1 sm:flex-none"
+                    >
+                      {t('listings.viewPreview', 'Preview Listing')}
                     </Button>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </main>
   );
 }
