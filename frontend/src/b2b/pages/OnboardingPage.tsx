@@ -140,16 +140,44 @@ export default function OnboardingPage() {
     handleComplete();
   };
 
-  const handleComplete = () => {
-    // Collects B4, B5, B6, B7, B8, B9, B10 payload ready for backend onboarding submission (C1/C13)
-    console.log('Onboarding data prepared with confirmed AI findings:', { 
-      basicInfo, 
-      accessibilityInfo, 
-      sustainabilityInfo, 
-      photoSelection, 
-      aiAnalysis 
-    });
-    navigate('/b2b/opportunity-detector');
+  const handleComplete = async () => {
+    // Build payload for backend using correct BasicInfoData field names
+    const accItems = Object.entries(accessibilityInfo)
+      .filter(([_, v]) => v === true)
+      .map(([k]) => ({ label: k, value: true, data_state: 'reported' as any }));
+
+    const susItems = Object.entries(sustainabilityInfo)
+      .filter(([_, v]) => v === true)
+      .map(([k]) => ({ label: k, value: true, data_state: 'reported' as any }));
+
+    const amenityItems = Object.entries(amenitiesInfo)
+      .filter(([_, v]) => v === true)
+      .map(([k]) => ({ label: k, value: true, data_state: 'reported' as any }));
+
+    const payload = {
+      name: basicInfo.name || 'New Property',
+      city: basicInfo.city || 'Unknown City',
+      description: basicInfo.description || '',
+      address: basicInfo.address || '',
+      price_inr_per_night: parseFloat(basicInfo.price as any) || 3000,
+      star_rating: basicInfo.starRating || 3,
+      amenity_items: amenityItems,
+      accessibility_items: accItems,
+      sustainability_items: susItems,
+      rooms: roomsInfo,
+      rules: rulesInfo,
+      data_state: 'reported' as any
+    };
+
+    try {
+      // Use dynamic import or ensure createListing is available
+      const { createListing } = await import('../../lib/api');
+      await createListing(payload);
+      navigate('/b2b/listings');
+    } catch (err: any) {
+      console.error("Failed to create listing", err);
+      alert("Error saving listing! Check console: " + err.message);
+    }
   };
 
   const steps = [

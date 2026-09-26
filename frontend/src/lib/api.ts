@@ -238,10 +238,17 @@ export const mockGetListing = async (id: string): Promise<ListingResponse> => {
     city: 'Goa',
     price_inr_per_night: 3000,
     star_rating: 3,
-    accessibility_items: [],
-    sustainability_items: [],
-    data_state: 'demo_synthetic'
-  };
+    accessibility_items: [
+      { label: 'step_free_entrance', value: true, data_state: 'demo_synthetic' },
+      { label: 'elevator', value: true, data_state: 'demo_synthetic' }
+    ],
+    sustainability_items: [
+      { label: 'waste_program', value: true, data_state: 'demo_synthetic' }
+    ],
+    data_state: 'demo_synthetic',
+    translations: { en: { name: 'Demo Grand Hotel', description: 'This is a demo property showing how your profile will look.' } },
+    photos: ["https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"]
+  } as any;
 };
 
 export const mockCreateListing = async (payload: ListingPayload): Promise<ListingResponse> => {
@@ -258,16 +265,25 @@ export const getListing = async (id: string): Promise<ListingResponse> => {
     if (response.ok) {
       return await response.json();
     }
-    if (response.status === 404 || response.status === 501) {
-      return await mockGetListing(id);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch listing with status ${response.status}`);
     }
     throw new Error(`Failed to fetch listing with status ${response.status}`);
   } catch (error: any) {
-    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
-      return await mockGetListing(id);
-    }
     throw error;
   }
+};
+
+export const getAllListings = async (): Promise<ListingResponse[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/listings`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch all listings: ${response.status}`);
+  }
+  const data = await response.json();
+  if (!data || data.length === 0) {
+    return [await mockGetListing('mock_hotel_014')];
+  }
+  return data;
 };
 
 export const createListing = async (payload: ListingPayload): Promise<ListingResponse> => {
@@ -282,14 +298,11 @@ export const createListing = async (payload: ListingPayload): Promise<ListingRes
     if (response.ok) {
       return await response.json();
     }
-    if (response.status === 404 || response.status === 501) {
-      return await mockCreateListing(payload);
+    if (!response.ok) {
+      throw new Error(`Failed to create listing with status ${response.status}`);
     }
     throw new Error(`Failed to create listing with status ${response.status}`);
   } catch (error: any) {
-    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
-      return await mockCreateListing(payload);
-    }
     throw error;
   }
 };
@@ -911,8 +924,7 @@ export async function searchAccommodation(payload: AccommodationSearchRequest): 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn(`Accommodation search failed with status ${response.status}, falling back to mock.`);
-      return getAccommodationMockData(payload);
+      throw new Error(`Accommodation search failed with status ${response.status}`);
     }
 
     const data: AccommodationSearchResponse = await response.json();
@@ -920,8 +932,7 @@ export async function searchAccommodation(payload: AccommodationSearchRequest): 
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name !== "AbortError") {
-      console.warn("Accommodation search network error, falling back to mock.", err);
-      return getAccommodationMockData(payload);
+      throw err;
     }
     throw new Error("Accommodation search timed out");
   }
@@ -1027,8 +1038,7 @@ export async function getListingDetail(id: string): Promise<ListingDetailRespons
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn(`Listing detail fetch failed with status ${response.status}, falling back to mock.`);
-      return getListingDetailMockData(id);
+      throw new Error(`Listing detail fetch failed with status ${response.status}`);
     }
 
     const data: ListingDetailResponse = await response.json();
@@ -1036,8 +1046,7 @@ export async function getListingDetail(id: string): Promise<ListingDetailRespons
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name !== "AbortError") {
-      console.warn("Listing detail network error, falling back to mock.", err);
-      return getListingDetailMockData(id);
+      throw err;
     }
     throw new Error("Listing detail fetch timed out");
   }

@@ -11,6 +11,13 @@ import { DataStateBadge } from '../../shared/components/DataStateBadge';
 import { getListingDetail, ListingDetailResponse } from '../../lib/api';
 import { PropertyDetailTemplate } from '../components/property/PropertyDetailTemplate';
 
+// Import rich editing components from onboarding
+import { AccessibilityStep, AccessibilityData } from '../components/onboarding/AccessibilityStep';
+import { SustainabilityStep, SustainabilityData } from '../components/onboarding/SustainabilityStep';
+import { AmenitiesStep, AmenitiesData } from '../components/onboarding/AmenitiesStep';
+import { RoomsStep, RoomData } from '../components/onboarding/RoomsStep';
+import { RulesStep, RulesData } from '../components/onboarding/RulesStep';
+
 export default function ListingPreviewPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
@@ -24,7 +31,30 @@ export default function ListingPreviewPage() {
   const [editForm, setEditForm] = useState<any>({});
 
   const handleOpenEdit = (modalName: string, initialData: any) => {
-    setEditForm(initialData);
+    let form = { ...initialData };
+    if (['accessibility', 'sustainability', 'amenities', 'rules'].includes(modalName)) {
+      const obj: Record<string, boolean> = {};
+      if (modalName === 'accessibility') {
+        listing?.accessibility_items?.forEach((i: any) => { obj[i.label] = true });
+        form.accessibility = obj;
+      } else if (modalName === 'sustainability') {
+        listing?.sustainability_items?.forEach((i: any) => { obj[i.label] = true });
+        form.sustainability = obj;
+      } else if (modalName === 'amenities') {
+        listing?.amenities?.forEach((a: string) => { obj[a] = true });
+        form.amenities = obj;
+      } else if (modalName === 'rules') {
+        listing?.property_rules?.forEach((r: string) => { obj[r] = true });
+        form.rules = obj;
+      }
+    } else if (modalName === 'rooms') {
+      form.rooms = listing?.rooms || [];
+    } else if (modalName === 'location') {
+      form.city = listing?.city || '';
+    } else if (modalName === 'photos') {
+      form.uploadedPhotos = listing?.photos || [];
+    }
+    setEditForm(form);
     setActiveEditModal(modalName);
   };
 
@@ -37,12 +67,19 @@ export default function ListingPreviewPage() {
       if (!updatedListing.translations.en) updatedListing.translations.en = { name: updatedListing.id };
       updatedListing.translations.en.description = editForm.description;
     } else if (activeEditModal === 'photos') {
-      updatedListing.photos = editForm.photos.split('\n').filter((p: string) => p.trim() !== '');
+      updatedListing.photos = editForm.uploadedPhotos || [];
     } else if (activeEditModal === 'accessibility') {
-      // Just a mock save for prototype
-      alert("Saved accessibility features locally.");
+      updatedListing.accessibility_items = Object.entries(editForm.accessibility || {}).filter(([_, v]) => v).map(([k, _]) => ({ label: k, value: true, data_state: 'reported' as any }));
     } else if (activeEditModal === 'sustainability') {
-      alert("Saved sustainability features locally.");
+      updatedListing.sustainability_items = Object.entries(editForm.sustainability || {}).filter(([_, v]) => v).map(([k, _]) => ({ label: k, value: true, data_state: 'reported' as any }));
+    } else if (activeEditModal === 'amenities') {
+      updatedListing.amenities = Object.keys(editForm.amenities || {}).filter(k => editForm.amenities[k]);
+    } else if (activeEditModal === 'rules') {
+      updatedListing.property_rules = Object.keys(editForm.rules || {}).filter(k => editForm.rules[k]);
+    } else if (activeEditModal === 'rooms') {
+      updatedListing.rooms = editForm.rooms || [];
+    } else if (activeEditModal === 'location') {
+      updatedListing.city = editForm.city || '';
     }
     
     setListing(updatedListing);
@@ -93,23 +130,7 @@ export default function ListingPreviewPage() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-[#26382D] pb-24">
-      {/* Persistent Business Toolbar */}
-      <div className="sticky top-16 z-40 w-full bg-[#26382D] text-white px-4 py-3 shadow-md border-b border-[#26382D]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-md">
-              <Eye className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold uppercase tracking-wider">{t('preview.businessPreview', 'Business Preview')}</p>
-              <p className="text-xs text-white/80">{t('preview.previewMsg', 'You are viewing this listing exactly as a traveler sees it.')}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            {/* Removed global Manage Photos and Edit Listing buttons as per requirements. Editing is now inline. */}
-          </div>
-        </div>
-      </div>
+
       <PropertyDetailTemplate 
         listing={listing} 
         mode="business" 
@@ -122,10 +143,12 @@ export default function ListingPreviewPage() {
         onClose={() => setActiveEditModal(null)}
         title={`Edit ${activeEditModal ? activeEditModal.charAt(0).toUpperCase() + activeEditModal.slice(1) : ''}`}
         footer={
-          <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setActiveEditModal(null)}>Cancel</Button>
-            <Button variant="primary" onClick={handleSaveEdit}>Save Changes</Button>
-          </div>
+          ['about', 'photos', 'location'].includes(activeEditModal || '') ? (
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => setActiveEditModal(null)}>Cancel</Button>
+              <Button variant="primary" onClick={handleSaveEdit}>Save Changes</Button>
+            </div>
+          ) : undefined
         }
       >
         <div className="space-y-4">
@@ -143,21 +166,88 @@ export default function ListingPreviewPage() {
           
           {activeEditModal === 'photos' && (
             <div>
-              <label className="block text-sm font-medium text-[#26382D] mb-1">Photo URLs (One per line)</label>
-              <textarea 
-                className="w-full h-48 p-3 rounded-xl border border-[#D8C9BE] focus:border-[#7C9278] focus:ring-1 focus:ring-[#7C9278] outline-none text-sm"
-                value={editForm.photos || ''}
-                onChange={(e) => setEditForm({...editForm, photos: e.target.value})}
-                placeholder="https://example.com/photo1.jpg"
-              />
-              <p className="text-xs text-[#26382D]/60 mt-2">Enter direct image URLs.</p>
+              <label className="block text-sm font-medium text-[#26382D] mb-1">Upload Photos</label>
+              <div className="border-2 border-dashed border-[#D8C9BE] rounded-xl p-6 text-center hover:bg-[#F8F6F3] transition-colors relative cursor-pointer">
+                <input 
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    const newPhotos = files.map(f => URL.createObjectURL(f));
+                    setEditForm({...editForm, uploadedPhotos: [...(editForm.uploadedPhotos || []), ...newPhotos]});
+                  }}
+                />
+                <Camera className="w-8 h-8 mx-auto text-[#7C9278] mb-2" />
+                <p className="text-sm text-[#26382D] font-medium">Click or drag photos to upload</p>
+                <p className="text-xs text-[#26382D]/60 mt-1">Supports JPG, PNG, WEBP</p>
+              </div>
+              <div className="flex gap-2 flex-wrap mt-4">
+                {(editForm.uploadedPhotos || []).map((p: string, i: number) => (
+                  <div key={i} className="w-20 h-20 bg-[#F5F3ED] rounded-lg overflow-hidden border border-[#E5DFD6]">
+                    <img src={p} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {['accessibility', 'sustainability', 'amenities', 'rooms', 'location', 'rules'].includes(activeEditModal || '') && (
-            <div className="text-center py-8">
-              <Edit2 className="w-12 h-12 text-[#26382D]/20 mx-auto mb-4" />
-              <p className="text-[#26382D]/70 font-medium">Please edit {activeEditModal} details from your dashboard or during onboarding.</p>
+          {activeEditModal === 'accessibility' && (
+            <AccessibilityStep 
+              value={editForm.accessibility || {}} 
+              onChange={(val) => setEditForm({...editForm, accessibility: val})} 
+              onBack={() => setActiveEditModal(null)} 
+              onContinue={handleSaveEdit} 
+            />
+          )}
+
+          {activeEditModal === 'sustainability' && (
+            <SustainabilityStep 
+              value={editForm.sustainability || {}} 
+              onChange={(val) => setEditForm({...editForm, sustainability: val})} 
+              onBack={() => setActiveEditModal(null)} 
+              onContinue={handleSaveEdit} 
+            />
+          )}
+
+          {activeEditModal === 'amenities' && (
+            <AmenitiesStep 
+              value={editForm.amenities || {}} 
+              onChange={(val) => setEditForm({...editForm, amenities: val})} 
+              onBack={() => setActiveEditModal(null)} 
+              onContinue={handleSaveEdit} 
+            />
+          )}
+
+          {activeEditModal === 'rules' && (
+            <RulesStep 
+              value={editForm.rules || {}} 
+              onChange={(val) => setEditForm({...editForm, rules: val})} 
+              onBack={() => setActiveEditModal(null)} 
+              onContinue={handleSaveEdit} 
+            />
+          )}
+          
+          {activeEditModal === 'rooms' && (
+            <RoomsStep 
+              value={editForm.rooms || []} 
+              onChange={(val) => setEditForm({...editForm, rooms: val})} 
+              onBack={() => setActiveEditModal(null)} 
+              onContinue={handleSaveEdit} 
+            />
+          )}
+
+          {['location'].includes(activeEditModal || '') && (
+            <div>
+              <label className="block text-sm font-medium text-[#26382D] mb-1">City</label>
+              <input 
+                type="text"
+                className="w-full p-3 rounded-xl border border-[#D8C9BE] focus:border-[#7C9278] focus:ring-1 focus:ring-[#7C9278] outline-none"
+                value={editForm.city || ''}
+                onChange={(e) => setEditForm({...editForm, city: e.target.value})}
+                placeholder="E.g. Goa, Mumbai..."
+              />
             </div>
           )}
         </div>

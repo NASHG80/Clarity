@@ -301,13 +301,35 @@ export function PropertyDetailTemplate({ listing, mode, onEdit }: PropertyDetail
                 <h2 className="text-xl font-serif font-bold text-[#26382D]">{t('preview.location', 'Location')}</h2>
                 {renderEditButton('location')}
               </div>
-              <div className="w-full h-48 bg-[#E5DFD6] rounded-xl flex flex-col items-center justify-center text-[#26382D]/40 mb-4 border border-[#D8C9BE]">
-                <MapIcon className="w-8 h-8 mb-2" />
-                <span className="text-sm font-medium">{t('preview.mapPreview', 'Map Preview')}</span>
-              </div>
+              {(() => {
+                const mapQuery = encodeURIComponent(listing.address || listing.city || 'India');
+                const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+                const googleMapSrc = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${mapQuery}&zoom=15`;
+                return (
+                  <div className="w-full h-56 rounded-xl overflow-hidden border border-[#D8C9BE] mb-4 relative">
+                    <iframe
+                      title="Property Location"
+                      src={googleMapSrc}
+                      className="w-full h-full"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${mapQuery}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm text-[#26382D] text-xs px-2 py-1 rounded-md border border-[#D8C9BE] hover:bg-white transition-colors"
+                    >
+                      View on Google Maps ↗
+                    </a>
+                  </div>
+                );
+              })()}
               <p className="text-[#26382D]/80 text-sm flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{listing.address || listing.city || 'Location Details'} — <em>{listing.location ? 'Map coordinates set' : t('preview.exactLocationHidden', 'Exact location details pending')}</em></span>
+                <span>{listing.address || listing.city || 'Location Details'}</span>
               </p>
             </section>
 
