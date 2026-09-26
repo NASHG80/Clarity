@@ -1,11 +1,12 @@
 # Tech Stack (v2)
 
 ## Frontend
-- React + Vite
+- React + Vite + TypeScript (all components are `.tsx`, all plain
+  modules are `.ts` — see `frontend/tsconfig.json`)
 - Tailwind CSS
 - React Router (route groups for B2C and B2B, shared component library)
 - Recharts (B2B analytics charts, funnel, breakdown bars)
-- Leaflet + OpenStreetMap (multi-modal journey / map views)
+- Google Maps JavaScript API (multi-modal journey / map views)
 - react-i18next (i18n: English, Hindi, Marathi)
 - Google Fonts: Noto Sans Devanagari (or Noto Sans) loaded alongside
   the Latin UI font so Hindi/Marathi render correctly, not as tofu boxes
@@ -47,10 +48,12 @@ Setup:
 ```
 cd frontend
 npm create vite@latest . -- --template react
-npm install tailwindcss react-router-dom recharts leaflet react-leaflet \
+npm install tailwindcss react-router-dom recharts @react-google-maps/api \
   react-i18next i18next razorpay
 npm run dev
 ```
+
+Note: Google Maps requires an API key with billing enabled on the Google Cloud project (there is a free monthly credit, but a card must be on file).
 
 Responsive rule (see AGENTS.md #9): every page ships an explicit
 desktop component tree and an explicit mobile component tree, toggled
@@ -153,4 +156,5 @@ AI_VISION_URL=http://localhost:8001
 LLM_API_KEY=...
 RAZORPAY_KEY_ID=rzp_test_...
 RAZORPAY_KEY_SECRET=...
+VITE_GOOGLE_MAPS_API_KEY=...
 ```

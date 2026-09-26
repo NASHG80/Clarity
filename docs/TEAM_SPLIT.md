@@ -120,7 +120,7 @@ rather than showing "0 kg" or "N/A" ambiguously.
 What: segment-by-segment breakdown (walk/metro/bus) with per-segment
 time/CO2/accessibility.
 How: render `segments[]` from the transport result as a vertical
-timeline; Leaflet map optional overlay if time allows, static list is
+timeline; Google Maps optional overlay if time allows, static list is
 an acceptable fallback.
 Edge cases: a segment with no accessibility data -> show
 "Not verified" for that segment specifically, don't infer from the
@@ -615,6 +615,6 @@ Day 7:   Polish + rehearse both demo scripts (B2C + B2B), in Hindi
 # Stretch goals (only after all above is done and stable)
 - Verification inbox live end-to-end (Person B + C)
 - ML re-ranker layered on the rule-based engine (Person C)
-- Real Leaflet map rendering for the journey view (Person A)
+- Real Google Maps rendering for the journey view (Person A)
 - A real booking-capable supplier integration (Person C + D, large
   scope — only attempt if Day 6 integration finished early)
