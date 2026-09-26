@@ -1,42 +1,91 @@
 """Evaluation script for the experimental ML re-ranker.
 
-Compares Baseline (Rule-based) vs Experimental (ML Re-ranked) on synthetic data.
+Uses the held-out split='test' partition from D's prepared JSONL dataset.
+
+SYNTHETIC PROXY EVALUATION — NOT REAL USER PERFORMANCE.
+These results reflect learning from a rule-derived synthetic target.
+They do NOT indicate real traveler preference accuracy.
+
+Usage:
+    python -m recommendation_engine.ml.evaluate
 """
+import os
+import json
+import pickle
 import numpy as np
-from recommendation_engine.ml.dataset import generate_synthetic_data
-from recommendation_engine.ml.predict import load_model
+from sklearn.metrics import mean_absolute_error
+
+FEATURE_COLS = ["f0_env_score", "f1_acc_score", "f2_aff_score", "f3_con_score",
+                "f4_env_weight", "f5_acc_weight", "f6_aff_weight", "f7_con_weight",
+                "f8_state_prio"]
+
+MODEL_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(MODEL_DIR, "model.pkl")
+DATASET_PATH = os.path.join(MODEL_DIR, "data", "ml_dataset.jsonl")
+
+
+def load_split(split: str):
+    rows = []
+    with open(DATASET_PATH, "r", encoding="utf-8") as f:
+        for line in f:
+            row = json.loads(line)
+            if row["split"] == split:
+                rows.append(row)
+    X = np.array([[r[col] for col in FEATURE_COLS] for r in rows], dtype=np.float32)
+    y = np.array([r["y"] for r in rows], dtype=np.float32)
+    return X, y, len(rows)
+
 
 def evaluate_model():
-    print("--- ML Re-ranker Evaluation ---")
-    print("WARNING: Data is 100% synthetic/demo data. Results do NOT reflect real user personalization accuracy.")
-    
-    # Generate test set
-    X_test, y_test = generate_synthetic_data(num_samples=500)
-    
-    model = load_model()
-    if model is None:
-        print("Model not found. Run train.py first.")
+    print("=" * 60)
+    print("SYNTHETIC PROXY EVALUATION — NOT REAL USER PERFORMANCE")
+    print("=" * 60)
+    print()
+    print("WARNING: Dataset is 100% synthetic/demo data, derived from")
+    print("the rule-based recommendation logic. Results do NOT reflect")
+    print("real traveler preferences or booking outcomes.")
+    print()
+
+    if not os.path.exists(MODEL_PATH):
+        print("ERROR: model.pkl not found. Run train.py first.")
         return
-        
+
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+
+    X_test, y_test, n_test = load_split("test")
+    print(f"Evaluating on test split ({n_test} rows)...")
+    print()
+
     y_pred = model.predict(X_test)
-    
-    # Baseline is predicting just the simple unweighted average or something
-    # But wait, our rule-based system predicts `base_scores`.
-    # Our synthetic data base_score is the dot product of axes and weights.
-    base_scores = (X_test[:, 0]*X_test[:, 4] + X_test[:, 1]*X_test[:, 5] + X_test[:, 2]*X_test[:, 6] + X_test[:, 3]*X_test[:, 7])
-    
-    # Metric: Mean Absolute Error (MAE) on synthetic score
-    mae_baseline = np.mean(np.abs(y_test - base_scores))
-    mae_experimental = np.mean(np.abs(y_test - y_pred))
-    
-    print("\n--- Mean Absolute Error (lower is better) ---")
-    print(f"Baseline (Rule-based ranking):   {mae_baseline:.4f}")
-    print(f"Experimental (ML Re-ranking):  {mae_experimental:.4f}")
-    
+
+    # Baseline: rule-based weighted sum (the weighted-sum the rule engine already computes)
+    # Reproduced from the dataset's own target formula — base_score without acc_penalty/state_bonus
+    base_scores = (X_test[:, 0] * X_test[:, 4] +
+                   X_test[:, 1] * X_test[:, 5] +
+                   X_test[:, 2] * X_test[:, 6] +
+                   X_test[:, 3] * X_test[:, 7])
+
+    mae_baseline = mean_absolute_error(y_test, base_scores)
+    mae_experimental = mean_absolute_error(y_test, y_pred)
+
+    print("--- Mean Absolute Error (lower is better) ---")
+    print(f"Baseline (Rule-based weighted sum): {mae_baseline:.4f}")
+    print(f"Experimental (ML Ridge re-ranker):  {mae_experimental:.4f}")
+    print()
+
     if mae_experimental < mae_baseline:
-        print("\nConclusion: The ML re-ranker successfully learns the synthetic non-linear preferences (e.g. data_state penalty) that the base rule-engine ignores.")
+        print("Observation: ML re-ranker reduces MAE vs baseline on the synthetic")
+        print("test split. This reflects learning the acc_penalty and state_bonus")
+        print("terms — not real user preferences.")
     else:
-        print("\nConclusion: ML did not improve ranking on synthetic data.")
-        
+        print("Observation: ML did not reduce MAE vs baseline on test split.")
+
+    print()
+    print("=" * 60)
+    print("SYNTHETIC PROXY EVALUATION — NOT REAL USER PERFORMANCE")
+    print("=" * 60)
+
+
 if __name__ == "__main__":
     evaluate_model()
