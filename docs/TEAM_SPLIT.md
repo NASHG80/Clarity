@@ -131,7 +131,7 @@ Same card pattern as A10, adapted for hotel fields (price/night,
 star rating, accessibility_items count summary).
 
 ## A15. Listing detail page (tabbed)
-What: Overview / Accessibility / Sustainability / Reviews tabs.
+What: Overview / Accessibility / Sustainability / Confirmations tabs.
 How: shared `Tabs` component (Person B), each accessibility/
 sustainability item rendered with its own `DataStateBadge` — never
 collapsed into one summary badge.

@@ -1,0 +1,246 @@
+--- .\src\b2c\components\EmissionsInfoPopover.tsx ---
+  EmissionsInfoPopover — placeholder component
+--- .\src\b2c\components\ExperienceCard.tsx ---
+  DEMO
+  DEMO
+--- .\src\b2c\components\FilterBottomSheet.tsx ---
+  FilterBottomSheet — placeholder component
+--- .\src\b2c\components\FilterSidebar.tsx ---
+  FilterSidebar — placeholder component
+--- .\src\b2c\components\JourneySegmentTimeline.tsx ---
+  ;
+    case 'bus':
+    case 'shuttle':
+      return
+  ;
+    default:
+      return
+--- .\src\b2c\components\RequirementChips.tsx ---
+  RequirementChips — placeholder component
+--- .\src\b2c\components\TradeOffCard.tsx ---
+  TradeOffCard — placeholder component
+--- .\src\b2c\components\WeightSliders.tsx ---
+  WeightSliders — placeholder component
+--- .\src\b2c\pages\AccommodationResultsPage.tsx ---
+  (null);
+  const [results, setResults] = useState
+--- .\src\b2c\pages\ExplorePage.tsx ---
+  ([]);
+  const [selectedExperiences, setSelectedExperiences] = useState
+  (
+    location.state?.selectedExperiences || []
+  );
+  const [loading, setLoading] = useState
+  (true);
+  const [error, setError] = useState
+--- .\src\b2c\pages\JourneyViewPage.tsx ---
+  );
+
+  return (
+  Journey Info
+  Google Maps overlay is deferred (requires route geometry).
+--- .\src\b2c\pages\LandingPage.tsx ---
+  LandingPage — placeholder, see docs/TEAM_SPLIT.md for scope
+--- .\src\b2c\pages\ListingDetailPage.tsx ---
+  (null);
+  const [loading, setLoading] = useState
+  (true);
+  const [error, setError] = useState
+  (false);
+  const [activeTab, setActiveTab] = useState
+  );
+
+  return (
+--- .\src\b2c\pages\PaymentPage.tsx ---
+  PaymentPage — placeholder, see docs/TEAM_SPLIT.md for scope
+--- .\src\b2c\pages\RequirementFormPage.tsx ---
+  (initialData?.origin || '');
+  const [destination, setDestination] = useState
+  (initialData?.destination || '');
+  const [adults, setAdults] = useState
+  (
+    initialData?.adult_count !== undefined && initialData?.adult_count !== null
+      ? initialData.adult_count
+      : ''
+  );
+  const [children, setChildren] = useState
+  (initialData?.children_count ?? 0);
+  const [seniors, setSeniors] = useState
+  (initialData?.senior_count ?? 0);
+  const [nights, setNights] = useState
+  (
+    initialData?.nights !== undefined && initialData?.nights !== null
+      ? initialData.nights
+      : ''
+  );
+  
+  // Wheelchair count prefill: only use explicit count if present, never infer 1 from general flag
+  const [wheelchairUsers, setWheelchairUsers] = useState
+  (
+    (initialData as any)?.wheelchair_count !== undefined && (initialData as any)?.wheelchair_count !== null
+      ? (initialData as any).wheelchair_count
+      : ''
+  );
+
+  // RULE 6 & A5: Detailed chips are pre-checked ONLY from explicitly stated detailed IDs.
+  // Coarse flags (wheelchair, accessible_transport, accessible_accommodation) must NOT auto-check detailed chips.
+  const [selectedChips, setSelectedChips] = useState
+  !CANONICAL_ACCESSIBILITY_IDS.includes(flag as any)
+  );
+
+  // Budget state (A6: range slider + numeric input synced both ways)
+  const [budgetMax, setBudgetMax] = useState
+  (initialData?.budget_max || 20000);
+  const [budgetInput, setBudgetInput] = useState
+  (String(initialData?.budget_max || 20000));
+  
+  // Time state (A7)
+  const [timeMaxHours, setTimeMaxHours] = useState
+  (initialData?.time_max_hours || 8);
+  const [timeInput, setTimeInput] = useState
+  0 && budgetMax
+  (false);
+  const [isSubmitted, setIsSubmitted] = useState
+  (false);
+  const [isDirty, setIsDirty] = useState
+  (false);
+  const [pendingPersona, setPendingPersona] = useState
+  );
+
+  return (
+--- .\src\b2c\pages\TransportResultsPage.tsx ---
+  ;
+    case 'train':
+      return
+  ;
+    case 'bus':
+      return
+  ;
+    case 'taxi':
+    case 'car':
+      return
+  ;
+    default:
+      return
+  s.data_state === 'demo_synthetic');
+
+  return (
+  (null);
+  const [results, setResults] = useState
+--- .\src\b2c\pages\TripPromptPage.tsx ---
+  TripPromptPage — placeholder, see docs/TEAM_SPLIT.md for scope
+--- .\src\b2c\pages\TripSummaryPage.tsx ---
+  ;
+    case 'train':
+      return
+  ;
+    case 'bus':
+      return
+  ;
+    case 'taxi':
+    case 'car':
+      return
+  ;
+    default:
+      return
+  navigate(-1);
+
+  // Validate state
+  const isInvalid = !transportResult || !hotelResult || !stay || !stay.nights || stay.nights
+  );
+
+  return (
+--- .\src\shared\homepage.tsx ---
+  (null);
+
+  // NLU Extraction and Clarification State (Person A3 & A4)
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [isClarificationModalOpen, setIsClarificationModalOpen] = useState(false);
+  const [clarificationQueue, setClarificationQueue] = useState
+  ([]);
+  const [currentClarificationIndex, setCurrentClarificationIndex] = useState(0);
+  const [clarificationAnswer, setClarificationAnswer] = useState('');
+  const [clarificationError, setClarificationError] = useState
+  (null);
+  const [extractedAccumulator, setExtractedAccumulator] = useState
+  Green &amp; Inclusive Travel
+  English
+  EN
+  HI
+  MR
+  Press
+  ↵ Enter
+  to search
+  Konkan Corridor &bull; Western Ghats Rail
+  Step-free platform boarding &bull; 82% lower emissions than Mumbai–Goa flights
+  18.4 kg CO₂e / traveler
+  The Decision Matrix
+  Sernabatim Heritage Haven &bull; South Goa
+  100% Step-Free &bull; Rainwater-Harvested
+  Physical Dignity &amp; Ease
+  Audited door clearances &amp; platform hoists
+  Ecological Harmony
+  Electric rail corridors &amp; zero-waste homestays
+  Conscious Synthesis
+  Mobility
+  100% Step-Free
+  Carbon
+  -82% vs Flights
+  Certainty
+  Verified Evidence
+  Hospitality &amp; Transit Operators
+  450+ verified eco-homestays in India
+  MUMBAI &bull; BENGALURU &bull; DELHI &bull; GOA &bull; KOCHI
+  Navigation
+  Prioritizing low-carbon electrified transit and physical accessibility standards across India.
+  Back to top
+  WCAG 2.1 AA Accessible
+  &bull;
+  B2C Travel Prototype
+  Green &amp; Inclusive Travel Network
+  Inquiry Received
+  Our audit team will connect within 24 hours to schedule your step-free and energy assessment.
+  Property / Service Name
+  Region in India
+  Goa
+  Maharashtra (Konkan / Mumbai)
+  Kerala (Backwaters / Wayanad)
+  Rajasthan (Jaipur / Udaipur)
+  Karnataka (Coorg / Nilgiris)
+  Himachal Pradesh
+  Category
+  Eco-Resort / Homestay
+  Accessible Ground Fleet
+  Heritage Hotel
+  Activity / Tour Guide
+  Inclusion Standards:
+  • Verified doorway widths (&ge; 850mm) and step-free access
+  • Renewable energy supply or zero-single-use plastics
+  Welcome to Conscious Travel
+  Sign in to save your verified accessibility preferences, low-carbon journey drafts, and favorite stays across India.
+  Sign in with Mobile OTP (India)
+  Continue with Email
+  Universal design standards compliant &bull; WCAG 2.1 AA
+  );
+
+  return (
+  Close dialog
+  Green & Inclusive Travel Homepage
+  Language selector
+  Toggle menu
+--- .\src\shared\components\DataStateBadge.tsx ---
+  DataStateBadge — placeholder component
+--- .\src\shared\components\LanguageSwitcher.tsx ---
+  LanguageSwitcher — placeholder component
+--- .\src\shared\components\Modal.tsx ---
+  Modal — placeholder component
+--- .\src\shared\components\Navbar.tsx ---
+  Green &amp; Inclusive Travel
+  English
+  EN
+  HI
+  MR
+  Green & Inclusive Travel Homepage
+  Language selector
+--- .\src\shared\components\Tabs.tsx ---
+  Tabs — placeholder component

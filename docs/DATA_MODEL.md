@@ -72,15 +72,16 @@ For modes with a defensible benchmark (e.g. flights), set
   "_id": "exp_001",
   "city": "Goa",
   "translations": {
-    "en": { "name": "Accessible beach walk — Miramar" },
-    "hi": { "name": "..." },
-    "mr": { "name": "..." }
+    "en": { "name": "Accessible beach walk — Miramar", "description": "A fully step-free coastal experience." },
+    "hi": { "name": "...", "description": "..." },
+    "mr": { "name": "...", "description": "..." }
   },
   "accessibility": { "value": "step_free_path", "data_state": "community_confirmed" },
   "environmental_impact": { "value": "low", "data_state": "reported" },
   "cost_inr": 0,
   "duration_minutes": 60,
-  "distance_km": 2.1
+  "distance_km": 2.1,
+  "data_state": "demo_synthetic"
 }
 ```
 
