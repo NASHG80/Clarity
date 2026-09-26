@@ -68,6 +68,7 @@ Response:
         "emission_factor": 0.03
       },
       "accessibility": { "value": "high", "data_state": "demo_synthetic" },
+      "source": "seeded",
       "personal_match_pct": 91,
       "trade_off_summary": [
         "Meets your accessibility requirement",
