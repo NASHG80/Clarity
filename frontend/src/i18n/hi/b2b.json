@@ -144,7 +144,7 @@
   "demand.searches_one": "{{formattedCount}} खोज",
   "demand.searches_other": "{{formattedCount}} खोजें",
   "dataState.verified": "सत्यापित",
-  "dataState.reported": "प्रॉपर्टी द्वारा रिपोर्ट किया गया",
+  "dataState.reported": "रिपोर्ट किया गया",
   "dataState.community_confirmed": "यात्रियों द्वारा पुष्टीकृत",
   "dataState.not_verified": "असत्यापित",
   "dataState.demo_synthetic": "डेमो डेटा — केवल प्रोटोटाइप"

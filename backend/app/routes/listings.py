@@ -1,4 +1,4 @@
-"""Listings routes — GET /api/listings/{id} and POST /api/listings.
+"""Listings routes — GET /api/listings/{id}, GET /api/listings, and POST /api/listings.
 
 Rules (AGENTS.md / API_CONTRACT.md):
   - POST /api/listings accepts only data_state "reported" or "demo_synthetic".
@@ -7,9 +7,11 @@ Rules (AGENTS.md / API_CONTRACT.md):
 """
 
 import json
+import uuid
 from pathlib import Path
-from typing import Optional
-from fastapi import APIRouter
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException
+
 from app.db.mongo import get_db
 from app.models.schemas import (
     ChecklistItem,
@@ -26,7 +28,28 @@ router = APIRouter(prefix="/api", tags=["Listings"])
 
 
 # ---------------------------------------------------------------------------
-# GET /api/listings/{listing_id}
+# GET /api/listings — list all listings (for business dashboard)
+# ---------------------------------------------------------------------------
+
+@router.get("/listings", response_model=List[ListingDetailResponse])
+async def list_all_listings() -> List[ListingDetailResponse]:
+    """Return all listings (for business dashboard)."""
+    db = get_db()
+    cursor = db.hotels.find()
+    results = []
+    for doc in cursor:
+        doc["id"] = str(doc.pop("_id"))
+        if "translations" not in doc:
+            doc["translations"] = {"en": {"name": doc.get("name", doc["id"]), "description": ""}}
+        try:
+            results.append(ListingDetailResponse(**doc))
+        except Exception:
+            pass
+    return results
+
+
+# ---------------------------------------------------------------------------
+# GET /api/listings/{listing_id} — full listing detail
 # ---------------------------------------------------------------------------
 
 @router.get("/listings/{listing_id}", response_model=ListingDetailResponse)
@@ -136,19 +159,42 @@ async def get_listing(listing_id: str) -> ListingDetailResponse:
 
 
 # ---------------------------------------------------------------------------
-# POST /api/listings
+# POST /api/listings — create listing
 # ---------------------------------------------------------------------------
 
 @router.post("/listings", status_code=201, response_model=ListingCreateResponse)
 async def create_listing(payload: ListingCreateRequest) -> ListingCreateResponse:
-    """Create a listing manually (admin tool).
+    """Create a listing manually (persists to MongoDB).
 
     Contract rule: only "reported" or "demo_synthetic" are accepted here.
     "verified" is rejected at the Pydantic layer via ListingSubmitDataState enum.
     """
+    db = get_db()
+    listing_id = f"hotel_{uuid.uuid4().hex[:8]}"
+
+    doc = payload.model_dump()
+    doc["_id"] = listing_id
+    doc["data_state"] = payload.data_state.value
+    doc["translations"] = {
+        "en": {
+            "name": payload.name or "Unnamed Property",
+            "description": "Newly onboarded property."
+        }
+    }
+
+    # Optional fields expected by models
+    if "reviews_count" not in doc:
+        doc["reviews_count"] = 0
+    if "confirmations_count" not in doc:
+        doc["confirmations_count"] = 0
+    if "photos" not in doc:
+        doc["photos"] = []
+
+    db.hotels.insert_one(doc)
+
     return ListingCreateResponse(
-        status="stub_created",
-        id="listing_stub_001",
+        status="created",
+        id=listing_id,
         data_state=payload.data_state,
-        note="C1 stub — not persisted to MongoDB. Real write implemented in later C tasks.",
+        note="Listing persisted to MongoDB."
     )

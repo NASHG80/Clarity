@@ -346,13 +346,21 @@ class AccommodationSearchResponse(BaseModel):
 # LISTINGS — GET /api/listings/{id} and POST /api/listings
 # ===========================================================================
 
-class ListingCreateRequest(_StrictBase):
+class ListingCreateRequest(BaseModel):
     """Manual listing creation — only 'reported' or 'demo_synthetic' accepted."""
+    model_config = ConfigDict(extra="ignore")
     data_state: ListingSubmitDataState
     name: Optional[str] = None
     city: Optional[str] = None
+    description: Optional[str] = None
+    address: Optional[str] = None
     price_inr_per_night: Optional[float] = None
     star_rating: Optional[int] = None
+    amenity_items: List[ChecklistItem] = Field(default_factory=list)
+    accessibility_items: List[ChecklistItem] = Field(default_factory=list)
+    sustainability_items: List[ChecklistItem] = Field(default_factory=list)
+    rooms: List[Any] = Field(default_factory=list)
+    rules: Optional[Any] = None
 
 
 class ListingCreateResponse(BaseModel):
@@ -365,7 +373,7 @@ class ListingCreateResponse(BaseModel):
 
 class ListingDetailResponse(BaseModel):
     """Full listing detail — returned by GET /api/listings/{id}."""
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: str
     data_state: DataState

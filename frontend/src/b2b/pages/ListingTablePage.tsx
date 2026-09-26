@@ -4,28 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../shared/components/Button';
 import { Plus, Edit2, Eye, MapPin, Star, Building2, Map } from 'lucide-react';
 import { DataStateBadge } from '../../shared/components/DataStateBadge';
-import { searchAccommodation, AccommodationResult } from '../../lib/api';
+import { getAllListings, ListingResponse } from '../../lib/api';
 
 export default function ListingTablePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [properties, setProperties] = useState<AccommodationResult[]>([]);
+  const [properties, setProperties] = useState<ListingResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProperties() {
       try {
-        const res = await searchAccommodation({
-          origin: '',
-          destination: 'Goa',
-          destination_city: 'Goa',
-          budget_max: 100000,
-          time_max_hours: 100,
-          accessibility_required: [],
-          weights: { environmental: 1, accessibility: 1, affordability: 1, convenience: 1 },
-          include_unverified: true
-        });
-        setProperties(res.results);
+        const res = await getAllListings();
+        setProperties(res.reverse());
       } catch (err) {
         console.error("Failed to load listings", err);
       } finally {
@@ -46,6 +37,9 @@ export default function ListingTablePage() {
             {t('listings.manageSubtitle', 'Preview exactly how travelers see your listings.')}
           </p>
         </div>
+        <Button variant="primary" leftIcon={<Plus className="w-4 h-4" />} onClick={() => navigate('/onboarding')}>
+          Add Listing
+        </Button>
       </div>
 
       {loading ? (
@@ -57,7 +51,7 @@ export default function ListingTablePage() {
       ) : (
         <div className="flex flex-col gap-6">
           {properties.map((prop) => (
-            <div key={prop.id} className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
+            <div key={(prop as any).id || prop._id} className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
               
               {/* Left: Image */}
               <div className="w-full md:w-1/3 h-56 md:h-auto relative bg-[#E5DFD6]">
@@ -85,7 +79,7 @@ export default function ListingTablePage() {
                 <div>
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2">
                     <h2 className="text-xl md:text-2xl font-serif font-bold text-[#26382D] line-clamp-1">
-                      {prop.translations?.en?.name || 'Unnamed Property'}
+                      {prop.translations?.en?.name || (prop as any).name || 'Unnamed Property'}
                     </h2>
                     <div className="shrink-0 mt-1 sm:mt-0">
                       <DataStateBadge state={prop.data_state as any} />
