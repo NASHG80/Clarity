@@ -462,7 +462,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => 
           {/* Right: Action Button */}
           <div className="hidden md:flex items-center gap-5 text-sm">
             <button
-              onClick={() => document.getElementById('trip-input')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => navigate('/auth')}
               className="bg-[#26382D] text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-2 hover:bg-[#1A261E] transition-colors"
             >
               START PLANNING <ArrowRight className="w-3.5 h-3.5" />
@@ -585,7 +585,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => 
               
               <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
                 <button 
-                  onClick={() => navigate('/explore/Goa')}
+                  onClick={() => navigate('/auth')}
                   className="px-8 py-4 rounded-full bg-white text-[#26382D] text-xs font-bold tracking-wider hover:bg-[#F8F6F3] transition-colors flex items-center gap-2 shadow-xl hover:scale-105 duration-300"
                 >
                   PLAN MY JOURNEY <ArrowRight className="w-4 h-4" />

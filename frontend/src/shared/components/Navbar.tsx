@@ -118,7 +118,7 @@ export function Navbar({ navItems, brandName }: { navItems?: NavItem[], brandNam
           </div>
 
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/auth')}
             className="bg-[#26382D] text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-2 hover:bg-[#1A261E] transition-colors"
           >
             START PLANNING <ArrowRight className="w-3.5 h-3.5" />
