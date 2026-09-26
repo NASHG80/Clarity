@@ -110,7 +110,6 @@ export default function AccommodationResultCard({ result }: AccommodationResultC
                 className="inline-flex items-center bg-[#F8F6F3] border border-[#D8C9BE] rounded-full px-2.5 py-1"
               >
                 <span className="text-xs text-[#26382D] mr-2">{t(`features.${item.label}`, item.label)}</span>
-                {/* @ts-expect-error - Person B owns this component */}
                 <DataStateBadge state={item.data_state || 'not_verified'} />
               </div>
             ))}
@@ -120,7 +119,6 @@ export default function AccommodationResultCard({ result }: AccommodationResultC
                 className="inline-flex items-center bg-[#F4F9F5] border border-[#C5D9CB] rounded-full px-2.5 py-1"
               >
                 <span className="text-xs text-[#1F4029] mr-2">{t(`features.${item.label}`, item.label)}</span>
-                {/* @ts-expect-error - Person B owns this component */}
                 <DataStateBadge state={item.data_state || 'not_verified'} />
               </div>
             ))}

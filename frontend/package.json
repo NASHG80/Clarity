@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@react-google-maps/api": "^2.19.3",
+    "classnames": "^2.5.1",
     "i18next": "^23.14.0",
     "lucide-react": "^1.48.0",
     "razorpay": "^2.9.4",

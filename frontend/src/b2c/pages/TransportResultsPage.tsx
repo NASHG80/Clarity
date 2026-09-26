@@ -158,7 +158,6 @@ function A10TransportTradeOffCard({ result }: { result: TransportResult }) {
             <span className="font-semibold text-[#26382D]">{result.accessibility.value}</span>
             <div className="scale-90 origin-right">
               {/* Injecting Person B's shared component, even if it's a placeholder now */}
-              {/* @ts-expect-error ignoring prop errors since Person B hasn't defined them yet, but passing what they likely need */}
               <DataStateBadge state={result.accessibility.data_state} />
             </div>
           </div>

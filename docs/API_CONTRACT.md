@@ -345,3 +345,45 @@ in the frontend.
 Request: `{ "action": "accept" }` or `{ "action": "dispute" }`
 Response: `{ "success": true, "status": "accepted" }`
 Business responds to an individual traveler submission. Updates the submission status to `accepted` or `disputed`. Backend domain logic is responsible for updating the `confirmations` aggregate collection and potentially moving `data_state` toward `community_confirmed` when the threshold is reached.
+
+---
+
+## POST /api/auth/signup (NEW)
+Request:
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword",
+  "role": "customer",
+  "location": "28.6139, 77.2090"
+}
+```
+Note: `location` is optional and typically only provided for `role: "customer"`. Valid roles are `"customer"` or `"business"`.
+
+Response:
+```json
+{
+  "user_id": "usr_abc123",
+  "role": "customer",
+  "token": "mock_jwt_token",
+  "is_first_time": true
+}
+```
+
+## POST /api/auth/login (NEW)
+Request:
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword"
+}
+```
+Response:
+```json
+{
+  "user_id": "usr_abc123",
+  "role": "customer",
+  "token": "mock_jwt_token",
+  "is_first_time": false
+}
+```

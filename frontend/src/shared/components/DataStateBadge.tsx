@@ -56,3 +56,5 @@ export function DataStateBadge({ state, className = '', label }: DataStateBadgeP
     </Badge>
   );
 }
+
+export default DataStateBadge;

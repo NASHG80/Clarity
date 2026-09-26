@@ -23,6 +23,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Mic,
@@ -53,6 +54,7 @@ import {
 } from 'lucide-react';
 import heroBgImage from '../assets/images/hero_sustainable_india_travel_1790406163839.jpg';
 import accessibleGoaImg from '../assets/images/accessible_serene_retreat_goa_1790406178105.jpg';
+import cinematicHeroImg from '../assets/images/cinematic_high_end_architectural_travel_photography_of_a_modern_luxury_eco.png';
 import Navbar from './components/Navbar';
 import BottomNavBar from './components/BottomNavBar';
 import { extractTripNLU, NLUExtractedData, NLUMissingOrAmbiguousItem } from '../lib/api';
@@ -221,6 +223,7 @@ export interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => {
   const { t: tI18n, i18n } = useTranslation('b2c');
+  const navigate = useNavigate();
 
   const [currentLang, setCurrentLang] = useState<Language>(() => {
     return (localStorage.getItem('clarity_lang') as Language) || 'en';
@@ -426,116 +429,43 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => 
   const renderMobileHeader = () => (
     <>
       {/* -------------------------------------- */}
-      {/* 1. TOP NAVBAR                          */}
-      {/* -------------------------------------- */}
-      <header className="sticky top-0 z-40 bg-[#F1EDE9]/90 backdrop-blur-md border-b border-[#26382D]/8 transition-all">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 h-20 flex items-center justify-between">
+      {/* 1. TOP NAVBAR (Floating Pill) */}
+      <header className="fixed top-4 left-0 right-0 z-50 px-4 sm:px-6">
+        <div className="max-w-7xl mx-auto h-16 bg-[#F1EDE9]/95 backdrop-blur-md border border-[#26382D]/10 rounded-full flex items-center justify-between px-6 shadow-sm">
           
           {/* Logo / Wordmark */}
           <div className="flex items-center gap-3">
             <a 
               href="#top" 
-              className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] rounded-md"
+              className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] rounded-md"
               aria-label={tI18n('accessibility.home', 'Green & Inclusive Travel Homepage')}
             >
-              <div className="w-9 h-9 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-xs">
-                <svg className="w-5 h-5 text-[#A9B8A3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                  <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.5 12 13 14 10" strokeDasharray="2 2"/>
-                </svg>
+              <div className="w-8 h-8 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-xs">
+                <Leaf className="w-4 h-4" />
               </div>
-              <span className="font-serif text-2xl tracking-tight font-medium text-[#26382D]">
-                Green &amp; Inclusive Travel
+              <span className="font-serif text-xl tracking-tight font-medium text-[#26382D]">
+                EcoWay
               </span>
             </a>
           </div>
 
           {/* Center Links */}
-          <nav className="hidden md:flex items-center gap-9 text-[15px] font-medium tracking-wide text-[#26382D]/85">
-            <a 
-              href="#trip-input" 
-              className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all"
-            >
-              {t.nav.planTrip}
-            </a>
-            <a 
-              href="#value-propositions" 
-              className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all"
-            >
-              {t.nav.explore}
-            </a>
-            <a 
-              href="#editorial-philosophy" 
-              className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all"
-            >
-              {t.nav.trips}
-            </a>
+          {/* Center Links */}
+          <nav className="hidden md:flex items-center gap-8 text-[13px] font-semibold text-[#26382D]/80">
+            <a href="#value-propositions" className="hover:text-[#26382D] transition-colors">{t.nav.explore}</a>
+            <a href="#trip-input" className="hover:text-[#26382D] transition-colors">{t.nav.planTrip}</a>
+            <a href="#accessibility" className="hover:text-[#26382D] transition-colors">Accessibility</a>
+            <a href="#sustainability" className="hover:text-[#26382D] transition-colors">Sustainability</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); setIsBusinessModalOpen(true); }} className="hover:text-[#26382D] transition-colors">{t.nav.forBusinesses}</a>
           </nav>
 
-          {/* Right: For Businesses + Language Switcher + Sign In */}
+          {/* Right: Action Button */}
           <div className="hidden md:flex items-center gap-5 text-sm">
             <button
-              onClick={() => setIsBusinessModalOpen(true)}
-              className="text-[14px] font-medium text-[#26382D]/75 hover:text-[#26382D] transition-colors flex items-center gap-1.5 py-1.5 px-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] cursor-pointer"
+              onClick={() => navigate('/auth')}
+              className="bg-[#26382D] text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-2 hover:bg-[#1A261E] transition-colors"
             >
-              <span>{t.nav.forBusinesses}</span>
-              <ArrowUpRight className="w-3.5 h-3.5 text-[#7C9278]" />
-            </button>
-
-            <span className="w-[1px] h-4 bg-[#D8C9BE]" aria-hidden="true" />
-
-            {/* Language Switcher */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[#26382D] text-xs font-semibold tracking-wider hover:bg-[#F8F6F3] border border-transparent hover:border-[#D8C9BE] transition-all focus:outline-none cursor-pointer"
-                aria-label={tI18n('accessibility.languageSelector', 'Language selector')}
-              >
-                <Globe className="w-3.5 h-3.5 text-[#7C9278]" />
-                <span className="uppercase">{currentLang}</span>
-                <span className="text-[#A99587] text-[10px]">▼</span>
-              </button>
-
-              {langDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-36 bg-[#F8F6F3] rounded-xl shadow-[0_8px_24px_rgba(38,56,45,0.08)] border border-[#D8C9BE] py-1.5 z-50 animate-in fade-in duration-150">
-                  <button
-                    onClick={() => handleLanguageChange('en')}
-                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between cursor-pointer ${
-                      currentLang === 'en' ? 'bg-[#D8C9BE]/30 font-semibold text-[#26382D]' : 'text-[#26382D]/80 hover:bg-[#F1EDE9]'
-                    }`}
-                  >
-                    <span>English</span>
-                    <span className="text-[11px] text-[#A99587]">EN</span>
-                  </button>
-                  <button
-                    onClick={() => handleLanguageChange('hi')}
-                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between cursor-pointer ${
-                      currentLang === 'hi' ? 'bg-[#D8C9BE]/30 font-semibold text-[#26382D]' : 'text-[#26382D]/80 hover:bg-[#F1EDE9]'
-                    }`}
-                  >
-                    <span>हिन्दी</span>
-                    <span className="text-[11px] text-[#A99587]">HI</span>
-                  </button>
-                  <button
-                    onClick={() => handleLanguageChange('mr')}
-                    className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between cursor-pointer ${
-                      currentLang === 'mr' ? 'bg-[#D8C9BE]/30 font-semibold text-[#26382D]' : 'text-[#26382D]/80 hover:bg-[#F1EDE9]'
-                    }`}
-                  >
-                    <span>मराठी</span>
-                    <span className="text-[11px] text-[#A99587]">MR</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => setIsSignInModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#26382D]/20 text-[#26382D] text-xs font-semibold tracking-wide hover:bg-[#F8F6F3] hover:border-[#26382D] transition-all cursor-pointer"
-            >
-              <User className="w-3.5 h-3.5 text-[#7C9278]" />
-              <span>{t.nav.signIn}</span>
+              START PLANNING <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -631,200 +561,57 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => 
       <main className="flex-1">
         
         {/* 2. HERO SECTION */}
-        <section id="trip-input" className="relative pt-12 pb-16 sm:pt-20 sm:pb-24 overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none z-0 ambient-subtle-glow" />
-
-          <div className="relative z-10 max-w-5xl mx-auto px-6 sm:px-8 text-center">
+        <section className="relative pt-32 pb-32 flex flex-col justify-center overflow-hidden bg-[#1a261e]">
+          <img src={cinematicHeroImg} alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.85]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/60" />
+          
+          <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-8 w-full flex flex-col items-center justify-center text-center mt-8">
             
-            {/* Cormorant Garamond Headline */}
-            <div className="space-y-2 mb-6">
-              <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl font-normal tracking-tight text-[#26382D] leading-[1.08] text-balance">
-                <span className="block">{t.hero.headlinePart1}</span>
-                <span className="block font-light italic text-[#7C9278]">{t.hero.headlinePart2}</span>
-                <span className="block">{t.hero.headlinePart3}</span>
+            {/* Centered text */}
+            <div className="w-full flex flex-col items-center text-center">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-white text-[10px] font-bold tracking-widest uppercase mb-6 shadow-sm border border-white/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#A9B8A3]"></span>
+                INTELLIGENT ECO-HOSPITALITY
+              </span>
+              
+              <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white font-normal leading-[1.05] tracking-tight mb-6 drop-shadow-lg">
+                <span className="block font-semibold">Travel better.</span>
+                <span className="block italic text-[#D8C9BE] font-light mt-2">Leave less behind.</span>
               </h1>
-
-              {/* DM Sans Supporting Statement */}
-              <p className="max-w-2xl mx-auto text-base sm:text-lg text-[#26382D]/75 font-normal leading-relaxed pt-2">
-                {t.hero.supporting}
+              
+              <p className="text-white/90 text-lg md:text-xl max-w-lg mb-10 leading-relaxed font-light drop-shadow-md">
+                Discover journeys, stays and experiences that balance sustainability, accessibility, cost and comfort — intelligently.
               </p>
-            </div>
-
-            {/* 3. PRIMARY TRIP INPUT: Large rounded search-like card */}
-            <div className="mt-10 max-w-3xl mx-auto text-left">
-              <div className="bg-[#F8F6F3] rounded-3xl p-5 sm:p-7 border border-[#D8C9BE] shadow-[0_12px_36px_rgba(38,56,45,0.06)] hover:border-[#A99587] transition-all duration-300">
-                
-                <div className="flex items-center justify-between mb-3 text-xs tracking-wide">
-                  <label 
-                    htmlFor="trip-natural-input" 
-                    className="font-medium text-[#26382D] flex items-center gap-2 cursor-pointer uppercase tracking-[0.12em]"
-                  >
-                    <Search className="w-3.5 h-3.5 text-[#7C9278]" />
-                    <span>{t.inputCard.label}</span>
-                  </label>
-
-                  <div className="flex items-center gap-3">
-                    {tripQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setTripQuery('')}
-                        className="text-[#A99587] hover:text-[#26382D] transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
-                      >
-                        <X className="w-3 h-3" />
-                        <span>{t.inputCard.clear}</span>
-                      </button>
-                    )}
-                    <span className="text-[#A99587] text-[11px] font-mono tabular-nums">
-                      {tripQuery.length} {t.inputCard.charCount}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Natural Language Textarea */}
-                <div className="relative">
-                  <textarea
-                    id="trip-natural-input"
-                    rows={3}
-                    value={tripQuery}
-                    readOnly={isExtracting}
-                    onChange={(e) => {
-                      setTripQuery(e.target.value);
-                      if (promptError) setPromptError(null);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder={t.inputCard.placeholder}
-                    className={`w-full bg-transparent text-[#26382D] placeholder-[#26382D]/40 text-base sm:text-lg font-normal leading-relaxed resize-none focus:outline-none border-b border-[#D8C9BE]/50 pb-3 ${
-                      isExtracting ? 'opacity-70 cursor-wait' : ''
-                    }`}
-                    aria-label={t.inputCard.label}
-                  />
-
-                  {/* Inline prompt validation message */}
-                  {promptError && (
-                    <div className="mt-2 text-xs text-[#b91c1c] font-medium flex items-center gap-1.5 animate-in fade-in">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-[#b91c1c]" />
-                      <span>{promptError}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Bar */}
-                <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
-                  
-                  {/* Left: Dictate button & key hint */}
-                  <div className="flex items-center gap-3 text-xs text-[#26382D]/60">
-                    <button
-                      type="button"
-                      disabled={isExtracting}
-                      onClick={toggleVoiceInput}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all text-xs cursor-pointer ${
-                        isListening 
-                          ? 'bg-[#E8CFC4] border-[#A99587] text-[#26382D] animate-pulse font-medium'
-                          : 'border-[#D8C9BE] text-[#26382D]/75 hover:bg-[#F1EDE9] hover:text-[#26382D]'
-                      } ${isExtracting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      title={t.inputCard.voiceInputTooltip}
-                    >
-                      <Mic className={`w-3.5 h-3.5 ${isListening ? 'text-[#26382D]' : 'text-[#7C9278]'}`} />
-                      <span>{isListening ? 'Listening...' : 'Dictate'}</span>
-                    </button>
-
-                    <span className="hidden sm:inline text-[#A99587] text-[11px]">
-                      Press <kbd className="px-1.5 py-0.5 rounded bg-[#F1EDE9] text-[#26382D] font-mono text-[10px] border border-[#D8C9BE]">↵ Enter</kbd> to search
-                    </span>
-                  </div>
-
-                  {/* 4. PRIMARY CTA: Find My Options with Loading State */}
-                  <button
-                    type="button"
-                    disabled={isExtracting}
-                    onClick={handleFindOptions}
-                    className="group inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl bg-[#26382D] text-[#F8F6F3] text-sm font-medium tracking-wide hover:bg-[#1d2c23] active:scale-[0.98] transition-all shadow-[0_4px_16px_rgba(38,56,45,0.12)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {isExtracting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-[#A9B8A3]" />
-                        <span>{t.inputCard.analyzingText}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>{t.inputCard.buttonText}</span>
-                        <ArrowRight className="w-4 h-4 text-[#A9B8A3] group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </button>
-
-                </div>
-
-                <div className="mt-3 text-center sm:text-left">
-                  <p className="text-[12px] text-[#A99587] font-light">
-                    {t.inputCard.helperText}
-                  </p>
-                </div>
-
+              
+              <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="px-8 py-4 rounded-full bg-white text-[#26382D] text-xs font-bold tracking-wider hover:bg-[#F8F6F3] transition-colors flex items-center gap-2 shadow-xl hover:scale-105 duration-300"
+                >
+                  PLAN MY JOURNEY <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="flex flex-wrap items-center justify-center gap-4 text-[10px] text-white/80 font-bold tracking-[0.15em] uppercase">
+                <span className="flex items-center gap-1.5"><Sparkles className="w-3 h-3 text-[#D8C9BE]"/> AI-POWERED</span>
+                <span className="text-white/30">•</span>
+                <span className="flex items-center gap-1.5"><Leaf className="w-3 h-3 text-[#D8C9BE]"/> SUSTAINABILITY-AWARE</span>
+                <span className="text-white/30">•</span>
+                <span className="flex items-center gap-1.5"><Accessibility className="w-3 h-3 text-[#D8C9BE]"/> ACCESSIBILITY-FIRST</span>
               </div>
             </div>
-
-            {/* 5. EXAMPLE PROMPTS */}
-            <div className="mt-8 max-w-3xl mx-auto text-left">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7C9278]">
-                  {t.examplePrompts.heading}
-                </span>
-                <span className="h-[1px] flex-1 bg-[#D8C9BE]/50" />
-              </div>
-
-              <div className="flex flex-wrap gap-2.5">
-                {t.examplePrompts.items.map((prompt: any) => (
-                  <button
-                    key={prompt.id}
-                    type="button"
-                    onClick={() => setTripQuery(prompt.query)}
-                    className="text-left text-xs sm:text-[13px] px-3.5 py-2 rounded-xl bg-[#F8F6F3] border border-[#D8C9BE] text-[#26382D] hover:border-[#7C9278] hover:bg-white active:scale-[0.99] transition-all shadow-2xs group flex items-center gap-2 cursor-pointer"
-                  >
-                    <span className="text-[#A9B8A3] group-hover:text-[#7C9278] transition-colors">↗</span>
-                    <span className="font-normal">{prompt.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Photographic Vignette Anchor */}
-            <div className="mt-14 max-w-4xl mx-auto rounded-2xl overflow-hidden border border-[#D8C9BE]/60 relative shadow-sm">
-              <div className="relative aspect-[21/9] sm:aspect-[24/9] w-full bg-[#D8C9BE]/30 overflow-hidden">
-                <img 
-                  src={heroBgImage} 
-                  alt="Lush green Western Ghats with electric train route between Mumbai and Goa" 
-                  className="w-full h-full object-cover object-center filter brightness-[0.96] contrast-[1.02]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#26382D]/75 via-[#26382D]/20 to-transparent" />
-                <div className="absolute bottom-4 left-5 right-5 flex flex-col sm:flex-row sm:items-center justify-between text-left text-[#F8F6F3]">
-                  <div className="space-y-0.5">
-                    <span className="text-[11px] uppercase tracking-[0.18em] text-[#A9B8A3] font-medium">
-                      Konkan Corridor &bull; Western Ghats Rail
-                    </span>
-                    <p className="font-serif text-lg sm:text-xl font-light italic">
-                      Step-free platform boarding &bull; 82% lower emissions than Mumbai–Goa flights
-                    </p>
-                  </div>
-                  <div className="mt-2 sm:mt-0 flex items-center gap-2 text-xs font-mono text-[#E8CFC4]">
-                    <span>18.4 kg CO₂e / traveler</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           </div>
         </section>
 
         {/* 6. QUICK VALUE PROPOSITION (4 Simple Benefits with Evidence Badges) */}
-        <section id="value-propositions" className="py-16 sm:py-20 border-t border-[#D8C9BE]/50 relative z-10">
+        <section id="value-propositions" className="py-24 sm:py-32 relative z-10">
           <div className="max-w-7xl mx-auto px-6 sm:px-8">
             
-            <div className="text-center max-w-xl mx-auto mb-12">
-              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#7C9278] block mb-2">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#7C9278] block mb-4">
                 The Decision Matrix
               </span>
-              <h2 className="font-serif text-2xl sm:text-3xl font-normal text-[#26382D]">
+              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-[#26382D] tracking-tight">
                 {t.valueProps.title}
               </h2>
             </div>
@@ -863,17 +650,17 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => 
         </section>
 
         {/* 7. SMALL TRUST / EDITORIAL EXPLANATION SECTION */}
-        <section id="editorial-philosophy" className="py-20 sm:py-28 bg-[#F8F6F3] border-t border-[#D8C9BE]/50 relative z-10">
+        <section id="editorial-philosophy" className="py-24 sm:py-32 bg-[#F8F6F3] relative z-10">
           <div className="max-w-7xl mx-auto px-6 sm:px-8">
             
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-16">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center mb-16">
               
-              <div className="lg:col-span-7 space-y-6">
+              <div className="lg:col-span-7 space-y-8">
                 <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#7C9278]">
                   {t.editorial.kicker}
                 </span>
 
-                <h2 className="font-serif text-3xl sm:text-5xl font-normal text-[#26382D] leading-[1.12] text-balance">
+                <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-[#26382D] leading-[1.05] tracking-tight text-balance">
                   {t.editorial.heading}
                 </h2>
 
@@ -934,23 +721,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => 
         </section>
 
         {/* 8. ACCESSIBILITY + SUSTAINABILITY VISUAL (CONVERGENCE) */}
-        <section className="py-20 sm:py-28 relative overflow-hidden bg-[#F1EDE9]">
-          <div className="max-w-6xl mx-auto px-6 sm:px-8 text-center">
+        <section className="py-24 sm:py-32 relative overflow-hidden bg-[#F1EDE9]">
+          <div className="w-full px-0 text-center">
             
-            <div className="max-w-2xl mx-auto mb-16 space-y-3">
+            <div className="max-w-3xl mx-auto mb-20 space-y-6 px-6">
               <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#7C9278] block">
                 {t.convergence.kicker}
               </span>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-[#26382D] text-balance">
+              <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-normal text-[#26382D] tracking-tight text-balance">
                 {t.convergence.title}
               </h2>
-              <p className="text-sm sm:text-base text-[#26382D]/75 font-light leading-relaxed">
+              <p className="text-base sm:text-xl text-[#26382D]/75 font-light leading-relaxed">
                 {t.convergence.description}
               </p>
             </div>
 
-            {/* Abstract Tasteful Visual Composition */}
-            <div className="relative max-w-4xl mx-auto bg-[#F8F6F3] rounded-3xl p-8 sm:p-12 border border-[#D8C9BE] shadow-[0_12px_32px_rgba(38,56,45,0.04)]">
+            {/* Abstract Tasteful Visual Composition - Full Width */}
+            <div className="relative w-full bg-[#F8F6F3] py-16 sm:py-24 px-6 sm:px-12 border-y border-[#D8C9BE]">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start relative z-10">
                 
