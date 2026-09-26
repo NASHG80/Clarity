@@ -1,1 +1,48 @@
-"""DB package."""
+"""DB package for Green & Inclusive Travel."""
+
+from .mongo import (
+    get_mongo_client,
+    get_db,
+    close_mongo_client,
+    get_collection,
+    get_hotels_collection,
+    get_transport_routes_collection,
+    get_experiences_collection,
+    get_businesses_collection,
+    get_confirmations_collection,
+    get_ai_inspections_collection,
+    get_analytics_events_collection,
+    COLLECTION_HOTELS,
+    COLLECTION_TRANSPORT_ROUTES,
+    COLLECTION_EXPERIENCES,
+    COLLECTION_BUSINESSES,
+    COLLECTION_CONFIRMATIONS,
+    COLLECTION_AI_INSPECTIONS,
+    COLLECTION_ANALYTICS_EVENTS,
+    ALL_COLLECTIONS,
+)
+from .init import init_db, ensure_indexes
+
+__all__ = [
+    "get_mongo_client",
+    "get_db",
+    "close_mongo_client",
+    "get_collection",
+    "get_hotels_collection",
+    "get_transport_routes_collection",
+    "get_experiences_collection",
+    "get_businesses_collection",
+    "get_confirmations_collection",
+    "get_ai_inspections_collection",
+    "get_analytics_events_collection",
+    "init_db",
+    "ensure_indexes",
+    "COLLECTION_HOTELS",
+    "COLLECTION_TRANSPORT_ROUTES",
+    "COLLECTION_EXPERIENCES",
+    "COLLECTION_BUSINESSES",
+    "COLLECTION_CONFIRMATIONS",
+    "COLLECTION_AI_INSPECTIONS",
+    "COLLECTION_ANALYTICS_EVENTS",
+    "ALL_COLLECTIONS",
+]

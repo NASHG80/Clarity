@@ -69,6 +69,7 @@ Response:
         "emission_factor": 0.03
       },
       "accessibility": { "value": "high", "data_state": "demo_synthetic" },
+      "source": "seeded",
       "personal_match_pct": 91,
       "trade_off_summary": [
         "Meets your accessibility requirement",
@@ -100,6 +101,8 @@ Note: an option's `emissions.method` is either `"estimated"` (formula-
 based, always includes `distance_km` + `emission_factor`) or
 `"route_benchmark"` (includes `benchmark_kg` + `reduction_pct`).
 Never combine both in one object.
+
+Persistence Side Effect (C16): This endpoint asynchronously persists valid search requests containing a non-empty `accessibility_required` list to the `search_requests` collection for demand analytics. The request/response shapes remain unchanged.
 
 ## POST /api/search/accommodation
 Request (Transport Search shape + `destination_city`):
@@ -143,6 +146,8 @@ Response:
 }
 ```
 Note: `data_state` must be maintained strictly per item per the integrity rules. Do not create a merged score. `demo_synthetic` can appear at the root level (`data_state`) or item level. The frontend must safely fall back to `en` if a `translations` key is missing. No emissions fields are supported for accommodations.
+
+Persistence Side Effect (C16): This endpoint asynchronously persists valid search requests containing a non-empty `accessibility_required` list to the `search_requests` collection for demand analytics. The request/response shapes remain unchanged.
 
 ## GET /api/listings/{id}
 Response schema:

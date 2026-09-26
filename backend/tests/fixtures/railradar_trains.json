@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "data": {
+    "from": {
+      "code": "CSTM",
+      "name": "Chatrapati Shivaji Maharaj Terminus"
+    },
+    "to": {
+      "code": "MAO",
+      "name": "Madgaon Jn"
+    },
+    "trains": [],
+    "count": 0
+  },
+  "meta": {
+    "timestamp": "2026-09-26T17:41:02+05:30",
+    "traceId": "397fca7b-357c-43a4-b372-001fa4efa78a",
+    "source": "database",
+    "executionTime": 16
+  }
+}

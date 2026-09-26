@@ -1,1 +1,86 @@
-"""FastAPI entry point — mounts all routers from app/routes/."""
+"""FastAPI entry point — mounts all routers from app/routes/.
+
+Start the server:
+    uvicorn app.main:app --reload --port 8000
+
+C1: all routes are stubs returning deterministic contract-shaped responses.
+     Real business logic is added in C2-C22.
+"""
+
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+# ---------------------------------------------------------------------------
+# Load .env (backend/.env) — must happen before any os.environ reads
+# ---------------------------------------------------------------------------
+_env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=_env_path, override=True)
+
+# ---------------------------------------------------------------------------
+# Import route modules
+# ---------------------------------------------------------------------------
+from app.routes import (  # noqa: E402  (imports after load_dotenv is intentional)
+    nlu,
+    search,
+    listings,
+    business,
+    ai,
+    analytics,
+    payments,
+    confirmations,
+)
+
+# ---------------------------------------------------------------------------
+# FastAPI application
+# ---------------------------------------------------------------------------
+app = FastAPI(
+    title="Green & Inclusive Travel — Backend API",
+    description=(
+        "Personalized Travel Decision Engine for sustainable + accessible travel in India. "
+        "B2C: natural-language intake → recommendation engine → Razorpay test payment. "
+        "B2B: business onboarding → AI photo analysis → Pro analytics dashboard. "
+        "See docs/API_CONTRACT.md for the frozen endpoint contract."
+    ),
+    version="0.1.0-c1-stubs",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if isinstance(exc.detail, dict) and "code" in exc.detail:
+        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"code": "ERR_UNKNOWN", "detail": str(exc.detail)}
+    )
+
+# ---------------------------------------------------------------------------
+# CORS — scoped to the frontend dev origin; configurable via FRONTEND_ORIGIN
+# ---------------------------------------------------------------------------
+_frontend_origin = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[_frontend_origin],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ---------------------------------------------------------------------------
+# Register all routers
+# ---------------------------------------------------------------------------
+app.include_router(nlu.router)
+app.include_router(search.router)
+app.include_router(listings.router)
+app.include_router(business.router)
+app.include_router(ai.router)
+app.include_router(analytics.router)
+app.include_router(payments.router)
+app.include_router(confirmations.router)

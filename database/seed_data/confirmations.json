@@ -1,0 +1,23 @@
+[
+  {
+    "_id": "conf_001",
+    "hotel_id": "hotel_014",
+    "item_label": "roll_in_shower",
+    "confirmed_by_count": 4,
+    "disputed_count": 1
+  },
+  {
+    "_id": "conf_002",
+    "hotel_id": "hotel_001",
+    "item_label": "braille_signage",
+    "confirmed_by_count": 2,
+    "disputed_count": 0
+  },
+  {
+    "_id": "conf_003",
+    "hotel_id": "hotel_006",
+    "item_label": "solar_power",
+    "confirmed_by_count": 5,
+    "disputed_count": 0
+  }
+]
