@@ -1,6 +1,9 @@
 // Single source of truth for all fetch calls — must match docs/API_CONTRACT.md
-<<<<<<< HEAD
-export const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BACKEND_URL) ?? "http://localhost:8000";
+export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000";
+
+// =============================================================================
+// B2B — AI Inspection & Confirmation (C11/C13)
+// =============================================================================
 
 import { Detection } from '../b2b/components/onboarding/AiAnalysisStep';
 
@@ -90,10 +93,6 @@ export function mapDetectionLabelToChecklistKey(label: string): string | null {
 /**
  * Deterministic mock for POST /api/ai/confirm-detections.
  * Used when backend endpoint is not yet deployed.
- * Deterministic test scenario:
- * - If any item has image_id === 'simulate_fail', or if an item has image_id === 'fail_once'
- *   and this is the first attempt, it simulates a network failure to test retry behavior.
- * - Otherwise succeeds deterministically, mapping confirmed features to reported claims.
  */
 export const mockConfirmDetections = async (
   items: DetectionConfirmationItem[]
@@ -103,7 +102,6 @@ export const mockConfirmDetections = async (
 
   mockConfirmAttemptTracker++;
 
-  // Deterministic failure test trigger:
   const shouldFailAlways = items.some(item => item.image_id === 'simulate_fail');
   const shouldFailOnce = items.some(item => item.image_id === 'fail_once') && mockConfirmAttemptTracker === 1;
 
@@ -114,7 +112,6 @@ export const mockConfirmDetections = async (
   const confirmedItems = items.filter(i => i.confirmed);
   const rejectedItems = items.filter(i => !i.confirmed);
 
-  // Map confirmed labels to property checklist keys
   const updatedChecklistItems: string[] = [];
   confirmedItems.forEach(item => {
     const mapped = mapDetectionLabelToChecklistKey(item.label);
@@ -133,8 +130,6 @@ export const mockConfirmDetections = async (
 
 /**
  * Calls POST /api/ai/confirm-detections per docs/API_CONTRACT.md.
- * Dispatches real HTTP request to API_BASE_URL.
- * Falls back to deterministic mock if endpoint returns 404/501 or backend is offline.
  */
 export const confirmDetections = async (
   items: DetectionConfirmationItem[]
@@ -548,7 +543,6 @@ export const mockRespondToVerificationSubmission = async (businessId: string, su
     throw new Error('Deterministic network timeout');
   }
 
-  // Mutate mock state to simulate backend
   mockInboxSubmissions = mockInboxSubmissions.filter(sub => sub.id !== submissionId);
 
   return {
@@ -579,8 +573,10 @@ export const respondToVerificationSubmission = async (businessId: string, submis
     throw error;
   }
 };
-=======
-export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000";
+
+// =============================================================================
+// B2C — NLU Extraction (A7)
+// =============================================================================
 
 export interface NLUExtractedData {
   origin?: string;
@@ -624,12 +620,10 @@ export async function extractTripNLU(text: string): Promise<NLUExtractResponse> 
   };
 
   try {
-    // First try the configured API_BASE_URL
     let response: Response;
     try {
       response = await fetch(`${API_BASE_URL}/api/nlu/extract`, requestOptions);
     } catch (primaryErr) {
-      // If primary URL failed (e.g. backend at port 8000 offline in local dev), try local relative /api/nlu/extract
       if (API_BASE_URL !== "" && API_BASE_URL !== window.location.origin) {
         response = await fetch("/api/nlu/extract", requestOptions);
       } else {
@@ -654,9 +648,9 @@ export async function extractTripNLU(text: string): Promise<NLUExtractResponse> 
   }
 }
 
-// -----------------------------------------------------------------------------
-// Transport Search API (A10)
-// -----------------------------------------------------------------------------
+// =============================================================================
+// B2C — Transport Search (A10)
+// =============================================================================
 
 export interface TransportSearchRequest {
   origin: string;
@@ -748,9 +742,9 @@ export async function searchTransport(payload: TransportSearchRequest): Promise<
   }
 }
 
-// -----------------------------------------------------------------------------
-// Accommodation Search API (A14)
-// -----------------------------------------------------------------------------
+// =============================================================================
+// B2C — Accommodation Search (A14)
+// =============================================================================
 
 export interface AccommodationSearchRequest extends TransportSearchRequest {
   destination_city: string;
@@ -806,7 +800,6 @@ export async function searchAccommodation(payload: AccommodationSearchRequest): 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      // Since backend doesn't exist yet, we fall back to a mock if we get 404 or any other error.
       console.warn(`Accommodation search failed with status ${response.status}, falling back to mock.`);
       return getAccommodationMockData(payload);
     }
@@ -815,7 +808,6 @@ export async function searchAccommodation(payload: AccommodationSearchRequest): 
     return data;
   } catch (err: any) {
     clearTimeout(timeoutId);
-    // If it's not an abort, it's likely a network error (e.g. backend down/no endpoint), use mock
     if (err.name !== "AbortError") {
       console.warn("Accommodation search network error, falling back to mock.", err);
       return getAccommodationMockData(payload);
@@ -869,9 +861,9 @@ function getAccommodationMockData(payload: AccommodationSearchRequest): Accommod
   };
 }
 
-// -----------------------------------------------------------------------------
-// Listing Detail API (A15)
-// -----------------------------------------------------------------------------
+// =============================================================================
+// B2C — Listing Detail (A15)
+// =============================================================================
 
 export interface ConfirmationData {
   item_label: string;
@@ -974,7 +966,6 @@ function getListingDetailMockData(id: string): ListingDetailResponse {
     };
   }
   
-  // Default fallback mock
   return {
     id: id,
     translations: {
@@ -996,9 +987,9 @@ function getListingDetailMockData(id: string): ListingDetailResponse {
   };
 }
 
-// ---------------------------------------------------------------------------
-// EXPLORE (A16)
-// ---------------------------------------------------------------------------
+// =============================================================================
+// B2C — Explore (A16)
+// =============================================================================
 
 export type ExperienceTranslation = {
   name: string;
@@ -1045,7 +1036,7 @@ export async function getExplore(city: string, abortSignal?: AbortSignal): Promi
   }
 }
 
-function getExploreMockData(city: string): ExploreResponse {
+function getExploreMockData(_city: string): ExploreResponse {
   return {
     results: [
       {
@@ -1079,7 +1070,6 @@ function getExploreMockData(city: string): ExploreResponse {
       {
         id: "exp_003",
         translations: {
-          // Missing all to test absolute fallback safety, or missing EN completely (should rarely happen)
           en: { name: "Nature Reserve Kayaking", description: "Silent kayaking through mangroves." }
         },
         accessibility: { value: "requires_transfer", data_state: "reported" },
@@ -1093,9 +1083,9 @@ function getExploreMockData(city: string): ExploreResponse {
   };
 }
 
-// -----------------------------------------------------------------------------
-// Booking & Payments API (A18)
-// -----------------------------------------------------------------------------
+// =============================================================================
+// B2C — Booking & Payments (A18)
+// =============================================================================
 
 export interface CreateOrderRequest {
   amount_inr: number;
@@ -1173,4 +1163,3 @@ export async function verifyBookingPayment(payload: VerifyPaymentRequest): Promi
     throw err;
   }
 }
->>>>>>> aa111b2cfb4203eaa795cc70e88e978dcbaec1f6

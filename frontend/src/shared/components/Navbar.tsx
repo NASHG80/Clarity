@@ -1,7 +1,6 @@
-<<<<<<< HEAD
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Menu, User, Globe } from 'lucide-react';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Menu, User, Globe, ArrowUpRight } from 'lucide-react';
 import { Button } from './Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +16,7 @@ export interface NavbarProps {
   showLanguageSwitcherSlot?: boolean;
 }
 
+// B2B Navbar (Named Export)
 export function Navbar({ 
   navItems = [], 
   brandName = 'Green & Inclusive Travel',
@@ -71,13 +71,13 @@ export function Navbar({
             </Button>
           </div>
         </div>
-=======
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { Globe, ArrowUpRight } from 'lucide-react';
+      </div>
+    </header>
+  );
+}
 
-export default function Navbar() {
+// B2C Navbar (Default Export)
+export default function B2CNavbar() {
   const { t, i18n } = useTranslation('b2c');
   const navigate = useNavigate();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
@@ -127,6 +127,7 @@ export default function Navbar() {
             {t('home.nav.explore', 'Explore')}
           </button>
           <button 
+            onClick={() => navigate('/trip-summary')}
             className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
           >
             {t('home.nav.trips', 'Trips')}
@@ -136,6 +137,7 @@ export default function Navbar() {
         {/* Right: For Businesses + Language Switcher */}
         <div className="hidden md:flex items-center gap-5 text-sm">
           <button
+            onClick={() => navigate('/b2b/onboarding')}
             className="text-[14px] font-medium text-[#26382D]/75 hover:text-[#26382D] transition-colors flex items-center gap-1.5 py-1.5 px-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] cursor-pointer"
           >
             <span>{t('home.nav.forBusinesses', 'For Businesses')}</span>
@@ -190,8 +192,6 @@ export default function Navbar() {
             )}
           </div>
         </div>
-
->>>>>>> aa111b2cfb4203eaa795cc70e88e978dcbaec1f6
       </div>
     </header>
   );

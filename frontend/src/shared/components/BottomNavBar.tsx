@@ -1,6 +1,7 @@
 import React from 'react';
-<<<<<<< HEAD
-import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useLocation, NavLink } from 'react-router-dom';
+import { Search, Compass, Map } from 'lucide-react';
 
 export interface BottomNavItem {
   id: string;
@@ -10,7 +11,7 @@ export interface BottomNavItem {
 }
 
 export interface BottomNavBarProps {
-  items: BottomNavItem[];
+  items?: BottomNavItem[];
 }
 
 export function BottomNavBar({ items }: BottomNavBarProps) {
@@ -37,12 +38,10 @@ export function BottomNavBar({ items }: BottomNavBarProps) {
         ))}
       </div>
     </nav>
-=======
-import { useTranslation } from 'react-i18next';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Compass, Map } from 'lucide-react';
+  );
+}
 
-export default function BottomNavBar() {
+export default function B2CBottomNavBar() {
   const { t } = useTranslation('b2c');
   const navigate = useNavigate();
   const location = useLocation();
@@ -91,6 +90,5 @@ export default function BottomNavBar() {
 
       </div>
     </div>
->>>>>>> aa111b2cfb4203eaa795cc70e88e978dcbaec1f6
   );
 }

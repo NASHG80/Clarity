@@ -50,7 +50,7 @@ export function LanguageSwitcher() {
   const changeLanguage = (lang: SupportedLanguage) => {
     i18n.changeLanguage(lang);
     try {
-      localStorage.setItem('preferredLanguage', lang);
+      localStorage.setItem('clarity_lang', lang);
     } catch (e) {
       // Safely ignore if localStorage is unavailable
     }
