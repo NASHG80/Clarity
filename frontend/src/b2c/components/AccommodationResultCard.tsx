@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AccommodationResult } from '../../lib/api';
-import DataStateBadge from '../../shared/components/DataStateBadge';
+import { DataStateBadge } from '../../shared/components/DataStateBadge';
 import { Star, Image as ImageIcon } from 'lucide-react';
 import { formatCurrencyINR } from '../../lib/formatters';
 
@@ -110,7 +110,6 @@ export default function AccommodationResultCard({ result }: AccommodationResultC
                 className="inline-flex items-center bg-[#F8F6F3] border border-[#D8C9BE] rounded-full px-2.5 py-1"
               >
                 <span className="text-xs text-[#26382D] mr-2">{t(`features.${item.label}`, item.label)}</span>
-                {/* @ts-expect-error - Person B owns this component */}
                 <DataStateBadge state={item.data_state || 'not_verified'} />
               </div>
             ))}
@@ -120,7 +119,6 @@ export default function AccommodationResultCard({ result }: AccommodationResultC
                 className="inline-flex items-center bg-[#F4F9F5] border border-[#C5D9CB] rounded-full px-2.5 py-1"
               >
                 <span className="text-xs text-[#1F4029] mr-2">{t(`features.${item.label}`, item.label)}</span>
-                {/* @ts-expect-error - Person B owns this component */}
                 <DataStateBadge state={item.data_state || 'not_verified'} />
               </div>
             ))}

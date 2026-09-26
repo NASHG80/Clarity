@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TransportSegment } from '../../lib/api';
-import DataStateBadge from '../../shared/components/DataStateBadge';
+import { DataStateBadge } from '../../shared/components/DataStateBadge';
 import { Train, Bus, Info, ShieldCheck, ShieldAlert, Navigation } from 'lucide-react';
 
 interface JourneySegmentTimelineProps {
@@ -107,7 +107,6 @@ export default function JourneySegmentTimeline({ segments }: JourneySegmentTimel
 
                 {/* Data State Badge (Person B component integration) */}
                 <div className="scale-90 origin-right">
-                  {/* @ts-expect-error ignoring prop errors since Person B hasn't defined them yet */}
                   <DataStateBadge state={dataState} />
                 </div>
               </div>

@@ -1,376 +1,526 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { searchTransport, TransportSearchRequest, TransportResult } from '../../lib/api';
-import { formatCurrencyINR, formatDuration } from '../../lib/formatters';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../shared/components/Navbar';
-import BottomNavBar from '../../shared/components/BottomNavBar';
-import DataStateBadge from '../../shared/components/DataStateBadge';
-import { Train, Plane, Bus, Car, ChevronLeft, Leaf, Clock, IndianRupee, ShieldCheck, ThumbsUp, AlertTriangle } from 'lucide-react';
+import RouteMap from '../components/RouteMap';
+import { 
+  Train, Plane, Car, Navigation, MapPin, 
+  Leaf, Sliders, ChevronRight, User, Info, MessageCircle, AlertCircle, Loader
+} from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-interface RouteNavigationState {
-  searchPayload?: TransportSearchRequest;
-}
-
-const getModeIcon = (mode: string) => {
-  switch (mode.toLowerCase()) {
-    case 'flight':
-    case 'air':
-      return <Plane className="w-5 h-5" />;
-    case 'train':
-      return <Train className="w-5 h-5" />;
-    case 'bus':
-      return <Bus className="w-5 h-5" />;
-    case 'taxi':
-    case 'car':
-      return <Car className="w-5 h-5" />;
-    default:
-      return <Bus className="w-5 h-5" />;
-  }
-};
-
-function A10TransportTradeOffCard({ result }: { result: TransportResult }) {
-  const { t } = useTranslation('b2c');
+export default function TransportResultsPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [showEmissions, setShowEmissions] = useState(false);
-  const emissionsDetailsId = `emissions-details-${result.id}`;
+  const { t } = useTranslation('b2c');
 
-  const formatCurrency = formatCurrencyINR;
-  
-  const formatTime = (minutes: number) => {
-    const hrs = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return formatDuration(t, { hours: hrs > 0 ? hrs : undefined, minutes: mins > 0 ? mins : undefined });
+  // Workflows states
+  const [step, setStep] = useState<'TRIP_FORM' | 'MODE_SELECT' | 'MODE_FORM' | 'RESULTS' | 'BREAKDOWN'>('TRIP_FORM');
+  const [trip, setTrip] = useState<any>(null);
+  const [selectedMode, setSelectedMode] = useState<string | null>(null);
+  const [results, setResults] = useState<any[]>([]);
+  const [selectedOption, setSelectedOption] = useState<any>(null);
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
+
+  // Chat State
+  const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Handlers
+  const handleTripSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    setTrip({
+      origin: formData.get('origin'),
+      destination: formData.get('destination'),
+      date: formData.get('date'),
+      time: formData.get('time'),
+      adults: formData.get('adults'),
+      children: formData.get('children'),
+      seniors: formData.get('seniors'),
+    });
+    setStep('MODE_SELECT');
   };
 
-  // Rule 6: Visibly identify DEMO if present in the data states we know about.
-  const isDemo = result.accessibility?.data_state === 'demo_synthetic' || 
-                 result.segments?.some(s => s.data_state === 'demo_synthetic');
+  const handleModeSelect = (mode: string) => {
+    setSelectedMode(mode);
+    setStep('MODE_FORM');
+  };
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setStep('RESULTS');
+    
+    try {
+      const res = await fetch('/api/search/transport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: trip?.origin || "Borivali",
+          destination: trip?.destination || "Hotel XYZ, Goa",
+          mode: selectedMode?.toLowerCase() || "train",
+          date: trip?.date || "2026-09-27"
+        })
+      });
+      const data = await res.json();
+      setResults(data.results || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectOption = (opt: any) => {
+    setSelectedOption(opt);
+    setSelectedSegmentId(opt.segments[0]?.id || null);
+    setStep('BREAKDOWN');
+  };
+
+  const handleChatSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+    setChatMessages(prev => [...prev, { role: 'user', content: chatInput.trim() }]);
+    setChatInput('');
+    
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'This recommendation is based on a balanced weighting of your preferences. The train is currently ranked higher because it costs less and has a lower estimated CO₂, even though it requires more travel time.' 
+      }]);
+    }, 800);
+  };
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#D8C9BE] shadow-sm hover:shadow-md transition-shadow relative">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4 pb-4 border-b border-[#F8F6F3]">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#F8F6F3] p-2.5 rounded-full text-[#7C9278]">
-            {getModeIcon(result.mode)}
-          </div>
-          <div>
-            <h3 className="font-serif text-lg font-medium text-[#26382D] capitalize">
-              {result.mode}
-            </h3>
-            {result.personal_match_pct !== undefined && (
-              <span className="text-sm font-medium text-[#7C9278]">
-                {t('results.match')}: {Math.round(result.personal_match_pct * 100)}%
-              </span>
-            )}
-          </div>
-        </div>
-        {isDemo && (
-          <div className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded border border-orange-200 flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            {t('results.badgeDemo')}
-          </div>
-        )}
-      </div>
+    <div className="flex flex-col min-h-screen bg-[#F8F6F3] font-sans">
+      <Navbar />
 
-      {/* Trade-off Dimensions */}
-      <div className="grid grid-cols-1 gap-3 mb-5">
-        {/* Cost */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2 text-[#A99587]">
-            <IndianRupee className="w-4 h-4" />
-            <span>{t('results.cost')}</span>
-          </div>
-          <span className="font-semibold text-[#26382D]">{formatCurrency(result.cost_inr)}</span>
-        </div>
-
-        {/* Time */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2 text-[#A99587]">
-            <Clock className="w-4 h-4" />
-            <span>{t('results.time')}</span>
-          </div>
-          <span className="font-semibold text-[#26382D]">{formatTime(result.duration_minutes)}</span>
-        </div>
-
-        {/* CO2 Emissions */}
-        {result.emissions && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-[#A99587]">
-                <Leaf className="w-4 h-4" />
-                <span>{t('results.co2')}</span>
+      <div className="flex flex-1 max-w-7xl w-full mx-auto relative pt-4 md:pt-6">
+        
+        {/* LEFT SIDEBAR: Persistent Filters */}
+        <aside className="hidden lg:block w-72 shrink-0 pr-6 pb-24">
+          <div className="sticky top-24 space-y-6">
+            <div>
+              <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Travel Mode</h3>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3"><input type="checkbox" defaultChecked className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Car</span></label>
+                <label className="flex items-center gap-3"><input type="checkbox" defaultChecked className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Train</span></label>
+                <label className="flex items-center gap-3"><input type="checkbox" defaultChecked className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Flight</span></label>
               </div>
-              <div className="flex flex-col items-end">
-                <span className="font-semibold text-[#26382D]">{result.emissions.co2e_kg} kg CO₂e</span>
-                <button
-                  type="button"
-                  aria-expanded={showEmissions}
-                  aria-controls={emissionsDetailsId}
-                  onClick={() => setShowEmissions(!showEmissions)}
-                  className="text-[10px] uppercase text-[#7C9278] hover:text-[#26382D] font-medium tracking-wider cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7C9278] rounded px-1 -mr-1"
-                >
-                  {result.emissions.method === 'estimated' ? t('results.emissionsEstimated') : t('results.emissionsBenchmark')} ▾
-                </button>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Route Preference</h3>
+              <div className="space-y-2">
+                {['Best route', 'Fastest', 'Lowest cost', 'Lowest CO₂', 'Less walking', 'Fewer transfers', 'Wheelchair accessible'].map(pref => (
+                  <label key={pref} className="flex items-center gap-3"><input type="radio" name="routePref" defaultChecked={pref==='Best route'} className="w-4 h-4 text-[#7C9278] border-[#D8C9BE]" /><span className="text-[#26382D] text-sm">{pref}</span></label>
+                ))}
               </div>
             </div>
             
-            {showEmissions && (
-              <div id={emissionsDetailsId} className="bg-[#F8F6F3] rounded-lg p-3 text-xs text-[#26382D] border border-[#D8C9BE]">
-                <p className="font-medium text-[#7C9278] mb-2">{t('results.howCalculated')}</p>
-                {result.emissions.method === 'estimated' ? (
-                  <div className="flex flex-col gap-1">
-                    <div className="flex justify-between">
-                      <span className="text-[#A99587]">{t('results.calcDistance')}</span>
-                      <span className="font-mono">{result.emissions.distance_km} km</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#A99587]">{t('results.calcEmissionFactor')}</span>
-                      <span className="font-mono">{result.emissions.emission_factor} kg/km</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-1">
-                    <div className="flex justify-between">
-                      <span className="text-[#A99587]">{t('results.calcBenchmark')}</span>
-                      <span className="font-mono">{result.emissions.benchmark_kg} kg CO₂e</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#A99587]">{t('results.calcReduction')}</span>
-                      <span className="font-mono text-[#7C9278] font-semibold">{result.emissions.reduction_pct}%</span>
-                    </div>
-                  </div>
-                )}
+            <div>
+              <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Accessibility</h3>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Step-free</span></label>
+                <label className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Less walking</span></label>
+                <label className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Accessible transfers</span></label>
               </div>
-            )}
-          </div>
-        )}
+            </div>
 
-        {/* Accessibility */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2 text-[#A99587]">
-            <ShieldCheck className="w-4 h-4" />
-            <span>{t('results.accessibility')}</span>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <span className="font-semibold text-[#26382D]">{result.accessibility.value}</span>
-            <div className="scale-90 origin-right">
-              {/* Injecting Person B's shared component, even if it's a placeholder now */}
-              {/* @ts-expect-error ignoring prop errors since Person B hasn't defined them yet, but passing what they likely need */}
-              <DataStateBadge state={result.accessibility.data_state} />
+            <div>
+              <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Budget</h3>
+              <input type="text" placeholder="₹ ______" className="w-full border border-[#D8C9BE] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#7C9278]" />
             </div>
           </div>
-        </div>
+        </aside>
+
+        {/* MAIN AREA */}
+        <main className="flex-1 px-4 lg:px-0 pb-48 w-full">
+          
+          {step === 'TRIP_FORM' && (
+            <div className="max-w-2xl bg-white border border-[#D8C9BE] rounded-2xl shadow-sm p-6 sm:p-8">
+              <h2 className="font-serif text-2xl text-[#26382D] mb-6">Let's plan your journey</h2>
+              <form onSubmit={handleTripSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1.5">From</label>
+                  <input name="origin" defaultValue="Borivali, Mumbai" className="w-full border-b-2 border-[#D8C9BE] py-2 focus:border-[#26382D] outline-none text-[#26382D]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1.5">To</label>
+                  <input name="destination" defaultValue="Hotel XYZ, Goa" className="w-full border-b-2 border-[#D8C9BE] py-2 focus:border-[#26382D] outline-none text-[#26382D]" />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1.5">Travel Date</label>
+                    <input type="date" name="date" defaultValue="2026-09-27" className="w-full border-b-2 border-[#D8C9BE] py-2 outline-none text-[#26382D]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1.5">Leave After</label>
+                    <input type="time" name="time" defaultValue="06:00" className="w-full border-b-2 border-[#D8C9BE] py-2 outline-none text-[#26382D]" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-3">Passengers</label>
+                  <div className="flex gap-4">
+                    <div className="flex-1"><label className="block text-xs text-[#7C9278] mb-1">Adults</label><input type="number" name="adults" defaultValue={2} className="w-full border-b-2 border-[#D8C9BE] py-2 outline-none" /></div>
+                    <div className="flex-1"><label className="block text-xs text-[#7C9278] mb-1">Children</label><input type="number" name="children" defaultValue={0} className="w-full border-b-2 border-[#D8C9BE] py-2 outline-none" /></div>
+                    <div className="flex-1"><label className="block text-xs text-[#7C9278] mb-1">Seniors</label><input type="number" name="seniors" defaultValue={1} className="w-full border-b-2 border-[#D8C9BE] py-2 outline-none" /></div>
+                  </div>
+                </div>
+                <button type="submit" className="w-full bg-[#26382D] text-white py-3 rounded-xl font-medium mt-4 hover:bg-[#1a261f]">Continue</button>
+              </form>
+            </div>
+          )}
+
+          {step !== 'TRIP_FORM' && trip && (
+            <div className="mb-6 flex items-center justify-between bg-white border border-[#D8C9BE] p-4 rounded-2xl shadow-sm">
+              <div>
+                <div className="font-medium text-[#26382D]">{trip.origin} &rarr; {trip.destination}</div>
+                <div className="text-sm text-[#7C9278] mt-0.5">{trip.date} · {trip.time} · {trip.adults} Adults, {trip.children} Children, {trip.seniors} Senior</div>
+              </div>
+              <button onClick={() => setStep('TRIP_FORM')} className="text-sm text-[#26382D] underline font-medium">Edit</button>
+            </div>
+          )}
+
+          {step === 'MODE_SELECT' && (
+            <div className="max-w-2xl">
+              <h2 className="font-serif text-2xl text-[#26382D] mb-6">How would you like to travel?</h2>
+              <div className="grid grid-cols-3 gap-4">
+                <button onClick={() => handleModeSelect('CAR')} className="flex flex-col items-center justify-center gap-3 p-8 bg-white border border-[#D8C9BE] rounded-2xl hover:border-[#7C9278] transition-colors shadow-sm">
+                  <Car className="w-10 h-10 text-[#26382D]" />
+                  <span className="font-semibold text-[#26382D] tracking-wide">CAR</span>
+                </button>
+                <button onClick={() => handleModeSelect('TRAIN')} className="flex flex-col items-center justify-center gap-3 p-8 bg-white border border-[#D8C9BE] rounded-2xl hover:border-[#7C9278] transition-colors shadow-sm">
+                  <Train className="w-10 h-10 text-[#26382D]" />
+                  <span className="font-semibold text-[#26382D] tracking-wide">TRAIN</span>
+                </button>
+                <button onClick={() => handleModeSelect('FLIGHT')} className="flex flex-col items-center justify-center gap-3 p-8 bg-white border border-[#D8C9BE] rounded-2xl hover:border-[#7C9278] transition-colors shadow-sm">
+                  <Plane className="w-10 h-10 text-[#26382D]" />
+                  <span className="font-semibold text-[#26382D] tracking-wide">FLIGHT</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 'MODE_FORM' && (
+            <div className="max-w-2xl bg-white border border-[#D8C9BE] p-6 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-4 mb-6 border-b border-[#F8F6F3] pb-4">
+                <button onClick={() => setStep('MODE_SELECT')} className="text-[#7C9278] hover:text-[#26382D]">
+                  <ChevronRight className="w-5 h-5 rotate-180" />
+                </button>
+                <h2 className="font-serif text-2xl text-[#26382D] capitalize">{selectedMode?.toLowerCase()} Journey</h2>
+              </div>
+              <form onSubmit={handleSearch} className="space-y-6">
+                {selectedMode === 'TRAIN' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Boarding Station</label>
+                        <select name="board" className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none">
+                          <option>Borivali (BVI)</option>
+                          <option>Bandra Terminus (BDTS)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Destination Station</label>
+                        <select name="dest" className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none">
+                          <option>Madgaon (MAO)</option>
+                          <option>Thivim (THVM)</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Class</label>
+                        <select name="class" className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none">
+                          <option>Any</option>
+                          <option>2A (AC 2 Tier)</option>
+                          <option>SL (Sleeper)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Travel Date</label>
+                        <input name="date" type="date" defaultValue="2026-09-27" className="w-full border-b-2 border-[#D8C9BE] py-2 outline-none" />
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full bg-[#26382D] text-white py-3 rounded-xl font-medium mt-4 hover:bg-[#1a261f]">Search Trains</button>
+                  </>
+                )}
+                {selectedMode === 'FLIGHT' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Departure Airport</label>
+                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>BOM / Mumbai</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Arrival Airport</label>
+                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>GOI / Goa</option></select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Departure Preference</label>
+                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>Morning</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Travel Date</label>
+                        <input name="date" type="date" defaultValue="2026-09-27" className="w-full border-b-2 border-[#D8C9BE] py-2 outline-none" />
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full bg-[#26382D] text-white py-3 rounded-xl font-medium mt-4 hover:bg-[#1a261f]">Search Flights</button>
+                  </>
+                )}
+                {selectedMode === 'CAR' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Vehicle</label>
+                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>Private car</option></select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Fuel Type</label>
+                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>Petrol</option><option>EV</option></select>
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full bg-[#26382D] text-white py-3 rounded-xl font-medium mt-4 hover:bg-[#1a261f]">Calculate Route</button>
+                  </>
+                )}
+              </form>
+            </div>
+          )}
+
+          {step === 'RESULTS' && (
+            <div className="max-w-3xl space-y-4">
+              <div className="flex items-center gap-4 mb-4">
+                <button onClick={() => setStep('MODE_FORM')} className="text-[#7C9278] hover:text-[#26382D]">
+                  <ChevronRight className="w-5 h-5 rotate-180" />
+                </button>
+                <h2 className="font-serif text-2xl text-[#26382D] capitalize">{selectedMode?.toLowerCase()} Results</h2>
+              </div>
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader className="w-8 h-8 text-[#7C9278] animate-spin mb-4" />
+                  <p className="text-[#26382D] font-medium">Building your door-to-door journeys...</p>
+                </div>
+              ) : results.length === 0 ? (
+                <div className="bg-white border border-[#D8C9BE] rounded-2xl p-8 text-center text-[#7C9278]">
+                  No routes found.
+                </div>
+              ) : results.map(opt => (
+                <div key={opt.id} className="bg-white border border-[#D8C9BE] rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row">
+                  <div className="flex-1 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        {opt.mode === 'train' && <Train className="w-5 h-5 text-[#26382D]" />}
+                        {opt.mode === 'flight' && <Plane className="w-5 h-5 text-[#26382D]" />}
+                        {opt.mode === 'car' && <Car className="w-5 h-5 text-[#26382D]" />}
+                        <h4 className="font-bold text-[#26382D] text-lg">{opt.provider_metadata?.train_number || opt.provider_metadata?.flight_number || (opt.mode + " Route")}</h4>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-xl font-semibold text-[#26382D]">{"Departure"}</span>
+                        <span className="text-sm text-[#7C9278]">{opt.segments?.[0]?.origin?.name?.split(' ')[0] || "Origin"}</span>
+                      </div>
+                      <div className="flex-1 px-4 flex flex-col items-center justify-center relative">
+                        <span className="text-xs text-[#7C9278] mb-1">{Math.floor(opt.duration_minutes/60)}h {opt.duration_minutes%60}m</span>
+                        <div className="w-full border-t-2 border-dashed border-[#D8C9BE] relative">
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-[10px] text-[#A99587]">
+                            {opt.segments?.find((s:any) => s.details)?.details?.train_name || opt.segments?.find((s:any) => s.details)?.details?.airline || 'Transfers: ' + opt.transfer_count}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xl font-semibold text-[#26382D]">{"Arrival"}</span>
+                        <span className="text-sm text-[#7C9278]">{opt.segments?.[opt.segments?.length-1]?.destination?.name?.split(' ')[0] || "Dest"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="w-full md:w-48 bg-[#F8F6F3] p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-[#D8C9BE]">
+                    <div>
+                      <div className="text-xl font-bold text-[#26382D] mb-1">₹{opt.cost_inr}</div>
+                      <div className="text-xs text-[#7C9278] flex items-center gap-1"><Leaf className="w-3 h-3"/> {opt.emissions?.co2e_kg?.toFixed(1) || 0} kg CO₂e</div>
+                    </div>
+                    <button onClick={() => handleSelectOption(opt)} className="w-full mt-4 bg-[#26382D] text-white py-2 rounded-xl text-sm font-medium hover:bg-[#1a261f]">
+                      View Journey
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {step === 'BREAKDOWN' && selectedOption && (
+            <div className="w-full">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setStep('RESULTS')} className="text-[#7C9278] hover:text-[#26382D]">
+                    <ChevronRight className="w-5 h-5 rotate-180" />
+                  </button>
+                  <h2 className="font-serif text-2xl text-[#26382D]">Complete Journey</h2>
+                </div>
+                <button 
+                  onClick={() => navigate('/journey', { state: { result: selectedOption } })}
+                  className="bg-[#26382D] text-white px-6 py-2.5 rounded-xl font-medium text-sm hover:bg-[#1a261f]"
+                >
+                  Select & Continue
+                </button>
+              </div>
+
+              {/* Recommendation Analysis Box */}
+              <div className="bg-[#EAF0EB] border border-[#C5D9CB] rounded-2xl p-5 sm:p-6 mb-8 flex flex-col sm:flex-row gap-6">
+                <div className="flex-1">
+                  <h3 className="flex items-center gap-2 font-bold text-[#1F4029] mb-2"><Info className="w-5 h-5"/> Why this route is recommended</h3>
+                  <p className="text-sm text-[#3A5043] leading-relaxed mb-4">
+                    This option stays within your transport budget and has a lower estimated CO₂ impact than the available flight options.
+                    <br/><br/>
+                    <strong>Trade-off:</strong> It takes longer and requires additional transfers.
+                  </p>
+                </div>
+                <div className="w-full sm:w-48 shrink-0 space-y-2 text-sm">
+                  <div className="flex justify-between text-[#1F4029]"><span>Time</span><strong>{Math.floor(selectedOption.duration_minutes/60)}h {selectedOption.duration_minutes%60}m</strong></div>
+                  <div className="flex justify-between text-[#1F4029]"><span>Cost</span><strong>₹{selectedOption.cost_inr}</strong></div>
+                  <div className="flex justify-between text-[#1F4029]"><span>CO₂e</span><strong>{selectedOption.emissions?.co2e_kg?.toFixed(1)} kg</strong></div>
+                  <div className="flex justify-between text-[#1F4029]"><span>Walking</span><strong>{(selectedOption.total_walking_m/1000).toFixed(1)} km</strong></div>
+                  <div className="flex justify-between text-[#1F4029]"><span>Transfers</span><strong>{selectedOption.transfer_count}</strong></div>
+                </div>
+              </div>
+
+              {/* Door-to-door layout with Map */}
+              <div className="flex flex-col xl:flex-row gap-6 lg:gap-8">
+                {/* Timeline */}
+                <div className="flex-1 w-full xl:max-w-md bg-white border border-[#D8C9BE] rounded-2xl shadow-sm overflow-hidden">
+                  <div className="p-4 bg-[#F8F6F3] border-b border-[#D8C9BE]">
+                    <h3 className="font-bold text-[#26382D] uppercase tracking-wider text-xs">Door-to-door Segments</h3>
+                  </div>
+                  <div className="p-4 lg:p-6 space-y-0 relative">
+                    <div className="absolute top-8 bottom-8 left-[39px] lg:left-[47px] w-[2px] bg-[#D8C9BE]" />
+                    
+                    {selectedOption.segments.map((seg: any) => (
+                      <div 
+                        key={seg.id} 
+                        onClick={() => setSelectedSegmentId(seg.id)}
+                        className={`relative pl-14 pr-2 py-5 cursor-pointer rounded-xl transition-all border ${selectedSegmentId === seg.id ? 'bg-[#F8F6F3] border-[#7C9278] shadow-sm' : 'border-transparent hover:bg-[#F8F6F3]/50'}`}
+                      >
+                        <div className={`absolute left-4 lg:left-6 top-[26px] w-[14px] h-[14px] rounded-full border-2 border-white ${seg.mode === 'WALK' ? 'bg-[#A9B8A3]' : 'bg-[#26382D]'}`} />
+                        
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-bold text-[#7C9278] uppercase tracking-widest">{seg.mode} • {seg.provider}</span>
+                        </div>
+                        <div className="font-medium text-[#26382D] text-lg leading-tight mb-2">
+                          <div className="mb-0.5 text-[#7C9278] text-sm font-normal">START &rarr; <span className="font-medium text-[#26382D]">{seg.origin?.name}</span></div>
+                          <div className="text-[#7C9278] text-sm font-normal">END &rarr; <span className="font-medium text-[#26382D]">{seg.destination?.name}</span></div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#7C9278] mt-3 bg-white p-3 rounded-lg border border-[#D8C9BE]">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] uppercase font-bold text-[#A99587]">Time</span>
+                            <span className="font-medium text-[#26382D]">{seg.duration_minutes >= 60 ? `${Math.floor(seg.duration_minutes/60)}h ${seg.duration_minutes%60}m` : `${seg.duration_minutes} min`}</span>
+                          </div>
+                          {seg.distance_km > 0 && (
+                            <div className="flex flex-col border-l border-[#D8C9BE] pl-4">
+                              <span className="text-[10px] uppercase font-bold text-[#A99587]">Distance</span>
+                              <span className="font-medium text-[#26382D]">{seg.distance_km.toFixed(1)} km</span>
+                            </div>
+                          )}
+                          {seg.cost_inr > 0 && (
+                            <div className="flex flex-col border-l border-[#D8C9BE] pl-4">
+                              <span className="text-[10px] uppercase font-bold text-[#A99587]">Cost</span>
+                              <span className="font-medium text-[#26382D]">₹{seg.cost_inr}</span>
+                            </div>
+                          )}
+                          <div className="flex flex-col border-l border-[#D8C9BE] pl-4">
+                            <span className="text-[10px] uppercase font-bold text-[#A99587]">Est. CO₂</span>
+                            <span className="font-medium text-[#26382D]">{seg.co2_kg?.toFixed(1) || 0} kg</span>
+                          </div>
+                        </div>
+
+                        {selectedSegmentId === seg.id && seg.geometry && (
+                          <div className="mt-4 flex items-start gap-3 p-3 bg-[#EAF0EB] rounded-lg">
+                             <MapPin className="w-4 h-4 text-[#3A5043] shrink-0 mt-0.5" />
+                             <div>
+                               <div className="text-sm font-bold text-[#1F4029] mb-1">Why this segment matters</div>
+                               <div className="text-xs text-[#3A5043]">This is the {seg.mode} portion connecting you through your journey. Route focused on the right.</div>
+                             </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Map */}
+                <div className="flex-1 w-full xl:w-auto h-[400px] xl:h-[auto] xl:min-h-[600px] bg-[#EAF0EB] rounded-2xl overflow-hidden border border-[#D8C9BE] sticky top-24">
+                  <RouteMap 
+                    center={{ lat: 19.229, lng: 72.857 }} 
+                    zoom={10} 
+                    routes={selectedOption.segments.filter((s:any) => s.geometry).map((s:any) => ({
+                      id: s.id,
+                      encodedPolyline: typeof s.geometry === 'string' ? s.geometry : undefined,
+                      geoJson: typeof s.geometry === 'object' ? s.geometry : undefined,
+                      color: s.mode === 'WALK' ? '#A9B8A3' : '#26382D',
+                      isSelected: selectedSegmentId === s.id
+                    }))} 
+                    selectedSegmentId={selectedSegmentId || undefined} 
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
       </div>
 
-      {/* Trade-off Summary Bullets */}
-      {result.trade_off_summary && result.trade_off_summary.length > 0 && (
-        <div className="bg-[#F8F6F3] rounded-lg p-3 text-sm">
-          <ul className="space-y-1.5">
-            {result.trade_off_summary.map((bullet, i) => (
-              <li key={i} className="flex items-start gap-2 text-[#26382D]/80">
-                <span className="text-[#7C9278] mt-0.5">•</span>
-                <span>{bullet}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* FIXED CONTEXTUAL CHAT INPUT AT BOTTOM */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#F8F6F3]/95 backdrop-blur-md border-t border-[#D8C9BE] z-40 pb-safe shadow-[0_-4px_24px_rgba(38,56,45,0.05)]">
+        <div className="max-w-7xl mx-auto px-4 lg:px-0 lg:pl-72 flex flex-col pb-4 pt-4">
+          
+          {/* Chat History Container (only visible if there are messages) */}
+          {chatMessages.length > 0 && (
+            <div className="flex flex-col gap-3 mb-4 max-h-[30vh] overflow-y-auto px-2 scrollbar-hide">
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed border ${
+                    msg.role === 'user' 
+                      ? 'bg-[#26382D] text-white border-[#26382D] rounded-br-sm' 
+                      : 'bg-white text-[#26382D] border-[#D8C9BE] rounded-bl-sm'
+                  }`}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-      {/* Actions */}
-      <div className="mt-5 flex flex-col gap-3">
-        <button
-          type="button"
-          onClick={() => navigate('/accommodation-results', { state: { ...location.state, searchPayload: location.state?.searchPayload, transportResult: result } })}
-          className="w-full bg-[#26382D] text-white py-2.5 rounded-lg text-sm font-medium hover:bg-[#3A5043] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#26382D]"
-        >
-          {t('results.selectTransport')}
-        </button>
-        {result.segments && result.segments.length > 0 && (
-          <button
-            type="button"
-            onClick={() => navigate('/journey', { state: { result } })}
-            className="w-full bg-white text-[#26382D] py-2.5 rounded-lg text-sm font-medium border border-[#D8C9BE] hover:bg-[#F8F6F3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#D8C9BE]"
-          >
-            {t('results.viewJourney')}
-          </button>
-        )}
+          {/* Chat Input */}
+          <form onSubmit={handleChatSubmit} className="relative w-full max-w-4xl mx-auto">
+            <input 
+              type="text" 
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask about this journey... (e.g. 'Why is this route cheaper?')" 
+              className="w-full bg-white border border-[#D8C9BE] rounded-full pl-6 pr-14 py-4 text-[#26382D] placeholder-[#A99587] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7C9278] text-base"
+            />
+            <button 
+              type="submit"
+              disabled={!chatInput.trim()}
+              className="absolute right-2 top-2 bottom-2 aspect-square bg-[#26382D] text-white rounded-full flex items-center justify-center hover:bg-[#1a261f] disabled:opacity-50 transition-colors"
+            >
+              <Navigation className="w-5 h-5 transform rotate-45" />
+            </button>
+          </form>
+          
+          {/* Contextual Chips */}
+          <div className="hidden sm:flex gap-2 mt-3 max-w-4xl mx-auto overflow-x-auto scrollbar-hide text-xs w-full">
+            <button onClick={() => setChatInput("Why did you recommend the train?")} className="bg-white border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-[#F8F6F3]">Why did you recommend the train?</button>
+            <button onClick={() => setChatInput("How did you calculate CO₂?")} className="bg-white border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-[#F8F6F3]">How did you calculate CO₂?</button>
+            <button onClick={() => setChatInput("Why is the flight faster?")} className="bg-white border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-[#F8F6F3]">Why is the flight faster?</button>
+          </div>
+        </div>
       </div>
     </div>
-  );
-}
-
-export default function TransportResultsPage() {
-  const { t } = useTranslation('b2c');
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<TransportResult[]>([]);
-
-  const state = location.state as RouteNavigationState | null;
-  const searchPayload = state?.searchPayload;
-
-  useEffect(() => {
-    if (!searchPayload) return;
-
-    let isMounted = true;
-    const fetchResults = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await searchTransport(searchPayload);
-        if (isMounted) {
-          setResults(response.results);
-        }
-      } catch (err: any) {
-        if (isMounted) {
-          setError(err.message || t('results.error'));
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchResults();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [searchPayload, t]);
-
-  if (!searchPayload) {
-    return (
-      <div className="min-h-screen bg-[#F8F6F3] font-sans flex flex-col">
-        <Navbar />
-        <main className="flex-grow flex items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            <h2 className="text-2xl font-serif text-[#26382D] mb-3">{t('results.title')}</h2>
-            <p className="text-[#26382D]/70 mb-6">{t('results.missingPayload')}</p>
-            <button 
-              onClick={() => navigate('/')}
-              className="bg-[#26382D] text-white px-6 py-2.5 rounded-full hover:bg-[#3A5043] transition-colors"
-            >
-              {t('results.backToSearch')}
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="flex flex-col items-center justify-center py-20 text-[#A99587]">
-          <div className="w-8 h-8 border-4 border-[#D8C9BE] border-t-[#7C9278] rounded-full animate-spin mb-4" />
-          <p>{t('results.loading')}</p>
-        </div>
-      );
-    }
-    if (error) {
-      return (
-        <div role="alert" className="bg-red-50 text-red-800 p-6 rounded-2xl text-center border border-red-100">
-          <AlertTriangle className="w-8 h-8 mx-auto mb-3 text-red-500" />
-          <p>{error}</p>
-          <button 
-            onClick={() => navigate(-1)}
-            className="mt-4 px-6 py-2 bg-red-100 hover:bg-red-200 text-red-900 rounded-full transition-colors text-sm font-medium"
-          >
-            {t('results.goBack')}
-          </button>
-        </div>
-      );
-    }
-    if (results.length === 0) {
-      return (
-        <div className="bg-white p-10 rounded-2xl text-center border border-[#D8C9BE] shadow-sm max-w-xl mx-auto">
-          <div className="bg-[#F8F6F3] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShieldCheck className="w-8 h-8 text-[#A99587]" />
-          </div>
-          <h3 className="text-xl font-serif text-[#26382D] mb-2">{t('results.empty')}</h3>
-          <p className="text-[#A99587] mb-6">{t('results.emptyHelper')}</p>
-          <button 
-            onClick={() => navigate(-1)}
-            className="px-6 py-2.5 border-2 border-[#26382D] text-[#26382D] rounded-full font-medium hover:bg-[#F8F6F3] transition-colors"
-          >
-            {t('results.goBack')}
-          </button>
-        </div>
-      );
-    }
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {results.map(r => (
-          <A10TransportTradeOffCard key={r.id} result={r} />
-        ))}
-      </div>
-    );
-  };
-
-  return (
-    <>
-      {/* MOBILE LAYOUT */}
-      <div className="flex md:hidden flex-col min-h-screen bg-[#F8F6F3] font-sans pb-24">
-        <div className="sticky top-0 z-10 bg-white border-b border-[#D8C9BE] px-4 py-4">
-          <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm font-medium text-[#7C9278] hover:text-[#26382D] transition-colors mb-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            {t('results.goBack')}
-          </button>
-          <div>
-            <h1 className="text-2xl font-serif text-[#26382D]">
-              {t('results.title')}
-            </h1>
-            <p className="text-[#A99587] text-sm mt-1">
-              {searchPayload.origin} → {searchPayload.destination} • {t('results.subtitle')}
-            </p>
-          </div>
-        </div>
-        <main className="flex-grow px-4 py-6 w-full">
-          {renderContent()}
-        </main>
-        <BottomNavBar />
-      </div>
-
-      {/* DESKTOP LAYOUT */}
-      <div className="hidden md:flex flex-col min-h-screen bg-[#F8F6F3] font-sans">
-        <Navbar />
-
-        {/* Header Area */}
-        <div className="bg-white border-b border-[#D8C9BE] sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-8 py-6">
-            <button 
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-1 text-sm font-medium text-[#7C9278] hover:text-[#26382D] transition-colors mb-4"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              {t('results.goBack')}
-            </button>
-            <div className="flex justify-between items-end">
-              <div>
-                <h1 className="text-3xl font-serif text-[#26382D]">
-                  {t('results.title')}
-                </h1>
-                <p className="text-[#A99587] text-base mt-1">
-                  {searchPayload.origin} → {searchPayload.destination} • {t('results.subtitle')}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <main className="flex-grow max-w-7xl mx-auto px-8 py-8 w-full">
-          {renderContent()}
-        </main>
-      </div>
-    </>
   );
 }

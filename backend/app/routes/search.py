@@ -8,11 +8,12 @@ from typing import Dict, Any, List
 import datetime
 
 from app.db.mongo import get_db
-from app.services.live_api import fetch_serpapi_flights, fetch_serpapi_hotels, fetch_railradar_trains
+from app.services.live_api import fetch_serpapi_hotels
+from app.services.journey_builder import build_train_journeys, build_flight_journeys, build_car_journeys
 from app.models.schemas import (
     TransportSearchRequest, AccommodationSearchRequest,
     TransportSearchResponse, AccommodationSearchResponse,
-    TransportResult, HotelResult
+    TransportResult, HotelResult, NormalizedJourney
 )
 from recommendation_engine.filters import filter_candidates
 from recommendation_engine.scoring import calculate_sub_scores
@@ -59,31 +60,35 @@ async def search_transport(req: TransportSearchRequest) -> TransportSearchRespon
         except Exception:
             pass
 
-    # 1. Fetch seeded data
-    seeded_cursor = db.transport_routes.find({
-        "origin": req.origin,
-        "destination": req.destination
-    })
+    # 1. We won't use seeded data for real transport logic unless specified
     results = []
-    for doc in seeded_cursor:
-        if "_id" in doc:
-            doc["id"] = str(doc.pop("_id"))
-        doc["source"] = "seeded"
-        results.append(doc)
     
-    # 2. Fetch live data
-    search_date = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-    live_flights = await fetch_serpapi_flights(req.origin, req.destination, search_date)
-    live_trains = await fetch_railradar_trains(req.origin, req.destination, search_date)
+    # 2. Fetch live journeys
+    mode = req.mode or "train"
+    date = req.date or (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
     
-    # 3. Combine and deduplicate
-    seen_ids = {r.get("id") for r in results if r.get("id")}
-    for item in live_flights + live_trains:
-        if "id" not in item:
-            item["id"] = f"live_{len(seen_ids)}"
-        if item["id"] not in seen_ids:
-            results.append(item)
-            seen_ids.add(item["id"])
+    preferences = {}
+    if req.weights:
+        # e.g., mapping convenience to fewer transfers or less walking if high
+        if req.weights.convenience and req.weights.convenience > 0.5:
+            preferences["fewer_transfers"] = True
+
+    try:
+        if mode == "train":
+            journeys = await build_train_journeys(req.origin, req.destination, date, preferences)
+        elif mode == "flight":
+            journeys = await build_flight_journeys(req.origin, req.destination, date, preferences)
+        elif mode == "car":
+            journeys = await build_car_journeys(req.origin, req.destination, preferences)
+        else:
+            journeys = []
+            
+        for j in journeys:
+            results.append(j.model_dump())
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        results = []
             
     # 4. Filter (C3/C4)
     filtered = filter_candidates(
@@ -115,19 +120,32 @@ async def search_transport(req: TransportSearchRequest) -> TransportSearchRespon
         
         # Pydantic will validate the strict schema.
         try:
+            emissions_data = cand.get("emissions", {
+                "method": "estimated",
+                "co2e_kg": cand.get("total_co2_kg", 0.0),
+                "distance_km": sum(s.get("distance_km", 0) for s in cand.get("segments", [])),
+                "emission_factor": 0.04
+            })
+            
             final_results.append(TransportResult(
                 id=cand_id,
                 mode=cand["mode"],
-                cost_inr=cand["cost_inr"],
-                duration_minutes=cand["duration_minutes"],
-                emissions=cand["emissions"],
-                accessibility=cand["accessibility"],
+                cost_inr=cand.get("total_cost_inr", 0),
+                duration_minutes=cand.get("total_duration_minutes", 0),
+                emissions=emissions_data,
+                accessibility=cand.get("accessibility", {"value": None, "data_state": "not_verified"}),
                 personal_match_pct=cand.get("personal_match_pct"),
                 trade_off_summary=cand.get("trade_off_summary", []),
-                segments=cand.get("segments", [])
+                recommendation_reasons=cand.get("recommendation_reasons", []),
+                total_walking_m=cand.get("total_walking_m", 0),
+                transfer_count=cand.get("transfer_count", 0),
+                segments=cand.get("segments", []),
+                provider_metadata=cand.get("provider_metadata")
             ))
         except Exception as e:
             # Skip invalid candidates
+            import logging
+            logging.error(f"Failed to map TransportResult: {e}")
             pass
 
     return TransportSearchResponse(results=final_results)

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ExperienceResult } from '../../lib/api';
-import DataStateBadge from '../../shared/components/DataStateBadge';
+import { DataStateBadge } from '../../shared/components/DataStateBadge';
 import { formatCurrencyINR, formatDuration } from '../../lib/formatters';
 import { Clock, MapPin, IndianRupee } from 'lucide-react';
 
@@ -9,7 +9,7 @@ import { Clock, MapPin, IndianRupee } from 'lucide-react';
 const IsolatedDataStateBadge = ({ state }: { state: string }) => {
   return (
     <div className="flex flex-col gap-1 items-start sm:items-end">
-      <DataStateBadge />
+      <DataStateBadge state={state} />
       {state === 'demo_synthetic' && (
         <span className="text-[10px] font-bold text-[#E88D67] uppercase bg-[#E88D67]/10 px-1.5 py-0.5 rounded">
           {state}

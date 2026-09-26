@@ -23,17 +23,15 @@ def _get_field(candidate: Any, field_name: str) -> Any:
 
 
 def passes_budget(candidate: Any, budget_max: Optional[float]) -> bool:
-    """Check if candidate's cost is within the budget maximum.
-    
-    Uses cost_inr for transport, price_inr_per_night for accommodation.
-    Missing cost fails the filter (conservative).
-    """
+    """Check if candidate's cost is within the budget maximum."""
     if budget_max is None:
         return True
 
     cost = _get_field(candidate, "cost_inr")
     if cost is None:
         cost = _get_field(candidate, "price_inr_per_night")
+    if cost is None:
+        cost = _get_field(candidate, "total_cost_inr")
 
     if cost is None:
         return False
@@ -42,14 +40,14 @@ def passes_budget(candidate: Any, budget_max: Optional[float]) -> bool:
 
 
 def passes_time(candidate: Any, time_max_hours: Optional[float]) -> bool:
-    """Check if candidate's duration is within the maximum allowed time.
-    
-    Missing duration fails the filter (conservative).
-    """
+    """Check if candidate's duration is within the maximum allowed time."""
     if time_max_hours is None:
         return True
 
     duration_mins = _get_field(candidate, "duration_minutes")
+    if duration_mins is None:
+        duration_mins = _get_field(candidate, "total_duration_minutes")
+
     if duration_mins is None:
         return False
 

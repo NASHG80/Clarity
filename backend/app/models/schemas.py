@@ -190,18 +190,50 @@ class AttributeWithState(BaseModel):
         return self
 
 
-# ---------------------------------------------------------------------------
-# Transport segment
-# ---------------------------------------------------------------------------
-class Segment(BaseModel):
+class NormalizedPlace(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str
+    lat: float
+    lng: float
+    place_id: Optional[str] = None
+    code: Optional[str] = None
+    address: Optional[str] = None
+
+
+class NormalizedSegment(BaseModel):
     """One leg of a multi-modal transport route."""
     model_config = ConfigDict(extra="forbid")
 
-    type: str                               # e.g. "walk", "train", "flight"
-    duration_minutes: Optional[int] = None
-    distance_m: Optional[int] = None
-    accessible: Optional[bool] = None
-    data_state: DataState
+    id: str
+    segment_type: str  # "first_mile", "main", "last_mile"
+    mode: str          # "WALK", "TRANSIT", "DRIVE", "TRAIN", "FLIGHT"
+    provider: str
+    origin: NormalizedPlace
+    destination: NormalizedPlace
+    distance_km: float
+    duration_minutes: int
+    cost_inr: Optional[float] = None
+    co2_kg: Optional[float] = None
+    accessibility: Optional[AttributeWithState] = None
+    geometry: Optional[Any] = None  # Encoded polyline str or GeoJSON dict
+    sub_steps: List[Any] = Field(default_factory=list)
+    details: Optional[dict] = None
+
+
+class NormalizedJourney(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    journey_id: str
+    mode: str
+    segments: List[NormalizedSegment]
+    total_cost_inr: float
+    total_duration_minutes: int
+    total_co2_kg: float
+    total_walking_m: int
+    transfer_count: int
+    accessibility: AttributeWithState
+    recommendation_reasons: List[str] = Field(default_factory=list)
+    trade_offs: List[str] = Field(default_factory=list)
+    provider_metadata: Optional[dict] = None
 
 
 # ===========================================================================
@@ -262,13 +294,17 @@ class SearchWeights(_StrictBase):
 
 
 class TransportSearchRequest(_StrictBase):
-    origin: str
-    destination: str
+    origin: Union[str, dict]
+    destination: Union[str, dict]
+    mode: Optional[str] = None
     budget_max: Optional[float] = None
     time_max_hours: Optional[float] = None
     accessibility_required: Optional[List[str]] = Field(default_factory=list)
     weights: Optional[SearchWeights] = None
     include_unverified: Optional[bool] = False
+    passengers: Optional[dict] = None
+    date: Optional[str] = None
+    time: Optional[str] = None
 
 
 class TransportResult(BaseModel):
@@ -283,7 +319,11 @@ class TransportResult(BaseModel):
     accessibility: AttributeWithState
     personal_match_pct: Optional[float] = None
     trade_off_summary: List[str] = Field(default_factory=list)
-    segments: List[Segment] = Field(default_factory=list)
+    recommendation_reasons: List[str] = Field(default_factory=list)
+    total_walking_m: int = 0
+    transfer_count: int = 0
+    segments: List[NormalizedSegment] = Field(default_factory=list)
+    provider_metadata: Optional[dict] = None
 
 
 class TransportSearchResponse(BaseModel):
