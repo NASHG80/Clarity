@@ -108,6 +108,19 @@ Threshold (e.g. 3) lives in recommendation-engine config, not hardcoded
 in the frontend or in this document — see `config.py` in
 recommendation-engine.
 
+## Collection: verification_submissions (NEW for B19)
+```json
+{
+  "_id": "sub_001",
+  "hotel_id": "hotel_014",
+  "item_label": "roll_in_shower",
+  "status": "pending", 
+  "submission_type": "confirmation",
+  "created_at": "2026-09-26T10:00:00Z"
+}
+```
+`status` enum: `pending`, `accepted`, `disputed`. This feeds the B19 Verification Inbox. Accepting or disputing updates this status and flows into the `confirmations` aggregate collection according to domain logic.
+
 ## Collection: ai_inspections  (NEW)
 ```json
 {
