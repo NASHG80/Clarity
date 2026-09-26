@@ -15,7 +15,7 @@ from app.models.schemas import (
     TransportResult, HotelResult
 )
 from recommendation_engine.filters import filter_candidates
-from recommendation_engine.scoring import calculate_sub_scores
+from recommendation_engine.scoring import calculate_sub_scores, apply_sustainability_boost
 from recommendation_engine.rank import rank_candidates, generate_trade_offs
 
 router = APIRouter(prefix="/api/search", tags=["Search"])
@@ -158,9 +158,13 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
         doc["source"] = "seeded"
         results.append(doc)
         
-    # 2. Fetch live data
-    check_in = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-    check_out = (datetime.datetime.now() + datetime.timedelta(days=9)).strftime("%Y-%m-%d")
+    # 2. Fetch live data — use trip dates when supplied, else fall back to +7/+9 days
+    if req.arrival_date and req.departure_date:
+        check_in  = req.arrival_date
+        check_out = req.departure_date
+    else:
+        check_in  = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+        check_out = (datetime.datetime.now() + datetime.timedelta(days=9)).strftime("%Y-%m-%d")
     live_hotels = await fetch_serpapi_hotels(req.destination_city, check_in, check_out)
     
     # 3. Deduplicate
@@ -183,7 +187,14 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
     
     # 5. Score
     sub_scores = calculate_sub_scores(filtered)
-    
+
+    # 5b. Sustainability soft boost (AGENTS.md §2.2 — not_verified items never boosted)
+    sub_scores = apply_sustainability_boost(
+        filtered,
+        sub_scores,
+        req.sustainability_preferred or [],
+    )
+
     # 6. Rank
     ranked_meta = rank_candidates(filtered, sub_scores, req.weights)
     

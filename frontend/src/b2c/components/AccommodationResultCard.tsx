@@ -24,7 +24,7 @@ export default function AccommodationResultCard({ result }: AccommodationResultC
   const accessibilityCount = result.accessibility_items ? result.accessibility_items.length : 0;
   
   const handleCardClick = () => {
-    navigate(`/listings/${result.id}`, { state: location.state });
+    navigate(`/listings/${result.id}`, { state: { ...location.state, hotelResult: result } });
   };
 
   return (

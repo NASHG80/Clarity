@@ -191,3 +191,55 @@ Only valid search requests containing a non-empty `accessibility_required` list 
   when surfaced via the analytics endpoints.
 - Keep a `database/sources.md` listing where each real-anchor claim
   came from, so every claim in the demo is traceable.
+
+## Collection: traveler_trips  (NEW — Customer Dashboard)
+```json
+{
+  "_id": "trip_abc12345",
+  "user_id": "usr_xyz78901",
+  "destination": "Goa",
+  "adults": 2,
+  "children": 1,
+  "rooms": 1,
+  "arrival_date": "2026-10-12",
+  "departure_date": "2026-10-16",
+  "accessibility_required": ["wheelchair_accessible_room", "step_free_entrance"],
+  "sustainability_preferred": ["solar_power"],
+  "budget_max": 8000,
+  "weights": { "environmental": 0.30, "accessibility": 0.40, "affordability": 0.20, "convenience": 0.10 },
+  "include_unverified": false,
+  "phase": "RESULTS",
+  "last_search_result_count": 8,
+  "created_at": "2026-09-27T00:00:00Z",
+  "last_updated": "2026-09-27T00:15:00Z"
+}
+```
+`phase` enum: `EMPTY | BASICS_SAVED | ACCESSIBILITY | SUSTAINABILITY | PRIORITIES | SEARCHING | RESULTS | ERROR`
+One "active" trip per user = most recent by `last_updated`.
+`user_id` matches `users` collection — enforced by every trip endpoint.
+Index: `{ "user_id": 1, "last_updated": -1 }` for active-trip lookup.
+
+## Collection: traveler_interactions  (NEW — Customer Dashboard)
+Append-only. Never updated after insert. Distinct from `analytics_events` (B2B).
+```json
+{
+  "_id": "int_def45678",
+  "trip_id": "trip_abc12345",
+  "user_id": "usr_xyz78901",
+  "session_id": "sess_uvw01234",
+  "event_type": "search_performed",
+  "timestamp": "2026-09-27T00:10:00Z",
+  "payload": {
+    "client_event_id": "ce_01929abc",
+    "accessibility_required": ["wheelchair_accessible_room"],
+    "sustainability_preferred": ["solar_power"],
+    "budget_max": 8000,
+    "result_count": 8
+  }
+}
+```
+`event_type` enum: see TravelerEventType in API_CONTRACT.md (17 values).
+`client_event_id` in payload enables idempotent upsert on retry.
+Indexes:
+  - `{ "trip_id": 1, "timestamp": 1 }` — chronological memory rail reconstruction
+  - `{ "payload.client_event_id": 1 }` (sparse) — idempotency upsert key

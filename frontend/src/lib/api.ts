@@ -859,6 +859,12 @@ export async function searchTransport(payload: TransportSearchRequest): Promise<
 
 export interface AccommodationSearchRequest extends TransportSearchRequest {
   destination_city: string;
+  // Optional trip dates — when supplied, used for live hotel search (SerpAPI)
+  // instead of the default +7/+9 day fallback. Backwards-compatible.
+  arrival_date?: string;           // YYYY-MM-DD
+  departure_date?: string;         // YYYY-MM-DD
+  // Soft ranking preference — never a hard filter; not_verified items never boosted
+  sustainability_preferred?: string[];
 }
 
 export interface AccommodationItem {
@@ -1278,4 +1284,142 @@ export async function verifyBookingPayment(payload: VerifyPaymentRequest): Promi
     }
     throw err;
   }
+}
+
+// =============================================================================
+// B2C — Customer Dashboard Trip API
+// =============================================================================
+
+export interface TripWeights {
+  environmental: number;
+  accessibility: number;
+  affordability: number;
+  convenience: number;
+}
+
+export type DashboardPhase =
+  | 'EMPTY'
+  | 'BASICS_SAVED'
+  | 'ACCESSIBILITY'
+  | 'SUSTAINABILITY'
+  | 'PRIORITIES'
+  | 'SEARCHING'
+  | 'RESULTS'
+  | 'ERROR';
+
+export interface TripState {
+  trip_id: string;
+  user_id: string;
+  destination: string;
+  adults: number;
+  children: number;
+  rooms: number;
+  arrival_date: string;
+  departure_date: string;
+  accessibility_required: string[];
+  sustainability_preferred: string[];
+  budget_max: number | null;
+  weights: TripWeights;
+  include_unverified: boolean;
+  phase: DashboardPhase;
+  last_search_result_count: number | null;
+  created_at: string;
+  last_updated: string;
+}
+
+export interface TripCreatePayload {
+  user_id: string;
+  destination: string;
+  adults: number;
+  children: number;
+  rooms: number;
+  arrival_date: string;
+  departure_date: string;
+}
+
+export interface TripCreateResponse {
+  trip_id: string;
+  phase: DashboardPhase;
+  created_at: string;
+}
+
+export interface TripInteraction {
+  interaction_id: string;
+  event_type: string;
+  timestamp: string;
+  payload: Record<string, unknown>;
+}
+
+export interface TripInteractionPayload {
+  user_id: string;
+  session_id: string;
+  event_type: string;
+  payload: Record<string, unknown> & { client_event_id: string };
+}
+
+export async function createTrip(payload: TripCreatePayload): Promise<TripCreateResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/trips/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Create trip failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function getActiveTrip(userId: string): Promise<{ trip: TripState | null }> {
+  const response = await fetch(`${API_BASE_URL}/api/trips/active?user_id=${encodeURIComponent(userId)}`);
+  if (!response.ok) {
+    throw new Error(`Get active trip failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function patchTripState(
+  tripId: string,
+  partial: Partial<TripState> & { user_id: string }
+): Promise<{ trip_id: string; last_updated: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/trips/${encodeURIComponent(tripId)}/state`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(partial),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Patch trip state failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function postTripInteraction(
+  tripId: string,
+  payload: TripInteractionPayload
+): Promise<{ interaction_id: string; status: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/trips/${encodeURIComponent(tripId)}/interactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  // Fire-and-forget pattern: swallow errors silently in production
+  if (!response.ok) {
+    console.warn(`Interaction post failed: ${response.status}`);
+    return { interaction_id: '', status: 'failed' };
+  }
+  return response.json();
+}
+
+export async function getTripInteractions(
+  tripId: string,
+  userId: string
+): Promise<{ interactions: TripInteraction[] }> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/trips/${encodeURIComponent(tripId)}/interactions?user_id=${encodeURIComponent(userId)}`
+  );
+  if (!response.ok) {
+    throw new Error(`Get interactions failed: ${response.status}`);
+  }
+  return response.json();
 }

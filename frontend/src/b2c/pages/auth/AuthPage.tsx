@@ -66,7 +66,12 @@ export default function AuthPage() {
         return;
       }
 
-      // Success routing based on backend response
+      // Success: store identity in sessionStorage for the dashboard
+      sessionStorage.setItem('clarity_user_id', data.user_id);
+      sessionStorage.setItem('clarity_token', data.token);
+      sessionStorage.setItem('clarity_role', data.role);
+
+      // Route based on role
       if (data.role === 'customer') {
         navigate('/customer-dashboard');
       } else {

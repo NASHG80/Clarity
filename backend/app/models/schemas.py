@@ -301,6 +301,24 @@ class AccommodationSearchRequest(_StrictBase):
     accessibility_required: Optional[List[str]] = Field(default_factory=list)
     weights: Optional[SearchWeights] = None
     include_unverified: Optional[bool] = False
+    # Optional trip-date fields (Customer Dashboard — backwards-compatible)
+    arrival_date: Optional[str] = None    # YYYY-MM-DD; when supplied overrides +7 day fallback
+    departure_date: Optional[str] = None  # YYYY-MM-DD; must be after arrival_date
+    # Sustainability ranking preference (soft boost only — never a hard filter)
+    sustainability_preferred: Optional[List[str]] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def check_dates(self) -> "AccommodationSearchRequest":
+        from datetime import date as _date
+        if self.arrival_date and self.departure_date:
+            try:
+                arr = _date.fromisoformat(self.arrival_date)
+                dep = _date.fromisoformat(self.departure_date)
+            except ValueError as exc:
+                raise ValueError("arrival_date and departure_date must be YYYY-MM-DD") from exc
+            if dep <= arr:
+                raise ValueError("departure_date must be strictly after arrival_date")
+        return self
 
 
 class HotelResult(BaseModel):
