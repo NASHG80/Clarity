@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Globe, ArrowUpRight } from 'lucide-react';
+import { Globe, ArrowRight, Leaf } from 'lucide-react';
 
 export default function Navbar() {
   const { t, i18n } = useTranslation('b2c');
@@ -16,66 +16,43 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#F1EDE9]/90 backdrop-blur-md border-b border-[#26382D]/8 transition-all w-full shrink-0">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 h-20 flex items-center justify-between">
+    <header className="fixed top-4 left-0 right-0 z-50 px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto h-16 bg-[#F1EDE9]/95 backdrop-blur-md border border-[#26382D]/10 rounded-full flex items-center justify-between px-6 shadow-sm">
         
         {/* Logo / Wordmark */}
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate('/')} 
-            className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] rounded-md"
+            className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] rounded-md"
             aria-label={t('accessibility.home', 'Green & Inclusive Travel Homepage')}
           >
-            <div className="w-9 h-9 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-xs">
-              <svg className="w-5 h-5 text-[#A9B8A3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.5 12 13 14 10" strokeDasharray="2 2"/>
-              </svg>
+            <div className="w-8 h-8 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-xs">
+              <Leaf className="w-4 h-4" />
             </div>
-            <span className="font-serif text-2xl tracking-tight font-medium text-[#26382D]">
-              Green &amp; Inclusive Travel
+            <span className="font-serif text-xl tracking-tight font-medium text-[#26382D]">
+              EcoWay
             </span>
           </button>
         </div>
 
         {/* Center Links */}
-        <nav className="hidden md:flex items-center gap-9 text-[15px] font-medium tracking-wide text-[#26382D]/85">
-          <button 
-            onClick={() => navigate('/')} 
-            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
-          >
-            {t('home.nav.planTrip', 'Plan a Trip')}
-          </button>
-          <button 
-            onClick={() => navigate('/explore/Goa')} 
-            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
-          >
-            {t('home.nav.explore', 'Explore')}
-          </button>
-          <button 
-            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
-          >
-            {t('home.nav.trips', 'Trips')}
-          </button>
+        <nav className="hidden md:flex items-center gap-8 text-[13px] font-semibold text-[#26382D]/80">
+          <button onClick={() => navigate('/explore/Goa')} className="hover:text-[#26382D] transition-colors cursor-pointer">{t('home.nav.explore', 'Explore')}</button>
+          <button onClick={() => navigate('/')} className="hover:text-[#26382D] transition-colors cursor-pointer">{t('home.nav.planTrip', 'Plan a Trip')}</button>
+          <button className="hover:text-[#26382D] transition-colors cursor-pointer">Accessibility</button>
+          <button className="hover:text-[#26382D] transition-colors cursor-pointer">Sustainability</button>
+          <button className="hover:text-[#26382D] transition-colors cursor-pointer">{t('home.nav.forBusinesses', 'For Businesses')}</button>
         </nav>
 
-        {/* Right: For Businesses + Language Switcher */}
-        <div className="hidden md:flex items-center gap-5 text-sm">
-          <button
-            className="text-[14px] font-medium text-[#26382D]/75 hover:text-[#26382D] transition-colors flex items-center gap-1.5 py-1.5 px-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] cursor-pointer"
-          >
-            <span>{t('home.nav.forBusinesses', 'For Businesses')}</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-[#7C9278]" />
-          </button>
-
-          <span className="w-[1px] h-4 bg-[#D8C9BE]" aria-hidden="true" />
-
+        {/* Right: Action Button & Language */}
+        <div className="hidden md:flex items-center gap-4 text-sm">
+          
           {/* Language Switcher */}
-          <div className="relative">
+          <div className="relative mr-2">
             <button
               type="button"
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[#26382D] text-xs font-semibold tracking-wider hover:bg-[#F8F6F3] border border-transparent hover:border-[#D8C9BE] transition-all focus:outline-none cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[#26382D] text-[11px] font-bold tracking-wider hover:bg-[#D8C9BE]/30 border border-transparent transition-all focus:outline-none cursor-pointer"
               aria-label={t('accessibility.languageSelector', 'Language selector')}
             >
               <Globe className="w-3.5 h-3.5 text-[#7C9278]" />
@@ -115,6 +92,13 @@ export default function Navbar() {
               </div>
             )}
           </div>
+
+          <button
+            onClick={() => navigate('/')}
+            className="bg-[#26382D] text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-2 hover:bg-[#1A261E] transition-colors"
+          >
+            START PLANNING <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
       </div>
