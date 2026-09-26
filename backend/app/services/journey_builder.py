@@ -63,6 +63,15 @@ async def _get_google_route(origin_place: Any, dest_place: Any, mode: str, prefe
         elif preferences.get("fewer_transfers"):
             body["transitPreferences"] = {"routingPreference": "FEWER_TRANSFERS"}
             
+    if mode == "DRIVE" and preferences:
+        modifiers = {}
+        if preferences.get("avoid_tolls"):
+            modifiers["avoidTolls"] = True
+        if preferences.get("avoid_highways"):
+            modifiers["avoidHighways"] = True
+        if modifiers:
+            body["routeModifiers"] = modifiers
+            
     mask_transit = ','.join([
         'routes.duration','routes.distanceMeters',
         'routes.legs.steps.travelMode',
@@ -90,13 +99,24 @@ def _parse_google_route_to_segment(route_data: dict, segment_type: str, mode: st
     
     geom = rt.get('polyline', {}).get('encodedPolyline')
     
+    orig_lat, orig_lng = 0.0, 0.0
+    dest_lat, dest_lng = 0.0, 0.0
+    
+    if steps:
+        first_step = steps[0]
+        last_step = steps[-1]
+        orig_lat = first_step.get('startLocation', {}).get('latLng', {}).get('latitude', 0.0)
+        orig_lng = first_step.get('startLocation', {}).get('latLng', {}).get('longitude', 0.0)
+        dest_lat = last_step.get('endLocation', {}).get('latLng', {}).get('latitude', 0.0)
+        dest_lng = last_step.get('endLocation', {}).get('latLng', {}).get('longitude', 0.0)
+    
     return NormalizedSegment(
         id=str(uuid.uuid4()),
         segment_type=segment_type,
         mode=mode,
         provider="Google Routes",
-        origin=NormalizedPlace(name=orig_name, lat=0, lng=0), # Coordinates handled by map polyline typically
-        destination=NormalizedPlace(name=dest_name, lat=0, lng=0),
+        origin=NormalizedPlace(name=orig_name, lat=orig_lat, lng=orig_lng),
+        destination=NormalizedPlace(name=dest_name, lat=dest_lat, lng=dest_lng),
         distance_km=dist_m / 1000.0,
         duration_minutes=dur_mins,
         cost_inr=None, # Google Routes doesn't reliably give INR fares
@@ -120,6 +140,15 @@ async def build_train_journeys(origin: Any, destination: Any, date: str, prefere
             orig_stations.extend(stations)
         if city in dest_text:
             dest_stations.extend(stations)
+            
+    import re
+    m_orig = re.search(r'\(([a-z0-9_]+)\)$', orig_text)
+    if m_orig:
+        orig_stations = [m_orig.group(1).upper()]
+        
+    m_dest = re.search(r'\(([a-z0-9_]+)\)$', dest_text)
+    if m_dest:
+        dest_stations = [m_dest.group(1).upper()]
             
     # Default fallback if not found in static map (hackathon safeguard)
     if not orig_stations: orig_stations = ["LTT", "CSTM"]
@@ -261,7 +290,7 @@ async def build_train_journeys(origin: Any, destination: Any, date: str, prefere
             total_walking_m=int(walk_m),
             transfer_count=transfer_count,
             accessibility=AttributeWithState(value=None, data_state=DataState.not_verified),
-            provider_metadata={"train_number": train_num}
+            provider_details={"train_number": train_num}
         ))
         
     return journeys
@@ -271,8 +300,12 @@ async def build_flight_journeys(origin: Any, destination: Any, date: str, prefer
     orig_text = resolve_place_text(origin).lower()
     dest_text = resolve_place_text(destination).lower()
     
-    orig_airport = "BOM" if "mumbai" in orig_text else ("DEL" if "delhi" in orig_text else "BOM")
-    dest_airport = "GOI" if "goa" in dest_text else "GOI"
+    import re
+    m_orig = re.search(r'\b([a-z]{3})\b', orig_text)
+    m_dest = re.search(r'\b([a-z]{3})\b', dest_text)
+    
+    orig_airport = m_orig.group(1).upper() if m_orig else ("BOM" if "mumbai" in orig_text else ("DEL" if "delhi" in orig_text else "BOM"))
+    dest_airport = m_dest.group(1).upper() if m_dest else ("GOI" if "goa" in dest_text else "GOI")
     
     params = {
         "engine": "google_flights",
@@ -366,7 +399,7 @@ async def build_flight_journeys(origin: Any, destination: Any, date: str, prefer
             total_walking_m=0,
             transfer_count=2,
             accessibility=AttributeWithState(value=None, data_state=DataState.not_verified),
-            provider_metadata={"flight_number": flight_num}
+            provider_details={"flight_number": flight_num}
         ))
         
     return journeys
@@ -381,6 +414,11 @@ async def build_car_journeys(origin: Any, destination: Any, preferences: dict = 
         
     # Add estimated cost (e.g. INR 12 per km)
     seg.cost_inr = seg.distance_km * 12.0
+    fuel_type = (preferences or {}).get("fuel_type", "petrol").lower()
+    if fuel_type == "ev":
+        seg.co2_kg = seg.distance_km * 0.0 # EV tailpipe emissions
+    else:
+        seg.co2_kg = seg.distance_km * 0.12 # Petrol average
         
     j = NormalizedJourney(
         journey_id=str(uuid.uuid4()),

@@ -7,6 +7,12 @@ import {
   Leaf, Sliders, ChevronRight, User, Info, MessageCircle, AlertCircle, Loader
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import TrainCard from '../components/transport/TrainCard';
+import FlightCard from '../components/transport/FlightCard';
+import StationAutocomplete from '../components/transport/StationAutocomplete';
+import AirportAutocomplete from '../components/transport/AirportAutocomplete';
+import FlightPriceInsights from '../components/transport/FlightPriceInsights';
+import { API_BASE_URL } from '../../lib/api';
 
 export default function TransportResultsPage() {
   const navigate = useNavigate();
@@ -48,18 +54,23 @@ export default function TransportResultsPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    
     setIsLoading(true);
     setStep('RESULTS');
     
     try {
-      const res = await fetch('/api/search/transport', {
+      const res = await fetch(`${API_BASE_URL}/api/search/transport`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          origin: trip?.origin || "Borivali",
-          destination: trip?.destination || "Hotel XYZ, Goa",
+          origin: formData.get('board') || trip?.origin || "Borivali",
+          destination: formData.get('dest') || trip?.destination || "Hotel XYZ, Goa",
           mode: selectedMode?.toLowerCase() || "train",
-          date: trip?.date || "2026-09-27"
+          date: formData.get('date') || trip?.date || "2026-09-27",
+          vehicle_preferences: {
+             fuel_type: formData.get('fuel_type') || "petrol"
+          }
         })
       });
       const data = await res.json();
@@ -75,6 +86,46 @@ export default function TransportResultsPage() {
     setSelectedOption(opt);
     setSelectedSegmentId(opt.segments[0]?.id || null);
     setStep('BREAKDOWN');
+  };
+
+  const handleApplyFilters = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const prefs = formData.getAll('routePref') as string[];
+    
+    const weights = {
+      affordability: prefs.includes('Lowest cost') ? 1.0 : 0.5,
+      convenience: (prefs.includes('Fastest') || prefs.includes('Less walking') || prefs.includes('Fewer transfers')) ? 1.0 : 0.5,
+      environmental: prefs.includes('Lowest CO₂') ? 1.0 : 0.5,
+      accessibility: prefs.includes('Wheelchair accessible') ? 1.0 : 0.5,
+    };
+    
+    setIsLoading(true);
+    setStep('RESULTS');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/search/transport`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: trip?.origin || "Borivali",
+          destination: trip?.destination || "Hotel XYZ, Goa",
+          mode: selectedMode?.toLowerCase() || "train",
+          date: trip?.date || "2026-09-27",
+          weights: weights,
+          vehicle_preferences: {
+             fuel_type: (document.querySelector('select[name="fuel_type"]') as HTMLSelectElement)?.value || 'petrol',
+             avoid_tolls: formData.get('avoidTolls') === 'on',
+             avoid_highways: formData.get('avoidHighways') === 'on',
+          }
+        })
+      });
+      const data = await res.json();
+      setResults(data.results || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChatSubmit = (e: React.FormEvent) => {
@@ -99,7 +150,7 @@ export default function TransportResultsPage() {
         
         {/* LEFT SIDEBAR: Persistent Filters */}
         <aside className="hidden lg:block w-72 shrink-0 pr-6 pb-24">
-          <div className="sticky top-24 space-y-6">
+          <form onSubmit={handleApplyFilters} className="sticky top-24 space-y-6">
             <div>
               <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Travel Mode</h3>
               <div className="space-y-2">
@@ -113,7 +164,7 @@ export default function TransportResultsPage() {
               <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Route Preference</h3>
               <div className="space-y-2">
                 {['Best route', 'Fastest', 'Lowest cost', 'Lowest CO₂', 'Less walking', 'Fewer transfers', 'Wheelchair accessible'].map(pref => (
-                  <label key={pref} className="flex items-center gap-3"><input type="radio" name="routePref" defaultChecked={pref==='Best route'} className="w-4 h-4 text-[#7C9278] border-[#D8C9BE]" /><span className="text-[#26382D] text-sm">{pref}</span></label>
+                  <label key={pref} className="flex items-center gap-3"><input type="checkbox" name="routePref" defaultChecked={pref==='Best route'} className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">{pref}</span></label>
                 ))}
               </div>
             </div>
@@ -127,11 +178,25 @@ export default function TransportResultsPage() {
               </div>
             </div>
 
+            {selectedMode === 'CAR' && (
+              <div>
+                <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Route Options (Car)</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-3"><input type="checkbox" name="avoidTolls" className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Avoid Tolls</span></label>
+                  <label className="flex items-center gap-3"><input type="checkbox" name="avoidHighways" className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Avoid Highways</span></label>
+                </div>
+              </div>
+            )}
+
             <div>
               <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Budget</h3>
               <input type="text" placeholder="₹ ______" className="w-full border border-[#D8C9BE] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#7C9278]" />
             </div>
-          </div>
+
+            <button type="submit" className="w-full bg-[#2563EB] text-white py-3 rounded-xl font-medium mt-4 hover:bg-blue-700 transition-colors">
+              Apply Filters
+            </button>
+          </form>
         </aside>
 
         {/* MAIN AREA */}
@@ -215,18 +280,10 @@ export default function TransportResultsPage() {
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Boarding Station</label>
-                        <select name="board" className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none">
-                          <option>Borivali (BVI)</option>
-                          <option>Bandra Terminus (BDTS)</option>
-                        </select>
+                        <StationAutocomplete label="Boarding Station" name="board" defaultValue="LTT" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Destination Station</label>
-                        <select name="dest" className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none">
-                          <option>Madgaon (MAO)</option>
-                          <option>Thivim (THVM)</option>
-                        </select>
+                        <StationAutocomplete label="Destination Station" name="dest" defaultValue="MAO" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -250,12 +307,10 @@ export default function TransportResultsPage() {
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Departure Airport</label>
-                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>BOM / Mumbai</option></select>
+                        <AirportAutocomplete label="Departure Airport" name="board" defaultValue="BOM" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Arrival Airport</label>
-                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>GOI / Goa</option></select>
+                        <AirportAutocomplete label="Arrival Airport" name="dest" defaultValue="GOI" />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -280,7 +335,7 @@ export default function TransportResultsPage() {
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Fuel Type</label>
-                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>Petrol</option><option>EV</option></select>
+                        <select name="fuel_type" onChange={(e) => e.currentTarget.form?.requestSubmit()} className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option value="petrol">Petrol</option><option value="ev">EV</option></select>
                       </div>
                     </div>
                     <button type="submit" className="w-full bg-[#26382D] text-white py-3 rounded-xl font-medium mt-4 hover:bg-[#1a261f]">Calculate Route</button>
@@ -303,19 +358,30 @@ export default function TransportResultsPage() {
                   <Loader className="w-8 h-8 text-[#7C9278] animate-spin mb-4" />
                   <p className="text-[#26382D] font-medium">Building your door-to-door journeys...</p>
                 </div>
-              ) : results.length === 0 ? (
-                <div className="bg-white border border-[#D8C9BE] rounded-2xl p-8 text-center text-[#7C9278]">
-                  No routes found.
-                </div>
-              ) : results.map(opt => (
+              ) : (
+                <>
+                  {results.length > 0 && results.some(r => r.mode === 'flight') && (
+                    <FlightPriceInsights insights={{ destination: trip?.destination || "your destination", low: 4500, high: 6500 }} />
+                  )}
+                  {results.length === 0 ? (
+                    <div className="bg-white border border-[#D8C9BE] rounded-2xl p-8 text-center text-[#7C9278]">
+                      No routes found.
+                    </div>
+                  ) : results.map(opt => {
+                    if (opt.mode === 'train') {
+                  return <TrainCard key={opt.id} option={opt} onSelect={() => handleSelectOption(opt)} />;
+                } else if (opt.mode === 'flight') {
+                  return <FlightCard key={opt.id} option={opt} onSelect={() => handleSelectOption(opt)} />;
+                }
+                
+                // Fallback for car or others
+                return (
                 <div key={opt.id} className="bg-white border border-[#D8C9BE] rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row">
                   <div className="flex-1 p-5">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        {opt.mode === 'train' && <Train className="w-5 h-5 text-[#26382D]" />}
-                        {opt.mode === 'flight' && <Plane className="w-5 h-5 text-[#26382D]" />}
-                        {opt.mode === 'car' && <Car className="w-5 h-5 text-[#26382D]" />}
-                        <h4 className="font-bold text-[#26382D] text-lg">{opt.provider_metadata?.train_number || opt.provider_metadata?.flight_number || (opt.mode + " Route")}</h4>
+                        <Car className="w-5 h-5 text-[#26382D]" />
+                        <h4 className="font-bold text-[#26382D] text-lg">{opt.provider_details?.train_number || opt.provider_details?.flight_number || (opt.mode + " Route")}</h4>
                       </div>
                     </div>
                     
@@ -341,7 +407,7 @@ export default function TransportResultsPage() {
 
                   <div className="w-full md:w-48 bg-[#F8F6F3] p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-[#D8C9BE]">
                     <div>
-                      <div className="text-xl font-bold text-[#26382D] mb-1">₹{opt.cost_inr}</div>
+                      <div className="text-xl font-bold text-[#26382D] mb-1">₹{opt.cost_inr?.toFixed(2) || '0.00'}</div>
                       <div className="text-xs text-[#7C9278] flex items-center gap-1"><Leaf className="w-3 h-3"/> {opt.emissions?.co2e_kg?.toFixed(1) || 0} kg CO₂e</div>
                     </div>
                     <button onClick={() => handleSelectOption(opt)} className="w-full mt-4 bg-[#26382D] text-white py-2 rounded-xl text-sm font-medium hover:bg-[#1a261f]">
@@ -349,7 +415,10 @@ export default function TransportResultsPage() {
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
+              </>
+              )}
             </div>
           )}
 
@@ -382,7 +451,7 @@ export default function TransportResultsPage() {
                 </div>
                 <div className="w-full sm:w-48 shrink-0 space-y-2 text-sm">
                   <div className="flex justify-between text-[#1F4029]"><span>Time</span><strong>{Math.floor(selectedOption.duration_minutes/60)}h {selectedOption.duration_minutes%60}m</strong></div>
-                  <div className="flex justify-between text-[#1F4029]"><span>Cost</span><strong>₹{selectedOption.cost_inr}</strong></div>
+                  <div className="flex justify-between text-[#1F4029]"><span>Cost</span><strong>₹{selectedOption.cost_inr?.toFixed(2) || '0.00'}</strong></div>
                   <div className="flex justify-between text-[#1F4029]"><span>CO₂e</span><strong>{selectedOption.emissions?.co2e_kg?.toFixed(1)} kg</strong></div>
                   <div className="flex justify-between text-[#1F4029]"><span>Walking</span><strong>{(selectedOption.total_walking_m/1000).toFixed(1)} km</strong></div>
                   <div className="flex justify-between text-[#1F4029]"><span>Transfers</span><strong>{selectedOption.transfer_count}</strong></div>
@@ -429,7 +498,7 @@ export default function TransportResultsPage() {
                           {seg.cost_inr > 0 && (
                             <div className="flex flex-col border-l border-[#D8C9BE] pl-4">
                               <span className="text-[10px] uppercase font-bold text-[#A99587]">Cost</span>
-                              <span className="font-medium text-[#26382D]">₹{seg.cost_inr}</span>
+                              <span className="font-medium text-[#26382D]">₹{seg.cost_inr?.toFixed(2) || '0.00'}</span>
                             </div>
                           )}
                           <div className="flex flex-col border-l border-[#D8C9BE] pl-4">
@@ -461,9 +530,21 @@ export default function TransportResultsPage() {
                       id: s.id,
                       encodedPolyline: typeof s.geometry === 'string' ? s.geometry : undefined,
                       geoJson: typeof s.geometry === 'object' ? s.geometry : undefined,
-                      color: s.mode === 'WALK' ? '#A9B8A3' : '#26382D',
+                      color: s.mode === 'WALK' ? '#93C5FD' : '#2563EB',
                       isSelected: selectedSegmentId === s.id
                     }))} 
+                    markers={[
+                      ...(selectedOption.segments?.[0]?.origin?.lat && selectedOption.segments?.[0]?.origin?.lng ? [{
+                        id: 'start',
+                        position: { lat: selectedOption.segments[0].origin.lat, lng: selectedOption.segments[0].origin.lng },
+                        label: 'A'
+                      }] : []),
+                      ...(selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lat && selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lng ? [{
+                        id: 'end',
+                        position: { lat: selectedOption.segments[selectedOption.segments.length - 1].destination.lat, lng: selectedOption.segments[selectedOption.segments.length - 1].destination.lng },
+                        label: 'B'
+                      }] : [])
+                    ]}
                     selectedSegmentId={selectedSegmentId || undefined} 
                   />
                 </div>

@@ -233,7 +233,7 @@ class NormalizedJourney(BaseModel):
     accessibility: AttributeWithState
     recommendation_reasons: List[str] = Field(default_factory=list)
     trade_offs: List[str] = Field(default_factory=list)
-    provider_metadata: Optional[dict] = None
+    provider_details: Optional[dict] = None
 
 
 # ===========================================================================
@@ -297,6 +297,7 @@ class TransportSearchRequest(_StrictBase):
     origin: Union[str, dict]
     destination: Union[str, dict]
     mode: Optional[str] = None
+    vehicle_preferences: Optional[dict] = None
     budget_max: Optional[float] = None
     time_max_hours: Optional[float] = None
     accessibility_required: Optional[List[str]] = Field(default_factory=list)
@@ -323,7 +324,7 @@ class TransportResult(BaseModel):
     total_walking_m: int = 0
     transfer_count: int = 0
     segments: List[NormalizedSegment] = Field(default_factory=list)
-    provider_metadata: Optional[dict] = None
+    provider_details: Optional[dict] = None
 
 
 class TransportSearchResponse(BaseModel):

@@ -76,6 +76,24 @@ async def railradar_get(path: str, params: dict = None) -> dict:
         logger.error(f"RailRadar API error: {e}")
         return {}
 
+async def railradar_autocomplete(q: str) -> List[Dict]:
+    data = await railradar_get(f"/v1/stations", {"q": q})
+    if data and data.get("success"):
+        return data.get("data", {}).get("stations", [])
+    return []
+
+async def railradar_train_route(train_number: str) -> dict:
+    return await railradar_get(f"/v1/trains/{train_number}/route")
+
+async def railradar_train_live(train_number: str) -> dict:
+    return await railradar_get(f"/v1/trains/{train_number}/live")
+
+async def railradar_train_fare(train_number: str, src: str, dst: str, date: str) -> dict:
+    return await railradar_get(f"/v1/trains/{train_number}/fare", {"journeyDate": date, "source": src, "destination": dst, "class": "3A"})
+
+async def railradar_train_seats(train_number: str, src: str, dst: str, date: str) -> dict:
+    return await railradar_get(f"/v1/trains/{train_number}/seat-availability", {"journeyDate": date, "source": src, "destination": dst, "class": "3A"})
+
 async def serpapi_get(params: dict) -> dict:
     if not SERPAPI_API_KEY:
         logger.error("Missing SERPAPI_API_KEY")
@@ -128,3 +146,39 @@ async def fetch_serpapi_hotels(destination: str, check_in: str, check_out: str) 
             "source": "live"
         })
     return results
+
+async def google_places_autocomplete(q: str) -> List[Dict]:
+    if not GOOGLE_ROUTES_API_KEY:
+        return []
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                "https://places.googleapis.com/v1/places:autocomplete",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Goog-Api-Key": GOOGLE_ROUTES_API_KEY,
+                },
+                json={"input": q}
+            )
+            data = resp.json()
+            return data.get("suggestions", [])
+    except Exception as e:
+        logger.error(f"Google Places Autocomplete error: {e}")
+        return []
+
+async def google_places_details(place_id: str) -> dict:
+    if not GOOGLE_ROUTES_API_KEY:
+        return {}
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"https://places.googleapis.com/v1/places/{place_id}",
+                headers={
+                    "X-Goog-Api-Key": GOOGLE_ROUTES_API_KEY,
+                    "X-Goog-FieldMask": "id,displayName,formattedAddress,location"
+                }
+            )
+            return resp.json()
+    except Exception as e:
+        logger.error(f"Google Places Details error: {e}")
+        return {}

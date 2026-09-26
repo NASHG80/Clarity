@@ -8,7 +8,10 @@ from typing import Dict, Any, List
 import datetime
 
 from app.db.mongo import get_db
-from app.services.live_api import fetch_serpapi_hotels
+from app.services.live_api import (
+    fetch_serpapi_hotels, railradar_autocomplete, google_places_autocomplete, google_places_details,
+    railradar_train_route, railradar_train_live, railradar_train_fare, railradar_train_seats
+)
 from app.services.journey_builder import build_train_journeys, build_flight_journeys, build_car_journeys
 from app.models.schemas import (
     TransportSearchRequest, AccommodationSearchRequest,
@@ -20,6 +23,54 @@ from recommendation_engine.scoring import calculate_sub_scores, apply_sustainabi
 from recommendation_engine.rank import rank_candidates, generate_trade_offs
 
 router = APIRouter(prefix="/api/search", tags=["Search"])
+
+@router.get("/autocomplete/places")
+async def autocomplete_places(q: str):
+    return await google_places_autocomplete(q)
+
+@router.get("/autocomplete/station")
+async def autocomplete_station(q: str):
+    q = q.lower()
+    stations = [
+        {"code": "LTT", "name": "Mumbai LTT"},
+        {"code": "CSTM", "name": "Mumbai CSMT"},
+        {"code": "BCT", "name": "Mumbai Central"},
+        {"code": "MAO", "name": "Madgaon Jn (Goa)"},
+        {"code": "NDLS", "name": "New Delhi"},
+        {"code": "SBC", "name": "KSR Bengaluru"}
+    ]
+    return [s for s in stations if q in s["name"].lower() or q in s["code"].lower()]
+
+@router.get("/autocomplete/airport")
+async def autocomplete_airport(q: str):
+    q = q.lower()
+    airports = [
+        {"id": "BOM", "name": "Mumbai - Chhatrapati Shivaji Int"},
+        {"id": "GOI", "name": "Goa - Dabolim"},
+        {"id": "DEL", "name": "Delhi - Indira Gandhi Int"},
+        {"id": "BLR", "name": "Bangalore - Kempegowda Int"}
+    ]
+    return [a for a in airports if q in a["name"].lower() or q in a["id"].lower()]
+
+@router.get("/place/{place_id}")
+async def get_place_details(place_id: str):
+    return await google_places_details(place_id)
+
+@router.get("/transport/train/{train_number}/route")
+async def get_train_route(train_number: str):
+    return await railradar_train_route(train_number)
+
+@router.get("/transport/train/{train_number}/live")
+async def get_train_live(train_number: str):
+    return await railradar_train_live(train_number)
+
+@router.get("/transport/train/{train_number}/fare")
+async def get_train_fare(train_number: str, src: str, dst: str, date: str):
+    return await railradar_train_fare(train_number, src, dst, date)
+
+@router.get("/transport/train/{train_number}/seats")
+async def get_train_seats(train_number: str, src: str, dst: str, date: str):
+    return await railradar_train_seats(train_number, src, dst, date)
 
 def _build_trade_off_summary(trade_offs_data: dict, item_id: str) -> List[str]:
     if not trade_offs_data:
@@ -72,6 +123,9 @@ async def search_transport(req: TransportSearchRequest) -> TransportSearchRespon
         # e.g., mapping convenience to fewer transfers or less walking if high
         if req.weights.convenience and req.weights.convenience > 0.5:
             preferences["fewer_transfers"] = True
+            
+    if req.vehicle_preferences:
+        preferences.update(req.vehicle_preferences)
 
     try:
         if mode == "train":
@@ -140,7 +194,7 @@ async def search_transport(req: TransportSearchRequest) -> TransportSearchRespon
                 total_walking_m=cand.get("total_walking_m", 0),
                 transfer_count=cand.get("transfer_count", 0),
                 segments=cand.get("segments", []),
-                provider_metadata=cand.get("provider_metadata")
+                provider_details=cand.get("provider_details")
             ))
         except Exception as e:
             # Skip invalid candidates

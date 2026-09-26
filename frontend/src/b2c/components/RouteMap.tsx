@@ -1,5 +1,5 @@
-import React from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
+import React, { useState, useEffect, useRef } from 'react';
+import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 
 const mapContainerStyle = {
   width: '100%',
@@ -26,6 +26,8 @@ export interface RouteMapProps {
   selectedSegmentId?: string;
 }
 
+const libraries: ('geometry' | 'places' | 'marker')[] = ['geometry', 'places', 'marker'];
+
 export default function RouteMap({ center, zoom, markers, routes, selectedSegmentId }: RouteMapProps) {
   // Use VITE_GOOGLE_MAPS_API_KEY from env, fallback to empty string if not provided
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -33,8 +35,119 @@ export default function RouteMap({ center, zoom, markers, routes, selectedSegmen
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: apiKey,
-    libraries: ['geometry', 'places']
+    libraries: libraries
   });
+
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const markersRef = useRef<any[]>([]);
+  const polylinesRef = useRef<any[]>([]);
+
+  useEffect(() => {
+    if (!map || !window.google) return;
+    
+    const bounds = new window.google.maps.LatLngBounds();
+    let hasPoints = false;
+    
+    if (markers) {
+      markers.forEach(m => {
+        if (m.position && m.position.lat && m.position.lng) {
+          bounds.extend(m.position);
+          hasPoints = true;
+        }
+      });
+    }
+    
+    if (routes) {
+      routes.forEach(route => {
+        let path = route.coordinates;
+        if (route.encodedPolyline) {
+          path = window.google.maps.geometry.encoding.decodePath(route.encodedPolyline);
+        }
+        if (path) {
+          path.forEach((p: any) => {
+            // p might be LatLng object or LatLngLiteral. bounds.extend handles both.
+            if (typeof p.lat === 'function') {
+               bounds.extend(p);
+               hasPoints = true;
+            } else if (p.lat && p.lng) {
+              bounds.extend(p);
+              hasPoints = true;
+            }
+          });
+        }
+      });
+    }
+    
+    if (hasPoints) {
+      map.fitBounds(bounds);
+      const listener = window.google.maps.event.addListener(map, "idle", () => {
+         if (map.getZoom()! > 14) map.setZoom(14);
+         window.google.maps.event.removeListener(listener);
+      });
+    }
+
+    // Cleanup previous overlays
+    markersRef.current.forEach(m => {
+      if (m.map) m.map = null; // AdvancedMarkerElement map property
+      if (m.setMap) m.setMap(null); // Fallback
+    });
+    markersRef.current = [];
+    
+    polylinesRef.current.forEach(p => p.setMap(null));
+    polylinesRef.current = [];
+
+    // Draw markers using AdvancedMarkerElement
+    if (markers && window.google.maps.marker) {
+      markers.forEach(markerData => {
+        const pinView = new window.google.maps.marker.PinElement({
+          glyphText: markerData.label || '',
+          background: '#2563EB',
+          borderColor: '#ffffff',
+          glyphColor: '#ffffff'
+        });
+
+        const newMarker = new window.google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: markerData.position,
+          content: pinView,
+          title: markerData.label
+        });
+        markersRef.current.push(newMarker);
+      });
+    }
+
+    // Draw polylines
+    if (routes) {
+      routes.forEach(route => {
+        const isHighlighted = selectedSegmentId ? route.id === selectedSegmentId : route.isSelected;
+        const strokeColor = isHighlighted ? (route.color || '#2563EB') : '#93C5FD';
+        const strokeWeight = isHighlighted ? (route.weight || 6) : 4;
+        const strokeOpacity = isHighlighted ? 1.0 : 0.6;
+        
+        let path = route.coordinates;
+        if (route.encodedPolyline) {
+          path = window.google.maps.geometry.encoding.decodePath(route.encodedPolyline);
+        }
+
+        const newPolyline = new window.google.maps.Polyline({
+          path,
+          strokeColor,
+          strokeWeight,
+          strokeOpacity,
+          map
+        });
+        polylinesRef.current.push(newPolyline);
+      });
+    }
+
+    return () => {
+      markersRef.current.forEach(m => {
+        if (m.map) m.map = null;
+        if (m.setMap) m.setMap(null);
+      });
+      polylinesRef.current.forEach(p => p.setMap(null));
+    };
+  }, [map, markers, routes, selectedSegmentId]);
 
   if (!isLoaded) {
     return (
@@ -52,42 +165,14 @@ export default function RouteMap({ center, zoom, markers, routes, selectedSegmen
         mapContainerStyle={mapContainerStyle}
         center={center}
         zoom={zoom}
+        onLoad={setMap}
+        onUnmount={() => setMap(null)}
         options={{
           disableDefaultUI: false,
           zoomControl: true,
+          mapId: 'DEMO_MAP_ID',
         }}
-      >
-        {markers?.map(marker => (
-          <Marker 
-            key={marker.id} 
-            position={marker.position} 
-            label={marker.label} 
-          />
-        ))}
-        {routes?.map(route => {
-          const isHighlighted = selectedSegmentId ? route.id === selectedSegmentId : route.isSelected;
-          const strokeColor = isHighlighted ? (route.color || '#26382D') : '#A9B8A3';
-          const strokeWeight = isHighlighted ? (route.weight || 6) : 3;
-          const strokeOpacity = isHighlighted ? 1.0 : 0.6;
-          
-          let path = route.coordinates;
-          if (route.encodedPolyline && window.google) {
-            path = window.google.maps.geometry.encoding.decodePath(route.encodedPolyline);
-          }
-          
-          return (
-            <Polyline
-              key={route.id}
-              path={path}
-              options={{
-                strokeColor,
-                strokeWeight,
-                strokeOpacity,
-              }}
-            />
-          );
-        })}
-      </GoogleMap>
+      />
     </div>
   );
 }

@@ -23,6 +23,10 @@ from app.models.schemas import (
     VerifyPaymentRequest,
     VerifyPaymentResponse,
 )
+from pydantic import BaseModel
+
+class PaymentConfigResponse(BaseModel):
+    key_id: str
 
 router = APIRouter(prefix="/api/booking", tags=["Payments"])
 
@@ -34,6 +38,10 @@ router = APIRouter(prefix="/api/booking", tags=["Payments"])
 import os
 import razorpay
 from fastapi import HTTPException
+
+@router.get("/config", response_model=PaymentConfigResponse)
+async def get_payment_config() -> PaymentConfigResponse:
+    return PaymentConfigResponse(key_id=os.getenv("RAZORPAY_KEY_ID", "rzp_test_dummy"))
 
 @router.post("/create-order", response_model=CreateOrderResponse)
 async def create_order(payload: CreateOrderRequest) -> CreateOrderResponse:
