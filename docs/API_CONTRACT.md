@@ -100,10 +100,14 @@ based, always includes `distance_km` + `emission_factor`) or
 `"route_benchmark"` (includes `benchmark_kg` + `reduction_pct`).
 Never combine both in one object.
 
+Persistence Side Effect (C16): This endpoint asynchronously persists valid search requests containing a non-empty `accessibility_required` list to the `search_requests` collection for demand analytics. The request/response shapes remain unchanged.
+
 ## POST /api/search/accommodation
 Same shape as transport search, plus `destination_city`. Response:
 array of hotel cards with `accessibility_items` / `sustainability_items`
 as arrays of `{ label, data_state, value }` — never a merged score.
+
+Persistence Side Effect (C16): This endpoint asynchronously persists valid search requests containing a non-empty `accessibility_required` list to the `search_requests` collection for demand analytics. The request/response shapes remain unchanged.
 
 ## GET /api/listings/{id}
 Full detail: overview, full accessibility/sustainability checklist

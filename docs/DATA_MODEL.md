@@ -150,6 +150,18 @@ maintaining separate pre-aggregated documents, unless query latency
 becomes a real problem in testing — if so, fall back to a daily
 materialized `analytics_daily_summary` collection.
 
+## Collection: search_requests  (NEW for C16)
+```json
+{
+  "_id": "req_001",
+  "search_type": "accommodation",
+  "accessibility_required": ["roll_in_shower", "step_free_entrance"],
+  "timestamp": "2026-09-26T10:00:00Z"
+}
+```
+`search_type` enum: `transport` or `accommodation`.
+Only valid search requests containing a non-empty `accessibility_required` list are persisted. Labels are stored exactly as submitted, without expansion or inference. No user, session, destination mapping, or business tracking is recorded here. The `timestamp` field supports the C16 "recent" aggregation window (defined as a rolling 7-day UTC lookback matching C15).
+
 ## Seed dataset composition (`database/seed.py`)
 - 5 real, researched anchor properties (mix of luxury + budget),
   `data_state: "reported"` or `"verified"` where justified, each with
