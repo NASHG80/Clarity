@@ -40,7 +40,7 @@ export default function TravelerFunnel({ funnel }: TravelerFunnelProps) {
       <div className="flex flex-col lg:flex-row justify-between relative">
         
         {/* Horizontal Connector Line for Desktop */}
-        <div className="hidden lg:block absolute top-[52px] left-0 right-0 h-px bg-[#F0EBE1] -z-10" />
+        <div className="hidden lg:block absolute top-[32px] left-0 right-0 h-px bg-[#F0EBE1] -z-10" />
 
         {enrichedStages.map((stage, i) => {
           const isLast = i === enrichedStages.length - 1;
@@ -71,7 +71,7 @@ export default function TravelerFunnel({ funnel }: TravelerFunnelProps) {
 
               {/* Conversion indicator */}
               {!isLast && (
-                <div className="lg:absolute lg:top-[-40px] lg:left-[50%] lg:w-full lg:flex lg:justify-center">
+                <div className="lg:absolute lg:top-[20px] lg:left-[50%] lg:w-full lg:flex lg:justify-center">
                   <div className="ml-[68px] lg:ml-0 mb-8 lg:mb-0 bg-[#F5F3ED] text-[#5B6D62] text-[11px] font-bold px-3 py-1.5 rounded-full border border-[#E5DFD6] inline-flex items-center gap-1 shrink-0 z-10">
                     <svg className="w-3 h-3 text-[#7C9278] lg:-rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />

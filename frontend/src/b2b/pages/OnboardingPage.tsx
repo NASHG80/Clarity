@@ -180,9 +180,9 @@ export default function OnboardingPage() {
 
   return (
     <div className="h-screen flex flex-col font-sans overflow-hidden bg-[#F1EDE9]">
-      <Navbar />
+      <Navbar navItems={[]} brandName="GreenStay Partner" />
 
-      <main className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
+      <main className="flex-1 flex flex-col md:flex-row relative overflow-hidden pt-24 md:pt-28">
         
         {/* Mobile Toggle Bar */}
         <div className="md:hidden flex items-center bg-[#F8F6F3] border-b border-[#D8C9BE] p-2 shrink-0">

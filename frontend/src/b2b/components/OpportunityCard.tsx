@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { UnifiedOpportunity } from '../types/opportunity';
 import { DataStateBadge } from '../../shared/components/DataStateBadge';
 import { ArrowRight, AlertCircle, LineChart, FileQuestion, Users, CheckCircle2, ShieldCheck, Leaf } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface OpportunityCardProps {
   opportunity: UnifiedOpportunity;
@@ -10,6 +11,7 @@ interface OpportunityCardProps {
 
 export default function OpportunityCard({ opportunity }: OpportunityCardProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   
   // Decide Icon based on type
   let Icon = LineChart;
@@ -57,7 +59,10 @@ export default function OpportunityCard({ opportunity }: OpportunityCardProps) {
           </div>
 
           <div className="shrink-0 flex flex-col items-start md:items-end">
-            <button className="inline-flex items-center gap-2 text-[#7C9278] font-bold text-sm hover:text-[#1C2B22] transition-colors mt-2 md:mt-0">
+            <button 
+              onClick={() => navigate('/onboarding')}
+              className="inline-flex items-center gap-2 text-[#7C9278] font-bold text-sm hover:text-[#1C2B22] transition-colors mt-2 md:mt-0 cursor-pointer"
+            >
               {opportunity.suggested_action}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>

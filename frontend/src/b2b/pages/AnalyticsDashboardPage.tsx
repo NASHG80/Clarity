@@ -8,7 +8,7 @@ import { ActivityTrendChart } from '../components/analytics/ActivityTrendChart';
 import { DemandChart } from '../components/analytics/DemandChart';
 import { AiAnalyticsPanel } from '../components/analytics/AiAnalyticsPanel';
 import { Button } from '../../shared/components/Button';
-import { Loader2, AlertCircle, Info, Download, Sparkles, ChevronDown } from 'lucide-react';
+import { Loader2, AlertCircle, Info, Download, Sparkles, ChevronDown, RefreshCw } from 'lucide-react';
 import { DataStateBadge } from '../../shared/components/DataStateBadge';
 
 export default function AnalyticsDashboardPage() {
@@ -19,6 +19,10 @@ export default function AnalyticsDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState('this_week');
 
   const businessId = "biz_001"; // Default identity for prototype
 
@@ -45,10 +49,58 @@ export default function AnalyticsDashboardPage() {
     fetchData();
   }, [businessId]);
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchData();
+    setIsRefreshing(false);
+    setToastMessage(t('analytics.updated', 'Analytics updated'));
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleExport = () => {
+    if (!data || !demandData || !opportunitiesData) return;
+    setIsExporting(true);
+    try {
+      const rows = [
+        ['Metric', 'Value', 'Period'],
+        ['Impressions', data.funnel.listing_impressions, data.period || 'this_week'],
+        ['Property Opens', data.funnel.listing_opens, data.period || 'this_week'],
+        ['Detail Views', data.funnel.detail_opens, data.period || 'this_week'],
+        ['Saves', data.funnel.saves, data.period || 'this_week'],
+        ['Bookings', data.funnel.bookings, data.period || 'this_week'],
+        [],
+        ['Demand Gap', 'Searches', 'Status'],
+        ...(demandData.gaps || []).map(gap => [gap.label, gap.count, gap.property_data_state]),
+      ];
+      
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + rows.map(e => e.join(",")).join("\n");
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `analytics_${businessId}_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      alert("Unable to export analytics.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
-    <main className="w-full min-h-screen bg-[#FAF9F7] text-[#26382D] font-sans pt-12 pb-24">
+    <main className="w-full min-h-screen bg-[#FAF9F7] text-[#26382D] font-sans pb-24">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10">
         
+        {/* TOAST */}
+        {toastMessage && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#1C2B22] text-white px-4 py-2 rounded-full shadow-lg z-50 text-sm font-medium animate-in slide-in-from-bottom-5">
+            {toastMessage}
+          </div>
+        )}
+
         {/* HEADER */}
         <header className="mb-14 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="max-w-2xl">
@@ -69,21 +121,41 @@ export default function AnalyticsDashboardPage() {
           
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
-              <select className="appearance-none bg-white border border-[#D8C9BE] text-[#26382D] text-sm font-medium py-2.5 pl-4 pr-10 rounded-lg hover:bg-[#FDFCFB] focus:outline-none transition-colors cursor-pointer" disabled>
-                <option>7 days</option>
+              <select 
+                value={selectedPeriod}
+                onChange={(e) => {
+                  setSelectedPeriod(e.target.value);
+                  handleRefresh();
+                }}
+                className="appearance-none bg-white border border-[#D8C9BE] text-[#26382D] text-sm font-medium py-2.5 pl-4 pr-10 rounded-lg hover:bg-[#FDFCFB] focus:outline-none transition-colors cursor-pointer"
+              >
+                <option value="this_week">This week</option>
+                <option value="last_30_days">Last 30 days</option>
+                <option value="last_90_days">Last 90 days</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#26382D]/50 pointer-events-none" />
             </div>
-            <button className="flex items-center gap-2 bg-white border border-[#D8C9BE] text-[#26382D] hover:bg-[#FDFCFB] transition-colors py-2.5 px-4 rounded-lg text-sm font-medium">
-              <Download className="w-4 h-4" />
-              Export
+            <button 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="flex items-center gap-2 bg-white border border-[#D8C9BE] text-[#26382D] hover:bg-[#FDFCFB] transition-colors py-2.5 px-4 rounded-lg text-sm font-medium disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#7C9278]' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button 
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex items-center gap-2 bg-white border border-[#D8C9BE] text-[#26382D] hover:bg-[#FDFCFB] transition-colors py-2.5 px-4 rounded-lg text-sm font-medium disabled:opacity-50"
+            >
+              {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {isExporting ? 'Exporting...' : 'Export'}
             </button>
             <button 
               onClick={() => setIsAiPanelOpen(true)}
               className="flex items-center gap-2 bg-[#26382D] text-white hover:bg-[#1C2B22] transition-colors py-2.5 px-5 rounded-lg text-sm font-medium shadow-sm hover:shadow"
             >
-              <Sparkles className="w-4 h-4 text-yellow-300" />
-              ✨ AI Insights
+              AI Insights
             </button>
           </div>
         </header>
@@ -119,13 +191,6 @@ export default function AnalyticsDashboardPage() {
                         18% vs prev
                       </span>
                     </div>
-                  </div>
-                  <div className="h-16 w-32 md:w-48 opacity-40">
-                    {/* Simulated mini sparkline */}
-                    <svg viewBox="0 0 100 30" className="w-full h-full text-[#7C9278]" preserveAspectRatio="none">
-                      <path d="M0 30 Q 10 20, 20 25 T 40 15 T 60 20 T 80 5 T 100 10 L 100 30 Z" fill="currentColor" opacity="0.1" />
-                      <path d="M0 30 Q 10 20, 20 25 T 40 15 T 60 20 T 80 5 T 100 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
                   </div>
                 </div>
 

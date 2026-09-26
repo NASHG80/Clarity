@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DemandResponse } from '../../lib/api';
 import { getLocalizedLabel } from '../utils/labels';
 import { ArrowRight, AlertCircle, FileQuestion } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface DemandComparisonProps {
   demand: DemandResponse;
@@ -10,6 +11,7 @@ interface DemandComparisonProps {
 
 export default function DemandComparison({ demand }: DemandComparisonProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const gaps = demand.gaps || [];
 
   return (
@@ -52,10 +54,13 @@ export default function DemandComparison({ demand }: DemandComparisonProps) {
               </div>
 
               {/* Action */}
-              <div className="p-4 border-t border-[#E5DFD6] bg-white flex justify-between items-center transition-colors group-hover:bg-[#FDFCFB]">
+              <button 
+                onClick={() => navigate('/onboarding')}
+                className="w-full p-4 border-t border-[#E5DFD6] bg-white flex justify-between items-center transition-colors hover:bg-[#FDFCFB] group cursor-pointer focus:outline-none focus:bg-[#FDFCFB]"
+              >
                 <span className="text-[13px] font-bold text-[#3E5245]">Review or add accessibility information</span>
                 <ArrowRight className="w-4 h-4 text-[#7C9278] group-hover:translate-x-1 transition-transform" />
-              </div>
+              </button>
             </div>
           ))}
         </div>

@@ -23,7 +23,7 @@ export function ActivityTrendChart({ data = [] }: ActivityTrendChartProps) {
         </div>
         <div className="flex gap-3">
           <div className="relative">
-            <select className="appearance-none bg-[#F8F6F3] border border-[#E5DFD6] text-[#26382D] text-sm font-medium py-2 pl-4 pr-10 rounded-lg hover:bg-[#F0EBE1] focus:outline-none transition-colors cursor-pointer">
+            <select className="appearance-none bg-[#F8F6F3] border border-[#E5DFD6] text-[#26382D] text-sm font-medium py-2 pl-4 pr-10 rounded-lg focus:outline-none transition-colors disabled:opacity-70 disabled:cursor-not-allowed" disabled={data.length === 0}>
               <option>Impressions</option>
               <option>Property Opens</option>
               <option>Detail Views</option>
@@ -31,8 +31,8 @@ export function ActivityTrendChart({ data = [] }: ActivityTrendChartProps) {
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#26382D]/50 pointer-events-none" />
           </div>
           <div className="relative">
-            <select className="appearance-none bg-[#F8F6F3] border border-[#E5DFD6] text-[#26382D] text-sm font-medium py-2 pl-4 pr-10 rounded-lg hover:bg-[#F0EBE1] focus:outline-none transition-colors cursor-pointer" disabled>
-              <option>7 days</option>
+            <select className="appearance-none bg-[#F8F6F3] border border-[#E5DFD6] text-[#26382D] text-sm font-medium py-2 pl-4 pr-10 rounded-lg focus:outline-none transition-colors disabled:opacity-70 disabled:cursor-not-allowed" disabled>
+              <option>This week</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#26382D]/50 pointer-events-none" />
           </div>
@@ -85,7 +85,7 @@ export function ActivityTrendChart({ data = [] }: ActivityTrendChartProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
             </svg>
             <p className="text-[#5B6D62] text-[15px] font-medium text-center max-w-sm px-4">
-              More customer activity will unlock performance trends here.
+              Trend data will appear as more time-based activity is collected.
             </p>
           </div>
         )}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getVerificationInbox, respondToVerificationSubmission, VerificationSubmission } from '../../lib/api';
-import { Navbar } from '../../shared/components/Navbar';
+
 import { Button } from '../../shared/components/Button';
 import { Loader2, AlertCircle, FileQuestion, CheckCircle2, ShieldCheck, Users, Check, X } from 'lucide-react';
 import { DataStateBadge } from '../../shared/components/DataStateBadge';
