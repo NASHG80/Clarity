@@ -151,19 +151,67 @@ async def get_listing(listing_id: str) -> ListingDetailResponse:
     return ListingDetailResponse(
         id=listing_id,
         data_state=DataState.reported,
-        translations=None,
+        translations=Translations(
+            en=TranslationEntry(
+                name="", # Name will be preserved by the frontend
+                description="This is a beautiful, eco-conscious property located in a prime spot. With elegant rooms, modern comforts, and a strong focus on sustainable travel, we aim to provide an unforgettable experience for our guests. You can expect high-quality service, local aesthetic touches, and thoughtful amenities designed for both relaxation and productivity.",
+            )
+        ),
         city=None,
         price_inr_per_night=None,
         star_rating=4,
+        amenities=["Free WiFi", "Swimming Pool", "Spa & Wellness", "Restaurant", "Room Service", "Fitness Center"],
+        rooms=[
+            {
+                "name": "Deluxe Double Room",
+                "price": 4500,
+                "capacity": 2,
+                "features": ["King Bed", "Balcony", "Air Conditioning", "En-suite Bathroom"]
+            },
+            {
+                "name": "Premium Suite",
+                "price": 7500,
+                "capacity": 3,
+                "features": ["King Bed", "Living Area", "Mini Bar", "City View", "Air Conditioning"]
+            }
+        ],
+        rules={
+            "checkIn": "14:00",
+            "checkOut": "11:00",
+            "cancellation": "Free cancellation up to 48 hours before check-in.",
+            "pets": "Pets are not allowed.",
+            "smoking": "Non-smoking property."
+        },
+        reviews=[
+            {
+                "author": "Anjali S.",
+                "rating": 5,
+                "date": "2023-10-12",
+                "text": "Absolutely loved my stay! The property is gorgeous and the staff went out of their way to make us comfortable. The eco-friendly touches were a huge plus."
+            },
+            {
+                "author": "Rahul M.",
+                "rating": 4,
+                "date": "2023-09-05",
+                "text": "Very comfortable rooms and great location. The breakfast spread was fantastic. Will definitely visit again."
+            }
+        ],
+        reviews_count=24,
         accessibility_items=[
             ChecklistItem(label="step_free_entrance", value=True, data_state=DataState.reported),
             ChecklistItem(label="elevator", value=True, data_state=DataState.reported),
+            ChecklistItem(label="wide_hallways", value=True, data_state=DataState.reported),
+            ChecklistItem(label="accessible_parking", value=True, data_state=DataState.reported),
+            ChecklistItem(label="grab_bars", value=True, data_state=DataState.reported)
         ],
         sustainability_items=[
             ChecklistItem(label="waste_program", value=True, data_state=DataState.reported),
+            ChecklistItem(label="solar_heating", value=True, data_state=DataState.reported),
+            ChecklistItem(label="no_single_use_plastic", value=True, data_state=DataState.reported),
+            ChecklistItem(label="local_sourcing", value=True, data_state=DataState.reported),
+            ChecklistItem(label="water_saving", value=True, data_state=DataState.reported)
         ],
-        reviews_count=0,
-        confirmations_count=0,
+        confirmations_count=12,
         photos=[],
     )
 

@@ -60,7 +60,24 @@ export default function OnboardingPage() {
   });
 
   // Step 5 State
-  const [roomsInfo, setRoomsInfo] = useState<RoomData[]>([]);
+  const [roomsInfo, setRoomsInfo] = useState<RoomData[]>([
+    {
+      id: "room_001",
+      name: "Deluxe Garden Suite",
+      capacity: "3",
+      bedType: "1 King Bed + 1 Sofa Bed",
+      size: "45 sq m",
+      photoUrl: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      id: "room_002",
+      name: "Accessible Family Room",
+      capacity: "4",
+      bedType: "2 Queen Beds",
+      size: "55 sq m",
+      photoUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800"
+    }
+  ]);
 
   // Step 6 State
   const [rulesInfo, setRulesInfo] = useState<RulesData>({
@@ -169,10 +186,10 @@ export default function OnboardingPage() {
 
     try {
       await createListing(payload as any);
-      navigate('/b2b/listings');
+      navigate('/b2b/opportunity-detector');
     } catch (err: any) {
       console.error("Failed to create listing", err);
-      navigate('/b2b/listings');
+      navigate('/b2b/opportunity-detector');
     }
   };
 
@@ -183,10 +200,7 @@ export default function OnboardingPage() {
     t('onboarding.step3', 'Sustainability'),
     t('onboarding.stepRooms', 'Rooms'),
     t('onboarding.stepRules', 'Rules'),
-    t('onboarding.step4', 'Photos'),
-    t('onboarding.step5', 'AI Analysis'),
-    t('onboarding.step6', 'Review AI'),
-    t('onboarding.step7', 'Confirm Findings'),
+    t('onboarding.step4', 'Photos')
   ];
 
   const previewProperty = buildPreviewProperty({
@@ -204,7 +218,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="h-screen flex flex-col font-sans overflow-hidden bg-[#F1EDE9]">
-      <Navbar navItems={[]} brandName="GreenStay Partner" />
+      <Navbar navItems={[]} brandName="Clarity" />
 
       <main className="flex-1 flex flex-col md:flex-row relative overflow-hidden pt-24 md:pt-28">
         
@@ -336,35 +350,7 @@ export default function OnboardingPage() {
               <PhotoUploadStep 
                 value={photoSelection}
                 onChange={setPhotoSelection}
-                onContinue={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 8 && (
-              <AiAnalysisStep 
-                photoSelection={photoSelection}
-                value={aiAnalysis}
-                onChange={setAiAnalysis}
-                onContinue={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 9 && (
-              <AiAnalysisReviewStep 
-                photoSelection={photoSelection}
-                aiAnalysis={aiAnalysis}
-                onContinue={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 10 && (
-              <AiConfirmationStep 
-                photoSelection={photoSelection}
-                aiAnalysis={aiAnalysis}
-                onConfirmComplete={handleConfirmComplete}
+                onContinue={handleComplete}
                 onBack={handleBack}
               />
             )}

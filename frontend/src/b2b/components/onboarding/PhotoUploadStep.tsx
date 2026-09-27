@@ -214,7 +214,7 @@ export function PhotoUploadStep({
           disabled={Object.values(value).flat().some(p => p.status === 'uploading')}
           className="w-full sm:w-auto px-10"
         >
-          {t('onboarding.continue', 'Continue')}
+          {t('onboarding.submit', 'Submit to Dashboard')}
         </Button>
       </div>
     </div>
