@@ -604,6 +604,38 @@ export default function TransportResultsPage() {
                           );
                         }
 
+                        // MAIN DRIVE (car-only journey — single segment covering origin → destination)
+                        if (segment.segment_type === 'main' && segment.mode === 'DRIVE') {
+                          const dh = Math.floor(segment.duration_minutes / 60);
+                          const dm = segment.duration_minutes % 60;
+                          return (
+                            <div className="mb-6">
+                              <div className="text-xs font-bold text-[#7C9278] uppercase tracking-wider mb-3">🚗 Your Route</div>
+                              <div
+                                onClick={() => { setSelectedSegmentId(segment.id); setSelectedSubStep(null); }}
+                                className={`relative pl-14 pr-4 py-5 cursor-pointer rounded-2xl transition-all border shadow-sm ${selectedSegmentId === segment.id ? 'bg-[#FEF3C7] border-[#f59e0b] ring-1 ring-[#f59e0b]' : 'bg-white border-[#D8C9BE] hover:bg-[#FEF9EE]'}`}
+                              >
+                                <div className="absolute left-4 top-5 text-2xl">🚗</div>
+                                <div className="font-bold text-[#26382D] text-base">{segment.origin?.name}</div>
+                                <div className="flex items-center gap-2 my-1.5">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#D8C9BE]" />
+                                  <div className="flex-1 border-t border-dashed border-[#D8C9BE]" />
+                                  <span className="text-xs font-semibold text-[#7C9278] px-2">{dh > 0 ? `${dh}h ` : ''}{dm}m · {segment.distance_km?.toFixed(0)} km</span>
+                                  <div className="flex-1 border-t border-dashed border-[#D8C9BE]" />
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#26382D]" />
+                                </div>
+                                <div className="font-bold text-[#26382D] text-base">{segment.destination?.name}</div>
+                                <div className="flex gap-4 mt-3 pt-3 border-t border-[#F8F6F3] text-xs text-[#7C9278]">
+                                  <span>💰 Est. ₹{segment.cost_inr?.toFixed(0) || (segment.distance_km * 12).toFixed(0)}</span>
+                                  <span>·</span>
+                                  <span>🌿 {segment.co2_kg?.toFixed(1)} kg CO₂ (estimated)</span>
+                                </div>
+                                {selectedSegmentId === segment.id && <div className="mt-2 text-xs text-[#f59e0b] font-medium">↑ Route shown on map</div>}
+                              </div>
+                            </div>
+                          );
+                        }
+
                         // FLIGHT MAIN
                         if (segment.segment_type === 'main' && segment.mode === 'FLIGHT') {
                           return (
@@ -731,6 +763,13 @@ export default function TransportResultsPage() {
                         );
                       };
 
+                      // For car-only journey (no first/last mile), initialize map on main segment
+                      const isCarOnly = selectedOption.mode === 'car' && !firstMile && !lastMile;
+                      if (isCarOnly && mainSeg && selectedSegmentId === null) {
+                        // Auto-select the main segment on first render so the map shows it
+                        setTimeout(() => setSelectedSegmentId(mainSeg.id), 50);
+                      }
+
                       return (
                         <>
                           {renderSubSteps(firstMile, "First Mile")}
@@ -752,13 +791,17 @@ export default function TransportResultsPage() {
                   )}
                   <div className="flex-1">
                     <RouteMap
-                      center={{ lat: 19.229, lng: 72.857 }}
-                      zoom={10}
+                      center={(() => {
+                        const firstSeg = selectedOption.segments?.[0];
+                        if (firstSeg?.origin?.lat && firstSeg?.origin?.lng) {
+                          return { lat: firstSeg.origin.lat, lng: firstSeg.origin.lng };
+                        }
+                        return { lat: 19.229, lng: 72.857 }; // fallback Mumbai
+                      })()}
+                      zoom={selectedOption.mode === 'car' ? 6 : 10}
                       routes={
                         selectedSubStep
-                          // When a sub-step is selected: show only that sub-step's polyline
                           ? [{ id: 'substep', encodedPolyline: selectedSubStep.polyline, color: '#2563EB', weight: 6, isSelected: true }]
-                          // Otherwise show all segment geometries
                           : selectedOption.segments.filter((s: any) => s.geometry).map((s: any) => {
                             const modeColor =
                               s.mode === 'TRAIN' ? '#1e3a5f' :
@@ -770,19 +813,21 @@ export default function TransportResultsPage() {
                               encodedPolyline: typeof s.geometry === 'string' ? s.geometry : undefined,
                               geoJson: typeof s.geometry === 'object' ? s.geometry : undefined,
                               color: modeColor,
-                              weight: s.segment_type === 'main' ? 6 : 4,
-                              isSelected: selectedSegmentId === s.id
+                              weight: s.segment_type === 'main' ? 7 : 5,
+                              isSelected: selectedSegmentId === s.id || selectedOption.mode === 'car'
                             };
                           })
                       }
                       markers={selectedSubStep ? [] : [
                         ...(selectedOption.segments?.[0]?.origin?.lat && selectedOption.segments?.[0]?.origin?.lng ? [{
                           id: 'start',
-                          position: { lat: selectedOption.segments[0].origin.lat, lng: selectedOption.segments[0].origin.lng }
+                          position: { lat: selectedOption.segments[0].origin.lat, lng: selectedOption.segments[0].origin.lng },
+                          label: '🏠'
                         }] : []),
                         ...(selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lat && selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lng ? [{
                           id: 'end',
-                          position: { lat: selectedOption.segments[selectedOption.segments.length - 1].destination.lat, lng: selectedOption.segments[selectedOption.segments.length - 1].destination.lng }
+                          position: { lat: selectedOption.segments[selectedOption.segments.length - 1].destination.lat, lng: selectedOption.segments[selectedOption.segments.length - 1].destination.lng },
+                          label: '📍'
                         }] : [])
                       ]}
                       selectedSegmentId={selectedSubStep ? 'substep' : (selectedSegmentId || undefined)}
