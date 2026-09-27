@@ -1,6 +1,6 @@
 """POST /inspect — forwards property images to YOLO-World-S, returns detections."""
-
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import json
 import numpy as np
 import cv2
@@ -71,11 +71,12 @@ async def inspect_image(file: UploadFile = File(...), queries: str = Form(...)):
     try:
         query_list = json.loads(queries)
         if not isinstance(query_list, list) or not all(isinstance(q, str) for q in query_list):
-            raise ValueError()
+            query_list = [queries]
         if len(query_list) == 0:
-            raise ValueError()
+            query_list = [queries]
     except Exception:
-        raise HTTPException(status_code=400, detail="queries must be a valid JSON list of strings and non-empty.")
+        # If it's not JSON, just treat the whole string as a single query
+        query_list = [queries]
         
     try:
         contents = await file.read()
@@ -101,7 +102,7 @@ async def inspect_image(file: UploadFile = File(...), queries: str = Form(...)):
     try:
         # Avoid inventing new classes, strictly use user's queries
         model_instance.set_classes(query_list)
-        results = model_instance(img, verbose=False)
+        results = model_instance(img, conf=0.01, verbose=False)
         
         detections = []
         if len(results) > 0:

@@ -370,7 +370,7 @@ class HotelResult(BaseModel):
     translations: Optional[Translations] = None
     city: Optional[str] = None
     price_inr_per_night: Optional[float] = None
-    star_rating: Optional[int] = None
+    star_rating: Optional[float] = None
     data_state: DataState
     accessibility_items: List[ChecklistItem] = Field(default_factory=list)
     sustainability_items: List[ChecklistItem] = Field(default_factory=list)
@@ -397,7 +397,7 @@ class ListingCreateRequest(BaseModel):
     description: Optional[str] = None
     address: Optional[str] = None
     price_inr_per_night: Optional[float] = None
-    star_rating: Optional[int] = None
+    star_rating: Optional[float] = None
     # Checklist items — optional so that basic listings without items are accepted
     accessibility_items: List[ChecklistItem] = Field(default_factory=list)
     sustainability_items: List[ChecklistItem] = Field(default_factory=list)
