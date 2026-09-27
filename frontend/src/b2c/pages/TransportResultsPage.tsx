@@ -61,6 +61,13 @@ export default function TransportResultsPage() {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
 
+    // Budget is required — read from the sidebar budget input
+    const sidebarBudget = (document.querySelector('input[name="budget"]') as HTMLInputElement)?.value;
+    if (!sidebarBudget || parseFloat(sidebarBudget) <= 0) {
+      alert('Please enter your max budget in the left sidebar before searching. The recommendation engine needs your budget to rank options correctly.');
+      return;
+    }
+
     setIsLoading(true);
     setStep('RESULTS');
 
@@ -73,6 +80,7 @@ export default function TransportResultsPage() {
           destination: trip?.destination || "Hotel XYZ, Goa",
           mode: selectedMode?.toLowerCase() || "train",
           date: formData.get('date') || trip?.date || "2026-09-27",
+          budget_max: parseFloat(sidebarBudget),
           vehicle_preferences: {
             fuel_type: formData.get('fuel_type') || "petrol",
             board_station: formData.get('board_code') || formData.get('board'),
@@ -98,6 +106,14 @@ export default function TransportResultsPage() {
   const handleApplyFilters = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget as HTMLFormElement);
+
+    // Budget is required before the engine can rank
+    const budgetVal = formData.get('budget') as string;
+    if (!budgetVal || parseFloat(budgetVal) <= 0) {
+      alert('Please enter your max budget (₹) before applying filters. Without a budget, the recommendation engine cannot rank options by cost.');
+      return;
+    }
+
     const prefs = formData.getAll('routePref') as string[];
 
     const weights = {
@@ -196,6 +212,23 @@ export default function TransportResultsPage() {
         {/* LEFT SIDEBAR: Persistent Filters */}
         <aside className="hidden lg:block w-72 shrink-0 pr-6 pb-12">
           <form onSubmit={handleApplyFilters} className="sticky top-24 space-y-6">
+
+            {/* BUDGET — first and required */}
+            <div>
+              <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Max Budget <span className="text-[#E88D67]">*</span></h3>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7C9278] font-medium text-sm">₹</span>
+                <input
+                  type="number"
+                  name="budget"
+                  min="0"
+                  placeholder="e.g. 5000"
+                  className="w-full border border-[#D8C9BE] rounded-xl pl-8 pr-4 py-2.5 text-sm outline-none focus:border-[#7C9278] focus:ring-1 focus:ring-[#7C9278] transition-colors"
+                />
+              </div>
+              <p className="text-[#A99587] text-xs mt-1">Required before searching</p>
+            </div>
+
             <div>
               <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Travel Mode</h3>
               <div className="space-y-2">
@@ -259,12 +292,7 @@ export default function TransportResultsPage() {
               </div>
             )}
 
-            <div>
-              <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Budget</h3>
-              <input type="text" placeholder="₹ ______" className="w-full border border-[#D8C9BE] rounded-xl px-4 py-2 text-sm outline-none focus:border-[#7C9278]" />
-            </div>
-
-            <button type="submit" className="w-full bg-[#2563EB] text-white py-3 rounded-xl font-medium mt-4 hover:bg-blue-700 transition-colors">
+            <button type="submit" className="w-full bg-[#26382D] text-white py-3 rounded-xl font-medium mt-4 hover:bg-[#1a261f] transition-colors">
               Apply Filters
             </button>
           </form>
@@ -387,7 +415,14 @@ export default function TransportResultsPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Departure Preference</label>
-                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>Morning</option></select>
+                        <select name="departure_pref" className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none text-[#26382D]">
+                          <option value="any">Any time</option>
+                          <option value="early_morning">Early morning (before 6am)</option>
+                          <option value="morning">Morning (6am – 12pm)</option>
+                          <option value="afternoon">Afternoon (12pm – 6pm)</option>
+                          <option value="evening">Evening (6pm – 9pm)</option>
+                          <option value="night">Night (after 9pm)</option>
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Travel Date</label>
@@ -401,12 +436,24 @@ export default function TransportResultsPage() {
                   <>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Vehicle</label>
-                        <select className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option>Private car</option></select>
+                        <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Vehicle Type</label>
+                        <select name="vehicle_type" className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none text-[#26382D]">
+                          <option value="private_car">Private car</option>
+                          <option value="cab">Cab / Taxi</option>
+                          <option value="suv">SUV</option>
+                          <option value="van">Mini Van</option>
+                          <option value="bike">Bike / Scooter</option>
+                        </select>
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">Fuel Type</label>
-                        <select name="fuel_type" onChange={(e) => e.currentTarget.form?.requestSubmit()} className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none"><option value="petrol">Petrol</option><option value="ev">EV</option></select>
+                        <select name="fuel_type" onChange={(e) => e.currentTarget.form?.requestSubmit()} className="w-full border-b-2 border-[#D8C9BE] py-2 bg-transparent outline-none text-[#26382D]">
+                          <option value="petrol">Petrol</option>
+                          <option value="diesel">Diesel</option>
+                          <option value="ev">Electric (EV)</option>
+                          <option value="hybrid">Hybrid</option>
+                          <option value="cng">CNG</option>
+                        </select>
                       </div>
                     </div>
                     <button type="submit" className="w-full bg-[#26382D] text-white py-3 rounded-xl font-medium mt-4 hover:bg-[#1a261f]">Calculate Route</button>
