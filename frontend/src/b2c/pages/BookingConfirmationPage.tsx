@@ -25,7 +25,7 @@ export default function BookingConfirmationPage() {
   const { reservation_status, hotelResult, stay, transportResult } = state;
 
   const handleReturnHome = () => {
-    navigate('/');
+    navigate('/customer-dashboard');
   };
 
   // Defensive handling: if we arrived without a valid reservation status
