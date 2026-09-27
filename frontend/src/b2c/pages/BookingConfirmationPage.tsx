@@ -84,20 +84,53 @@ export default function BookingConfirmationPage() {
                 </div>
               )}
 
-              {hotelResult && (
-                <div className="border-t border-[#D8C9BE] pt-4 mt-2 text-left">
-                  <h3 className="text-sm font-medium text-[#7C9278] mb-1">{t('bookingConfirmation.tripDetails', 'Trip Details')}</h3>
-                  <p className="text-[#26382D] font-medium">{hotelName}</p>
-                  {stay?.nights && <p className="text-[#A99587] text-sm">{t('tripSummary.nights', { count: stay.nights })}</p>}
-                </div>
-              )}
+              {/* MOBILE: Detailed Trip Summary */}
+              <div className="border-t border-[#D8C9BE] pt-4 mt-2 text-left w-full space-y-4">
+                <h3 className="text-sm font-bold text-[#7C9278] uppercase tracking-wider mb-2">{t('bookingConfirmation.tripDetails', 'Trip Details')}</h3>
+                
+                {transportResult && (
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-xs text-[#A99587] mb-1">Departure</p>
+                      <p className="text-[#26382D] font-medium text-sm">{state.searchPayload?.origin || transportResult.segments?.[0]?.origin?.name || 'Origin City'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-[#A99587] mb-1">Date</p>
+                      <p className="text-[#26382D] font-medium text-sm">{state.searchPayload?.date || 'Confirmed Date'}</p>
+                    </div>
+                  </div>
+                )}
 
-              <button 
-                onClick={handleReturnHome}
-                className="w-full mt-6 bg-[#26382D] text-white rounded-xl py-3.5 font-medium flex items-center justify-center hover:bg-[#1F2E25] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#26382D]"
-              >
-                {t('bookingConfirmation.returnHome', 'Return to Home')}
-              </button>
+                {transportResult && (
+                  <div>
+                    <p className="text-xs text-[#A99587] mb-1">Transport</p>
+                    <p className="text-[#26382D] font-medium text-sm capitalize">{transportResult.mode} Journey</p>
+                  </div>
+                )}
+
+                {hotelResult && (
+                  <div>
+                    <p className="text-xs text-[#A99587] mb-1">Accommodation</p>
+                    <p className="text-[#26382D] font-medium text-sm">{hotelName}</p>
+                    {stay?.nights && <p className="text-xs text-[#A99587]">{t('tripSummary.nights', { count: stay.nights })}</p>}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3 w-full mt-6">
+                <button 
+                  onClick={() => window.print()}
+                  className="w-full bg-transparent border-2 border-[#26382D] text-[#26382D] rounded-xl py-3 font-medium flex items-center justify-center hover:bg-[#F8F6F3] transition-colors"
+                >
+                  Download Itinerary
+                </button>
+                <button 
+                  onClick={handleReturnHome}
+                  className="w-full bg-[#26382D] text-white rounded-xl py-3 font-medium flex items-center justify-center hover:bg-[#1F2E25] transition-colors"
+                >
+                  {t('bookingConfirmation.returnHome', 'Return to Home')}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -145,20 +178,42 @@ export default function BookingConfirmationPage() {
               <h3 className="font-serif text-2xl text-[#26382D] mb-6">{t('bookingConfirmation.tripDetails', 'Trip Details')}</h3>
               
               <div className="space-y-6">
-                {hotelResult && (
+                {transportResult && (
+                  <div className="grid grid-cols-2 gap-6 pb-6 border-b border-[#D8C9BE]">
+                    <div>
+                      <p className="text-sm font-medium text-[#7C9278] mb-1">Departure</p>
+                      <p className="text-[#26382D] font-medium text-lg">{state.searchPayload?.origin || transportResult.segments?.[0]?.origin?.name || 'Origin City'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#7C9278] mb-1">Date</p>
+                      <p className="text-[#26382D] font-medium text-lg">{state.searchPayload?.date || 'Confirmed Date'}</p>
+                    </div>
+                  </div>
+                )}
+
+                {transportResult && (
                   <div>
+                    <p className="text-sm font-medium text-[#7C9278] mb-1">{t('bookingConfirmation.transport', 'Transport Method')}</p>
+                    <p className="text-[#26382D] font-medium capitalize text-lg">{transportResult.mode} Journey</p>
+                  </div>
+                )}
+
+                {hotelResult && (
+                  <div className="pt-2">
                     <p className="text-sm font-medium text-[#7C9278] mb-1">{t('bookingConfirmation.accommodation', 'Accommodation')}</p>
                     <p className="text-[#26382D] font-medium text-lg">{hotelName}</p>
-                    {stay?.nights && <p className="text-[#A99587]">{t('tripSummary.nights', { count: stay.nights })}</p>}
+                    {stay?.nights && <p className="text-[#A99587] mt-1">{t('tripSummary.nights', { count: stay.nights })}</p>}
                   </div>
                 )}
                 
-                {transportResult && (
-                  <div>
-                    <p className="text-sm font-medium text-[#7C9278] mb-1">{t('bookingConfirmation.transport', 'Transport')}</p>
-                    <p className="text-[#26382D] font-medium capitalize">{transportResult.mode}</p>
-                  </div>
-                )}
+                <div className="pt-6 mt-6 border-t border-[#D8C9BE]">
+                   <button 
+                    onClick={() => window.print()}
+                    className="w-full bg-transparent border-2 border-[#26382D] text-[#26382D] rounded-xl py-3.5 font-medium flex items-center justify-center hover:bg-[#F8F6F3] transition-colors"
+                  >
+                    Download / Print Itinerary
+                  </button>
+                </div>
               </div>
             </div>
           </div>
