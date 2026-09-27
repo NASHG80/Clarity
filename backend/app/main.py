@@ -70,7 +70,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 # CORS — scoped to frontend origins (supports comma-separated list)
 # ---------------------------------------------------------------------------
 _frontend_origin = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
-_allowed_origins = [origin.strip() for origin in _frontend_origin.split(",") if origin.strip()]
+_allowed_origins = [origin.strip().rstrip('/') for origin in _frontend_origin.split(",") if origin.strip()]
 
 # Preserve development origin just in case Render config overwrote it
 if "http://localhost:5173" not in _allowed_origins:
