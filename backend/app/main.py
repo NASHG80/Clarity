@@ -36,6 +36,7 @@ from app.routes import (  # noqa: E402  (imports after load_dotenv is intentiona
     confirmations,
     auth,
     trips,
+    proxy,
 )
 
 # ---------------------------------------------------------------------------
@@ -88,3 +89,4 @@ app.include_router(payments.router)
 app.include_router(confirmations.router)
 app.include_router(auth.router)
 app.include_router(trips.router)
+app.include_router(proxy.router)
