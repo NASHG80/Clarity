@@ -512,6 +512,25 @@ class AnalyticsSignal(BaseModel):
     text: str
 
 
+class BusinessProfileUpdateRequest(_StrictBase):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+    contactEmail: Optional[str] = None
+    contactPhone: Optional[str] = None
+    website: Optional[str] = None
+
+class BusinessProfileResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+    contactEmail: Optional[str] = None
+    contactPhone: Optional[str] = None
+    website: Optional[str] = None
+
 class BusinessAnalyticsResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     period: str

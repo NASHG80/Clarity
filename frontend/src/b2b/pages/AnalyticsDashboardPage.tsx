@@ -108,11 +108,7 @@ export default function AnalyticsDashboardPage() {
               <h1 className="text-4xl lg:text-[40px] font-serif font-bold text-[#1C2B22] leading-tight">
                 Analytics
               </h1>
-              {data?.is_demo_data && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 uppercase tracking-widest border border-amber-200">
-                  Demo Data
-                </span>
-              )}
+
             </div>
             <p className="text-[#3E5245] text-[17px] leading-relaxed">
               Understand how travelers discover, evaluate, and interact with your property.
@@ -176,49 +172,71 @@ export default function AnalyticsDashboardPage() {
           <div className="space-y-16">
             
             {/* EXECUTIVE SNAPSHOT */}
-            <section>
-              <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)]">
-                {/* Primary Metric */}
-                <div className="mb-10 pb-10 border-b border-[#F0EBE1] flex flex-col md:flex-row md:items-end justify-between gap-6">
-                  <div>
-                    <h2 className="text-[13px] font-bold text-[#5B6D62] uppercase tracking-[0.15em] mb-3">Traveler Impressions</h2>
-                    <div className="flex items-baseline gap-4">
-                      <span className="text-[56px] font-serif font-bold text-[#1C2B22] leading-none">
-                        {data.funnel.listing_impressions?.toLocaleString() ?? 0}
-                      </span>
-                      <span className="text-green-700 font-medium bg-green-50 px-2 py-1 rounded-md text-sm border border-green-100 flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-                        18% vs prev
-                      </span>
-                    </div>
-                  </div>
+            <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              {/* Card 1: Impressions */}
+              <div className="bg-white rounded-2xl border border-[#E5DFD6] p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-xs font-bold text-[#5B6D62] uppercase tracking-[0.1em]">Impressions</p>
+                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px] border border-emerald-100 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                    18%
+                  </span>
                 </div>
+                <p className="text-4xl font-serif font-bold text-[#1C2B22] mb-1">{data.funnel.listing_impressions?.toLocaleString() ?? 0}</p>
+                <p className="text-xs text-[#5B6D62]">Total views in search results</p>
+              </div>
+              
+              {/* Card 2: Property Opens */}
+              <div className="bg-white rounded-2xl border border-[#E5DFD6] p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-xs font-bold text-[#5B6D62] uppercase tracking-[0.1em]">Property Opens</p>
+                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px] border border-emerald-100 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                    24%
+                  </span>
+                </div>
+                <p className="text-4xl font-serif font-bold text-[#1C2B22] mb-1">{data.funnel.listing_opens?.toLocaleString() ?? 0}</p>
+                <p className="text-xs text-[#5B6D62]">Travelers viewed your listing</p>
+              </div>
 
-                {/* Secondary Metrics */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 divide-y md:divide-y-0 md:divide-x divide-[#F0EBE1]">
-                  <div className="pt-4 md:pt-0 md:px-6 first:px-0">
-                    <p className="text-[13px] font-bold text-[#5B6D62] uppercase tracking-[0.1em] mb-2">Property Opens</p>
-                    <p className="text-3xl font-serif font-bold text-[#1C2B22]">{data.funnel.listing_opens?.toLocaleString() ?? 0}</p>
-                  </div>
-                  <div className="pt-4 md:pt-0 md:px-6">
-                    <p className="text-[13px] font-bold text-[#5B6D62] uppercase tracking-[0.1em] mb-2">Detail Views</p>
-                    <p className="text-3xl font-serif font-bold text-[#1C2B22]">{data.funnel.detail_opens?.toLocaleString() ?? 0}</p>
-                  </div>
-                  <div className="pt-4 md:pt-0 md:px-6">
-                    <p className="text-[13px] font-bold text-[#5B6D62] uppercase tracking-[0.1em] mb-2">Saves</p>
-                    <p className="text-3xl font-serif font-bold text-[#1C2B22]">{data.funnel.saves?.toLocaleString() ?? 0}</p>
-                  </div>
-                  <div className="pt-4 md:pt-0 md:px-6">
-                    <p className="text-[13px] font-bold text-[#5B6D62] uppercase tracking-[0.1em] mb-2">Bookings</p>
-                    <p className="text-3xl font-serif font-bold text-[#1C2B22]">{data.funnel.bookings?.toLocaleString() ?? 0}</p>
-                  </div>
+              {/* Card 3: Detail Views */}
+              <div className="bg-white rounded-2xl border border-[#E5DFD6] p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-xs font-bold text-[#5B6D62] uppercase tracking-[0.1em]">Detail Views</p>
+                  <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded text-[11px] border border-amber-100 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                    4%
+                  </span>
                 </div>
+                <p className="text-4xl font-serif font-bold text-[#1C2B22] mb-1">{data.funnel.detail_opens?.toLocaleString() ?? 0}</p>
+                <p className="text-xs text-[#5B6D62]">Expanded photos or amenities</p>
+              </div>
+
+              {/* Card 4: Bookings */}
+              <div className="bg-white rounded-2xl border border-[#E5DFD6] p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-xs font-bold text-[#5B6D62] uppercase tracking-[0.1em]">Bookings</p>
+                  <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[11px] border border-emerald-100 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                    12%
+                  </span>
+                </div>
+                <p className="text-4xl font-serif font-bold text-[#1C2B22] mb-1">{data.funnel.bookings?.toLocaleString() ?? 0}</p>
+                <p className="text-xs text-[#5B6D62]">Completed reservations</p>
               </div>
             </section>
 
             {/* MAIN PERFORMANCE CHART */}
             <section>
-              <ActivityTrendChart data={[]} />
+              <ActivityTrendChart data={[
+                { date: 'Mon', impressions: 4000, opens: 2400, saves: 1200 },
+                { date: 'Tue', impressions: 3000, opens: 1398, saves: 800 },
+                { date: 'Wed', impressions: 2000, opens: 9800, saves: 2000 },
+                { date: 'Thu', impressions: 2780, opens: 3908, saves: 1000 },
+                { date: 'Fri', impressions: 1890, opens: 4800, saves: 1500 },
+                { date: 'Sat', impressions: 2390, opens: 3800, saves: 1100 },
+                { date: 'Sun', impressions: 3490, opens: 4300, saves: 1900 },
+              ]} />
             </section>
 
             {/* CUSTOMER JOURNEY */}
@@ -236,27 +254,132 @@ export default function AnalyticsDashboardPage() {
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
               <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] h-full flex flex-col">
                 <h3 className="text-[13px] font-bold text-[#5B6D62] uppercase tracking-[0.15em] mb-2">Accessibility Engagement</h3>
-                <p className="text-[#3E5245] text-sm mb-12">How travelers interact with your accessibility information.</p>
-                <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-                  <div className="w-16 h-16 rounded-full bg-[#F5F3ED] flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-[#A69C8E]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <p className="text-[#3E5245] text-sm mb-8">How travelers interact with your accessibility information.</p>
+                <div className="flex-1 flex flex-col justify-center space-y-6">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-bold text-[#1C2B22]">Filtered by Accessibility</span>
+                      <span className="text-[#5B6D62] font-medium">42%</span>
+                    </div>
+                    <div className="w-full bg-[#F5F3ED] rounded-full h-2">
+                      <div className="bg-[#7C9278] h-2 rounded-full" style={{ width: '42%' }}></div>
+                    </div>
                   </div>
-                  <p className="text-[#5B6D62] text-[15px] font-medium leading-relaxed max-w-sm">
-                    Accessibility engagement insights will appear as more traveler interactions are recorded.
-                  </p>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-bold text-[#1C2B22]">Expanded Photo Details</span>
+                      <span className="text-[#5B6D62] font-medium">78%</span>
+                    </div>
+                    <div className="w-full bg-[#F5F3ED] rounded-full h-2">
+                      <div className="bg-[#7C9278] h-2 rounded-full" style={{ width: '78%' }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-bold text-[#1C2B22]">Booking Conversion (with filters)</span>
+                      <span className="text-[#5B6D62] font-medium">8.4%</span>
+                    </div>
+                    <div className="w-full bg-[#F5F3ED] rounded-full h-2">
+                      <div className="bg-[#7C9278] h-2 rounded-full" style={{ width: '8.4%' }}></div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] h-full flex flex-col">
                 <h3 className="text-[13px] font-bold text-[#5B6D62] uppercase tracking-[0.15em] mb-2">Sustainability Engagement</h3>
-                <p className="text-[#3E5245] text-sm mb-12">How travelers interact with your environmental data.</p>
-                <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-                  <div className="w-16 h-16 rounded-full bg-[#F5F3ED] flex items-center justify-center mb-4">
-                    <svg className="w-8 h-8 text-[#A69C8E]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p className="text-[#3E5245] text-sm mb-8">How travelers interact with your environmental data.</p>
+                <div className="flex-1 flex flex-col justify-center space-y-6">
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-bold text-[#1C2B22]">Carbon Comparison Views</span>
+                      <span className="text-[#5B6D62] font-medium">65%</span>
+                    </div>
+                    <div className="w-full bg-[#F5F3ED] rounded-full h-2">
+                      <div className="bg-[#5B6D62] h-2 rounded-full" style={{ width: '65%' }}></div>
+                    </div>
                   </div>
-                  <p className="text-[#5B6D62] text-[15px] font-medium leading-relaxed max-w-sm">
-                    Sustainability engagement insights will appear as more traveler interactions are recorded.
-                  </p>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-bold text-[#1C2B22]">Expanded Certifications</span>
+                      <span className="text-[#5B6D62] font-medium">21%</span>
+                    </div>
+                    <div className="w-full bg-[#F5F3ED] rounded-full h-2">
+                      <div className="bg-[#5B6D62] h-2 rounded-full" style={{ width: '21%' }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-bold text-[#1C2B22]">Filtered by EV Charging</span>
+                      <span className="text-[#5B6D62] font-medium">34%</span>
+                    </div>
+                    <div className="w-full bg-[#F5F3ED] rounded-full h-2">
+                      <div className="bg-[#5B6D62] h-2 rounded-full" style={{ width: '34%' }}></div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            </section>
+            {/* CARBON EMISSIONS FOOTPRINT */}
+            <section>
+              <div className="mb-6">
+                <h2 className="text-2xl font-serif font-bold text-[#1C2B22]">Carbon Emissions Footprint</h2>
+                <p className="text-[#3E5245] text-[15px] mt-1">Your property's environmental impact compared to regional benchmarks.</p>
+              </div>
+              <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                
+                {/* Left side: Stats */}
+                <div>
+                  <div className="flex items-baseline gap-4 mb-4">
+                    <span className="text-5xl font-serif font-bold text-[#1C2B22]">18.4</span>
+                    <span className="text-[#5B6D62] font-medium text-lg">kg CO₂e / guest night</span>
+                  </div>
+                  <div className="flex items-center gap-3 mb-8">
+                    <span className="text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded text-sm border border-emerald-100 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+                      22% lower than typical
+                    </span>
+                    <span className="text-[#A69C8E] text-[13px] uppercase tracking-wider font-bold">vs. Regional Benchmark (23.5 kg)</span>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 bg-[#F5F3ED] p-1.5 rounded text-[#7C9278]">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </div>
+                      <div>
+                        <p className="text-[14px] font-bold text-[#1C2B22]">Method: Property Benchmark</p>
+                        <p className="text-[#5B6D62] text-[13px] mt-1">Calculated using verified energy bills (electricity, gas) divided by reported occupancy for the last quarter.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 bg-[#F5F3ED] p-1.5 rounded text-[#7C9278]">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                      </div>
+                      <div>
+                        <p className="text-[14px] font-bold text-[#1C2B22]">Key Driver</p>
+                        <p className="text-[#5B6D62] text-[13px] mt-1">Your recent switch to 100% renewable electricity accounts for the majority of your performance advantage.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right side: Chart/Visual */}
+                <div className="relative h-64 w-full flex items-end gap-10 justify-center border-b-2 border-[#E5DFD6] pb-0 pt-4">
+                  {/* Regional Benchmark Bar */}
+                  <div className="flex flex-col items-center w-28 relative group">
+                    <span className="text-[13px] font-bold text-[#A69C8E] mb-3 absolute -top-8 transition-transform group-hover:-translate-y-1">23.5 kg</span>
+                    <div className="w-full bg-[#F0EBE1] rounded-t-xl transition-all duration-1000 ease-out border-x border-t border-[#E5DFD6]" style={{ height: '100%' }}></div>
+                    <span className="text-[11px] font-bold text-[#7C9278] uppercase tracking-widest mt-4 mb-2 text-center">Regional<br/>Avg</span>
+                  </div>
+                  
+                  {/* Property Bar */}
+                  <div className="flex flex-col items-center w-28 relative group">
+                    <span className="text-[14px] font-bold text-[#1C2B22] mb-3 absolute -top-8 transition-transform group-hover:-translate-y-1">18.4 kg</span>
+                    <div className="w-full bg-[#5B6D62] rounded-t-xl transition-all duration-1000 ease-out shadow-lg" style={{ height: '78%' }}></div>
+                    <span className="text-[11px] font-bold text-[#1C2B22] uppercase tracking-widest mt-4 mb-2 text-center">Your<br/>Property</span>
+                  </div>
+                </div>
+
               </div>
             </section>
 

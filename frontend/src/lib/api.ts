@@ -1253,6 +1253,47 @@ export const getAiAnalyticsSummary = async (businessId: string, period: string):
   }
 };
 
+export interface BusinessProfileResponse {
+  id: string;
+  name: string;
+  description?: string;
+  industry?: string;
+  location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+}
+
+export interface BusinessProfileUpdateRequest {
+  name?: string;
+  description?: string;
+  industry?: string;
+  location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+}
+
+export async function getBusinessProfile(businessId: string): Promise<BusinessProfileResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/business/${businessId}/profile`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch business profile: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function updateBusinessProfile(businessId: string, payload: BusinessProfileUpdateRequest): Promise<BusinessProfileResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/business/${businessId}/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to update business profile: ${response.status}`);
+  }
+  return response.json();
+}
+
 export const uploadPhotoToCloudinary = async (file: File, signatureInfo?: any): Promise<{ url: string; public_id: string }> => {
   await new Promise(resolve => setTimeout(resolve, 1000));
   return { url: URL.createObjectURL(file), public_id: 'mock_id_' + Date.now() };
