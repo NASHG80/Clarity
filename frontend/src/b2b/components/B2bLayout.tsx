@@ -26,7 +26,7 @@ export default function B2bLayout() {
     <div className="min-h-screen bg-[#F8F6F3] flex flex-col font-sans">
       <Navbar 
         navItems={desktopNavItems} 
-        brandName="GreenStay Partner"
+        brandName="Clarity"
       />
       <div className="flex-1 pb-16 md:pb-0 pt-24 md:pt-28">
         <Outlet />

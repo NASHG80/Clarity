@@ -50,27 +50,6 @@ export function RulesStep({ value, onChange, onContinue, onBack }: RulesStepProp
 
       <div className="space-y-6 bg-[#F8F6F3] p-5 sm:p-8 rounded-2xl shadow-[0_4px_16px_rgba(38,56,45,0.03)] border border-[#D8C9BE]/50">
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-[#26382D]">Check-in Time</label>
-            <input
-              type="time"
-              className="w-full h-11 px-4 rounded-xl border border-[#D8C9BE] focus:border-[#7C9278] focus:ring-[#7C9278] focus:outline-none focus:ring-1 bg-white text-[#26382D]"
-              value={value.checkIn}
-              onChange={(e) => onChange({ ...value, checkIn: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-[#26382D]">Check-out Time</label>
-            <input
-              type="time"
-              className="w-full h-11 px-4 rounded-xl border border-[#D8C9BE] focus:border-[#7C9278] focus:ring-[#7C9278] focus:outline-none focus:ring-1 bg-white text-[#26382D]"
-              value={value.checkOut}
-              onChange={(e) => onChange({ ...value, checkOut: e.target.value })}
-            />
-          </div>
-        </div>
-
         <div className="space-y-1.5">
           <label className="block text-sm font-medium text-[#26382D]">Cancellation Policy</label>
           <select

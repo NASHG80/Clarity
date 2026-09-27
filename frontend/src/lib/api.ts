@@ -1017,6 +1017,24 @@ function getListingDetailMockData(id: string): ListingDetailResponse {
       confirmations: [
         { item_label: "step_free_entrance", confirmed_by_count: 12, disputed_count: 0 },
         { item_label: "wheelchair_accessible_room", confirmed_by_count: 2, disputed_count: 1 }
+      ],
+      rooms: [
+        {
+          id: "room_001",
+          name: "Deluxe Garden Suite",
+          capacity: "3",
+          bedType: "1 King Bed + 1 Sofa Bed",
+          size: "45 sq m",
+          photoUrl: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&q=80&w=800"
+        },
+        {
+          id: "room_002",
+          name: "Accessible Family Room",
+          capacity: "4",
+          bedType: "2 Queen Beds",
+          size: "55 sq m",
+          photoUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800"
+        }
       ]
     };
   }
