@@ -22,6 +22,7 @@ from app.routes import (
     analytics,
     payments,
     confirmations,
+    proxy,
 )
 
 __all__ = [
@@ -33,4 +34,5 @@ __all__ = [
     "analytics",
     "payments",
     "confirmations",
+    "proxy",
 ]
