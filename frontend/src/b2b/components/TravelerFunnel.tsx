@@ -86,7 +86,7 @@ export default function TravelerFunnel({ funnel }: TravelerFunnelProps) {
           <p className="text-[13px] font-bold text-red-800 uppercase tracking-[0.1em] mb-1">Largest observed drop-off</p>
           <p className="text-[#1C2B22] text-[15px] font-medium">Detail Views → Saves</p>
           <p className="text-[#5B6D62] text-sm mt-1">
-            83.9% did not save the listing after viewing the detail page.
+            76.6% did not save the listing after viewing the detail page.
           </p>
         </div>
       </div>

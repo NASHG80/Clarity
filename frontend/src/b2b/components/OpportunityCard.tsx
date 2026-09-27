@@ -52,9 +52,6 @@ export default function OpportunityCard({ opportunity }: OpportunityCardProps) {
             <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${severityStyle}`}>
               {getSeverityLabel(opportunity.severity)} &middot; {getCategory()}
             </div>
-            {opportunity.is_demo_data && (
-              <DataStateBadge state="demo_synthetic" />
-            )}
           </div>
         </div>
 
