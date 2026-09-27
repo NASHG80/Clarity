@@ -910,17 +910,18 @@ export interface ConfirmationData {
 export interface ListingDetailResponse {
   id: string;
   translations: Record<string, { name: string; description?: string }>;
-  city: string;
-  price_inr_per_night: number;
+  city?: string;
+  price_inr_per_night?: number;
   star_rating?: number;
   photos: string[];
   data_state: string;
   accessibility_items: AccommodationItem[];
   sustainability_items: AccommodationItem[];
-  confirmations: ConfirmationData[];
+  confirmations?: ConfirmationData[];
   amenities?: string[];
   rooms?: any[];
   rules?: any;
+  reviews?: any[];
   property_rules?: any;
   address?: string;
   location?: { lat: number; lng: number };

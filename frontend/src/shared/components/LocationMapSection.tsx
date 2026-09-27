@@ -262,24 +262,29 @@ export function LocationMapSection({ address, city }: Props) {
     }
     setSelectedId(place.placeId);
 
-    const mode = place.category === 'attraction' ? 'walking' : 'driving';
-    const data = await getDirections(hotelLatRef.current, hotelLngRef.current, place.lat, place.lng, mode);
+    // Always use driving — WALK data is sparse in India; backend also falls back to DRIVE
+    const data = await getDirections(hotelLatRef.current, hotelLngRef.current, place.lat, place.lng, 'driving');
 
-    if (!data?.routes?.[0]) return;
+    if (!data?.routes?.[0]) {
+      setRouteInfo({ dist: '–', dur: 'Route unavailable' });
+      return;
+    }
     const route = data.routes[0];
     const leg = route.legs[0];
     setRouteInfo({ dist: leg.distance?.text || '', dur: leg.duration?.text || '' });
 
-    // Decode polyline
+    // Decode polyline and draw
     let path: google.maps.LatLng[] = [];
-    if (route.overview_polyline?.points && mapRef.current) {
-      path = google.maps.geometry.encoding.decodePath(route.overview_polyline.points);
+    const encoded = route.overview_polyline?.points;
+    if (encoded && encoded.length > 0 && mapRef.current) {
+      path = google.maps.geometry.encoding.decodePath(encoded);
       polylineRef.current = new google.maps.Polyline({
         path,
         map: mapRef.current,
-        strokeColor: '#1a73e8',
-        strokeWeight: 5,
-        strokeOpacity: 0.9,
+        strokeColor: '#4285F4',
+        strokeWeight: 6,
+        strokeOpacity: 1.0,
+        zIndex: 50,
       });
 
       // Fit bounds
@@ -320,15 +325,17 @@ export function LocationMapSection({ address, city }: Props) {
         })
       );
 
-      // Midpoint Info Pill (Distance/Time)
+      // Midpoint Info Pill — "5 min / 1.5 km" style matching screenshot
       if (path.length > 0) {
         const midPoint = path[Math.floor(path.length / 2)];
-        const infoText = `${leg.duration?.text || ''} / ${leg.distance?.text || ''}`;
+        const dur = leg.duration?.text || '';
+        const dist = leg.distance?.text || '';
+        const infoText = dur && dist ? `${dur} / ${dist}` : dur || dist;
         
-        // Approximate width based on characters
-        const textWidth = infoText.length * 6 + 20;
-        const svgW = textWidth;
-        const svgH = 26;
+        const padding = 16;
+        const charWidth = 7;
+        const svgW = Math.max(infoText.length * charWidth + padding * 2, 80);
+        const svgH = 28;
         
         routeMarkersRef.current.push(
           new google.maps.Marker({
@@ -337,7 +344,10 @@ export function LocationMapSection({ address, city }: Props) {
             zIndex: 1000,
             icon: {
               url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
-                `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}"><rect width="${svgW}" height="${svgH}" rx="4" fill="#111827"/><text x="${svgW/2}" y="${svgH/2 + 4}" text-anchor="middle" fill="white" font-size="11" font-family="-apple-system, system-ui, sans-serif" font-weight="bold">${infoText}</text></svg>`
+                `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}">` +
+                `<rect width="${svgW}" height="${svgH}" rx="5" fill="#1a1a2e" opacity="0.92"/>` +
+                `<text x="${svgW/2}" y="${svgH/2 + 4.5}" text-anchor="middle" fill="white" font-size="12" font-family="-apple-system, Arial, sans-serif" font-weight="700" letter-spacing="0.2">${infoText}</text>` +
+                `</svg>`
               ),
               scaledSize: new google.maps.Size(svgW, svgH),
               anchor: new google.maps.Point(svgW/2, svgH/2),
@@ -378,7 +388,8 @@ export function LocationMapSection({ address, city }: Props) {
   /* ── Row ── */
   const Row = ({ place }: { place: Place }) => {
     const isSel = selectedId === place.placeId;
-    const display = place.duration || place.distance;
+    // Show distance (km) as primary — matches screenshot style
+    const display = place.distance || place.duration;
     return (
       <label className={`flex items-center gap-3 px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${isSel ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
         <input
@@ -390,7 +401,7 @@ export function LocationMapSection({ address, city }: Props) {
         <span className={`flex-1 text-sm leading-tight ${isSel ? 'font-semibold text-[#1a73e8]' : 'font-medium text-[#26382D]'}`}>
           {place.name}
         </span>
-        {display && <span className="text-xs text-[#26382D]/60 whitespace-nowrap shrink-0">{display}</span>}
+        {display && <span className={`text-xs whitespace-nowrap shrink-0 font-medium ${isSel ? 'text-[#1a73e8]' : 'text-[#26382D]/60'}`}>{display}</span>}
         <span className="text-gray-300 shrink-0">›</span>
       </label>
     );
@@ -412,6 +423,20 @@ export function LocationMapSection({ address, city }: Props) {
             />
           </div>
         </div>
+        {/* Route info banner — shown when a place is selected */}
+        {routeInfo && (
+          <div className="px-3 py-2 bg-[#1a73e8]/8 border-b border-[#1a73e8]/20 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-[#1a73e8] shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-[#1a73e8]">Route to selected</p>
+              <p className="text-sm font-semibold text-[#1C2B22]">{routeInfo.dur} &nbsp;·&nbsp; {routeInfo.dist}</p>
+            </div>
+            <button
+              onClick={() => { handleSelect({ placeId: selectedId! } as any, false); }}
+              className="text-[#1a73e8]/50 hover:text-[#1a73e8] text-lg font-bold shrink-0"
+            >×</button>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 shrink-0">
