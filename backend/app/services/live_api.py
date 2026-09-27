@@ -68,22 +68,35 @@ async def railradar_get(path: str, params: dict = None) -> dict:
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(f"https://api.railradar.in{path}", headers=headers, params=params)
-            data = resp.json()
+            
+            try:
+                data = resp.json()
+            except:
+                data = {}
+
             if resp.status_code == 200:
                 api_cache.set(cache_key, data)
-            return data
+                return data
+            
+            return {"error": True, "status": resp.status_code, "message": data.get("message", f"HTTP {resp.status_code}")}
     except Exception as e:
         logger.error(f"RailRadar API error: {e}")
-        return {}
+        return {"error": True, "status": 500, "message": str(e)}
 
 async def railradar_autocomplete(q: str) -> List[Dict]:
-    data = await railradar_get(f"/v1/stations", {"q": q})
+    data = await railradar_get(f"/v1/lookup/search/stations", {"q": q, "limit": 20})
+    if data.get("error"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=data.get("status", 500), detail=data.get("message", "Error fetching stations"))
     if data and data.get("success"):
-        return data.get("data", {}).get("stations", [])
+        return data.get("data", [])
     return []
 
 async def railradar_train_route(train_number: str) -> dict:
     return await railradar_get(f"/v1/trains/{train_number}/route")
+
+async def railradar_train_details(train_number: str) -> dict:
+    return await railradar_get(f"/v1/trains/{train_number}")
 
 async def railradar_train_live(train_number: str) -> dict:
     return await railradar_get(f"/v1/trains/{train_number}/live")

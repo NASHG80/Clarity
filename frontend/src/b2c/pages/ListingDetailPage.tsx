@@ -153,7 +153,7 @@ export default function ListingDetailPage() {
             });
 
             if (verification.payment_verified) {
-              navigate('/booking-confirmation', {
+              navigate('/transport', {
                 state: {
                   ...location.state,
                   hotelResult: listing,

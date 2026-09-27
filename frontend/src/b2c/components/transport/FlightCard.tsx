@@ -1,41 +1,64 @@
-import React from 'react';
-import { Plane, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plane, ArrowRight, ChevronDown, ChevronUp, Leaf, Clock, Wifi, Info } from 'lucide-react';
 
 export default function FlightCard({ option, onSelect }: { option: any, onSelect: () => void }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const mainSeg = option.segments.find((s: any) => s.segment_type === 'main');
   const details = mainSeg?.details || {};
+  const providerDetails = option.provider_details || {};
+  
+  const legs = providerDetails.legs || [];
+  const layovers = providerDetails.layovers || [];
+  const co2 = providerDetails.carbon_emissions || {};
 
   return (
-    <div className="bg-white border border-[#D8C9BE] rounded-2xl shadow-sm overflow-hidden hover:border-[#7C9278] transition-colors">
-      <div className="p-5 flex flex-col md:flex-row items-center gap-6">
+    <div className={`bg-white border ${isExpanded ? 'border-[#7C9278]' : 'border-[#D8C9BE]'} rounded-2xl shadow-sm overflow-hidden hover:border-[#7C9278] transition-colors`}>
+      <div 
+        className="p-5 flex flex-col md:flex-row items-center gap-6 cursor-pointer" 
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         
         {/* Airline & Timing */}
-        <div className="flex-1 w-full flex items-center justify-between md:justify-start md:gap-8">
-          <div className="flex items-center gap-4 min-w-[140px]">
-             {details.airline_logo ? (
-               <img src={details.airline_logo} alt={details.airline} className="w-10 h-10 object-contain rounded-full bg-[#F8F6F3] p-1 border border-[#D8C9BE]" />
-             ) : (
-               <div className="w-10 h-10 bg-[#EAF0EB] rounded-full flex items-center justify-center">
-                 <Plane className="w-5 h-5 text-[#26382D] -rotate-45" />
+        <div className="flex-1 w-full flex flex-col md:flex-row items-start md:items-center justify-between md:justify-start md:gap-8">
+          
+          <div className="flex w-full md:w-auto items-center justify-between md:justify-start gap-4 min-w-[160px] mb-4 md:mb-0">
+             <div className="flex items-center gap-4">
+               {details.airline_logo ? (
+                 <img src={details.airline_logo} alt={details.airline} className="w-10 h-10 object-contain rounded-full bg-[#F8F6F3] p-1 border border-[#D8C9BE]" />
+               ) : (
+                 <div className="w-10 h-10 bg-[#EAF0EB] rounded-full flex items-center justify-center">
+                   <Plane className="w-5 h-5 text-[#26382D] -rotate-45" />
+                 </div>
+               )}
+               <div>
+                 <div className="font-bold text-[#26382D] text-sm leading-tight">{details.airline || 'Airline'}</div>
+                 <div className="text-xs text-[#7C9278] mt-0.5">{details.flight_number}</div>
                </div>
-             )}
-             <div>
-               <div className="font-bold text-[#26382D] text-sm leading-tight">{details.airline || 'Airline'}</div>
-               <div className="text-xs text-[#7C9278] mt-0.5">{details.flight_number}</div>
+             </div>
+             
+             <div className="md:hidden">
+                {isExpanded ? <ChevronUp className="w-5 h-5 text-[#7C9278]" /> : <ChevronDown className="w-5 h-5 text-[#7C9278]" />}
              </div>
           </div>
           
-          <div className="flex flex-1 items-center justify-between md:justify-center md:gap-8">
-            <div className="flex flex-col text-right md:text-left">
-              <span className="text-lg font-bold text-[#26382D]">{details.departure_time || '10:00 AM'}</span>
-              <span className="text-xs font-semibold text-[#7C9278] uppercase mt-0.5">{mainSeg?.origin?.code || 'BOM'}</span>
+          <div className="flex w-full md:flex-1 items-center justify-between md:justify-center md:gap-8">
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] text-[#A99587] font-medium leading-none mb-1">
+                {details.departure_time ? new Date(details.departure_time).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date'}
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-bold text-[#26382D] leading-none">
+                  {details.departure_time ? new Date(details.departure_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '10:00'}
+                </span>
+                <span className="text-sm font-semibold text-[#7C9278] uppercase">{mainSeg?.origin?.code || 'BOM'}</span>
+              </div>
             </div>
             
-            <div className="flex flex-col items-center justify-center px-4 md:px-8 relative">
+            <div className="flex flex-col items-center justify-center px-4 md:px-8 relative flex-1">
               <span className="text-xs font-medium text-[#A99587] mb-1">
                 {Math.floor(mainSeg?.duration_minutes/60)}h {mainSeg?.duration_minutes%60}m
               </span>
-              <div className="w-16 md:w-32 h-[2px] bg-[#D8C9BE] relative">
+              <div className="w-full md:w-32 h-[2px] bg-[#D8C9BE] relative">
                 {details.stops > 0 && (
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white border-2 border-[#26382D] rounded-full" />
                 )}
@@ -45,9 +68,16 @@ export default function FlightCard({ option, onSelect }: { option: any, onSelect
               </span>
             </div>
 
-            <div className="flex flex-col">
-              <span className="text-lg font-bold text-[#26382D]">{details.arrival_time || '12:30 PM'}</span>
-              <span className="text-xs font-semibold text-[#7C9278] uppercase mt-0.5">{mainSeg?.destination?.code || 'GOI'}</span>
+            <div className="flex flex-col text-right items-end">
+              <span className="text-[10px] text-[#A99587] font-medium leading-none mb-1">
+                {details.arrival_time ? new Date(details.arrival_time).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date'}
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-semibold text-[#7C9278] uppercase">{mainSeg?.destination?.code || 'GOI'}</span>
+                <span className="text-xl font-bold text-[#26382D] leading-none">
+                  {details.arrival_time ? new Date(details.arrival_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : '12:30'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -57,17 +87,121 @@ export default function FlightCard({ option, onSelect }: { option: any, onSelect
           <div className="flex flex-col md:items-end">
              <span className="text-xl font-bold text-[#26382D]">₹{option.cost_inr}</span>
              {option.emissions?.co2e_kg && (
-               <span className="text-xs font-medium text-[#7C9278] mt-1">
+               <span className={`text-xs font-medium mt-1 flex items-center gap-1 ${co2.difference_percent < 0 ? 'text-green-600' : 'text-[#7C9278]'}`}>
+                 {co2.difference_percent < 0 && <Leaf className="w-3 h-3" />}
                  {option.emissions.co2e_kg.toFixed(0)} kg CO₂
+                 {co2.difference_percent < 0 && ` (${Math.abs(co2.difference_percent)}% less)`}
                </span>
              )}
           </div>
-          <button onClick={onSelect} className="mt-0 md:mt-3 bg-[#26382D] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#1a261f] transition-colors flex items-center gap-2">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect();
+            }} 
+            className="mt-0 md:mt-3 bg-[#26382D] text-white px-5 py-2 rounded-xl text-sm font-semibold hover:bg-[#1a261f] transition-colors flex items-center gap-2"
+          >
             Select <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-
+        
+        <div className="hidden md:block pl-2">
+            {isExpanded ? <ChevronUp className="w-5 h-5 text-[#7C9278]" /> : <ChevronDown className="w-5 h-5 text-[#7C9278]" />}
+        </div>
       </div>
+
+      {/* Expanded State */}
+      {isExpanded && (
+        <div className="bg-[#F8F6F3] border-t border-[#D8C9BE] p-6 space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+             <h4 className="font-bold text-[#26382D] text-sm uppercase tracking-wider">Flight Details</h4>
+             <div className="flex-1 border-t border-[#D8C9BE]" />
+          </div>
+          
+          <div className="space-y-6">
+            {legs.map((leg: any, idx: number) => {
+              const ext = leg.extensions || [];
+              const hasUsb = ext.some((e:string) => e.toLowerCase().includes('usb'));
+              const hasWifi = ext.some((e:string) => e.toLowerCase().includes('wifi'));
+              const co2Est = ext.find((e:string) => e.toLowerCase().includes('carbon'))?.split(': ')[1];
+              
+              return (
+                <div key={idx} className="flex flex-col md:flex-row gap-6 relative">
+                  {/* Timeline line */}
+                  {idx !== legs.length - 1 && (
+                    <div className="absolute left-[3px] top-[24px] bottom-[-24px] w-px bg-[#D8C9BE] md:hidden" />
+                  )}
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-[#26382D]" />
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-bold text-[#26382D] text-sm">
+                          {leg.departure_airport?.time ? new Date(leg.departure_airport.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Time'}
+                        </span>
+                        <span className="text-xs text-[#A99587] font-medium">
+                          {leg.departure_airport?.time ? new Date(leg.departure_airport.time).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date'}
+                        </span>
+                      </div>
+                      <span className="text-sm text-[#7C9278] font-medium">{leg.departure_airport?.name} ({leg.departure_airport?.id})</span>
+                    </div>
+                    
+                    <div className="pl-5 border-l-[2px] border-dashed border-[#D8C9BE] ml-[3px] py-4 space-y-3">
+                      <div className="flex items-start gap-4">
+                        <img src={leg.airline_logo} className="w-6 h-6 object-contain" alt="" />
+                        <div>
+                          <div className="text-sm font-semibold text-[#26382D]">
+                            {leg.airline} <span className="text-[#7C9278] font-normal">{leg.flight_number}</span>
+                          </div>
+                          <div className="text-xs text-[#7C9278] mt-1 flex items-center flex-wrap gap-x-3 gap-y-1">
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {Math.floor(leg.duration/60)}h {leg.duration%60}m</span>
+                            <span>{leg.airplane}</span>
+                            <span>{leg.travel_class}</span>
+                            <span>{leg.legroom}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 flex-wrap text-xs text-[#7C9278] pt-1">
+                        {hasUsb && <span className="flex items-center gap-1 bg-white px-2 py-1 rounded border border-[#D8C9BE]"><Info className="w-3 h-3" /> USB Power</span>}
+                        {hasWifi && <span className="flex items-center gap-1 bg-white px-2 py-1 rounded border border-[#D8C9BE]"><Wifi className="w-3 h-3" /> Wi-Fi</span>}
+                        {co2Est && <span className="flex items-center gap-1 bg-white px-2 py-1 rounded border border-[#D8C9BE]"><Leaf className="w-3 h-3 text-green-600" /> {co2Est}</span>}
+                        {leg.often_delayed_by_over_30_min && (
+                           <span className="flex items-center gap-1 bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200">
+                             Often delayed 30m+
+                           </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-[#7C9278]" />
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="font-bold text-[#26382D] text-sm">
+                          {leg.arrival_airport?.time ? new Date(leg.arrival_airport.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : 'Time'}
+                        </span>
+                        <span className="text-xs text-[#A99587] font-medium">
+                          {leg.arrival_airport?.time ? new Date(leg.arrival_airport.time).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date'}
+                        </span>
+                      </div>
+                      <span className="text-sm text-[#7C9278] font-medium">{leg.arrival_airport?.name} ({leg.arrival_airport?.id})</span>
+                    </div>
+                  </div>
+                  
+                  {/* Layover */}
+                  {idx < layovers.length && (
+                     <div className="bg-[#EAF0EB] rounded-xl px-4 py-3 md:py-2 flex items-center gap-3 text-sm font-medium text-[#26382D] md:self-center md:my-0 my-2">
+                       <Clock className="w-4 h-4 text-[#7C9278]" />
+                       Layover: {Math.floor(layovers[idx].duration/60)}h {layovers[idx].duration%60}m in {layovers[idx].name} ({layovers[idx].id})
+                     </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          
+        </div>
+      )}
     </div>
   );
 }

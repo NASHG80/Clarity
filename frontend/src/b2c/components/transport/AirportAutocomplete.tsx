@@ -16,9 +16,20 @@ interface Props {
   onSelect?: (place: any) => void;
 }
 
+const AIRPORTS = [
+  { iata: 'BOM', name: 'Chhatrapati Shivaji Maharaj International', city: 'Mumbai' },
+  { iata: 'DEL', name: 'Indira Gandhi International', city: 'Delhi' },
+  { iata: 'GOI', name: 'Goa International Airport, Dabolim', city: 'Goa' },
+  { iata: 'GOX', name: 'Manohar International Airport, Mopa', city: 'Goa' },
+  { iata: 'BLR', name: 'Kempegowda International', city: 'Bangalore' },
+  { iata: 'HYD', name: 'Rajiv Gandhi International', city: 'Hyderabad' },
+  { iata: 'MAA', name: 'Chennai International', city: 'Chennai' },
+  { iata: 'CCU', name: 'Netaji Subhash Chandra Bose International', city: 'Kolkata' },
+];
+
 export default function AirportAutocomplete({ label, name, defaultValue = "", onSelect }: Props) {
   const [query, setQuery] = useState(defaultValue);
-  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -39,49 +50,27 @@ export default function AirportAutocomplete({ label, name, defaultValue = "", on
       return;
     }
 
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/search/autocomplete/places?q=${encodeURIComponent(query + " airport")}`);
-        if (res.ok) {
-          const data = await res.json();
-          const mapped = data.map((d: any) => ({
-            placeId: d.placeId,
-            text: d.placePrediction?.text?.text || d.text,
-            mainText: d.placePrediction?.structuredFormat?.mainText?.text || d.text,
-            secondaryText: d.placePrediction?.structuredFormat?.secondaryText?.text || ""
-          }));
-          setSuggestions(mapped);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
+    setLoading(true);
+    const q = query.toLowerCase();
+    const matches = AIRPORTS.filter(a => 
+      a.city.toLowerCase().includes(q) || 
+      a.name.toLowerCase().includes(q) || 
+      a.iata.toLowerCase().includes(q)
+    );
+    setSuggestions(matches);
+    setLoading(false);
   }, [query, showDropdown]);
 
-  const handleSelect = async (s: PlaceSuggestion) => {
-    setQuery(s.mainText);
+  const handleSelect = (s: any) => {
+    setQuery(`${s.city} (${s.iata})`);
     setShowDropdown(false);
     
-    // Fetch details
     if (onSelect) {
-      try {
-        const res = await fetch(`/api/search/place/${s.placeId}`);
-        const data = await res.json();
-        onSelect({
-          name: data.displayName?.text || s.mainText,
-          lat: data.location?.latitude,
-          lng: data.location?.longitude,
-          place_id: data.id,
-          address: data.formattedAddress
-        });
-      } catch (err) {
-        console.error(err);
-      }
+      onSelect({
+        code: s.iata,
+        name: s.name,
+        city: s.city
+      });
     }
   };
 
@@ -89,6 +78,11 @@ export default function AirportAutocomplete({ label, name, defaultValue = "", on
     <div ref={wrapperRef} className="relative">
       <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1">{label}</label>
       <div className="relative">
+        <input 
+          type="hidden" 
+          name={`${name}_code`} 
+          value={query.includes('(') ? query.split('(')[1].replace(')', '') : query} 
+        />
         <input 
           type="text"
           name={name}
@@ -113,12 +107,15 @@ export default function AirportAutocomplete({ label, name, defaultValue = "", on
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#D8C9BE] rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
           {suggestions.map(s => (
             <div 
-              key={s.placeId} 
+              key={s.iata} 
               onClick={() => handleSelect(s)}
               className="px-4 py-3 hover:bg-[#F8F6F3] cursor-pointer border-b border-[#F8F6F3] last:border-0"
             >
-              <div className="font-semibold text-[#26382D] truncate">{s.mainText}</div>
-              <div className="text-xs text-[#7C9278] truncate mt-0.5">{s.secondaryText}</div>
+              <div className="font-semibold text-[#26382D] flex items-center gap-2 truncate">
+                <span>{s.city}</span>
+                <span className="text-[10px] bg-[#E88D67]/10 text-[#E88D67] px-1 rounded font-bold">{s.iata}</span>
+              </div>
+              <div className="text-xs text-[#7C9278] truncate mt-0.5">{s.name}</div>
             </div>
           ))}
         </div>

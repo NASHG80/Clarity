@@ -882,8 +882,17 @@ export async function searchTransport(payload: TransportSearchRequest): Promise<
 // B2C — Accommodation Search (A14)
 // =============================================================================
 
-export interface AccommodationSearchRequest extends TransportSearchRequest {
+export interface AccommodationSearchRequest {
   destination_city: string;
+  budget_max?: number;
+  accessibility_required?: string[];
+  weights?: {
+    sustainability?: number;
+    accessibility?: number;
+    cost?: number;
+    convenience?: number;
+  };
+  include_unverified?: boolean;
   // Optional trip dates — when supplied, used for live hotel search (SerpAPI)
   // instead of the default +7/+9 day fallback. Backwards-compatible.
   arrival_date?: string;           // YYYY-MM-DD
@@ -916,7 +925,7 @@ export interface AccommodationSearchResponse {
 
 export async function searchAccommodation(payload: AccommodationSearchRequest): Promise<AccommodationSearchResponse> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   const requestOptions: RequestInit = {
     method: "POST",

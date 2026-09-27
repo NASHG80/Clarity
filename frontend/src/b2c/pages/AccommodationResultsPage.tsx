@@ -34,10 +34,11 @@ export default function AccommodationResultsPage() {
       setError(null);
       try {
         const payload: AccommodationSearchRequest = {
-          ...searchPayload,
-          destination_city: searchPayload.destination
-        } as AccommodationSearchRequest;
-        
+          destination_city: searchPayload.destination,
+          budget_max: searchPayload.vehicle_preferences?.budget_max,
+          accessibility_required: searchPayload.wheelchair_accessible ? ['step_free'] : undefined,
+          weights: searchPayload.vehicle_preferences?.weights
+        };
         const response = await searchAccommodation(payload);
         if (isMounted) {
           setResults(response.results);

@@ -210,7 +210,6 @@ export default function CustomerDashboardPage() {
     try {
       const res = await searchAccommodation({
         destination_city: state.destination,
-        destination: state.destination,
         budget_max: state.budget_max !== null ? state.budget_max : undefined,
         accessibility_required: state.accessibility_required,
         sustainability_preferred: state.sustainability_preferred,
@@ -218,8 +217,7 @@ export default function CustomerDashboardPage() {
         include_unverified: state.include_unverified,
         arrival_date: state.arrival_date || undefined,
         departure_date: state.departure_date || undefined,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      });
 
 
       if (controller.signal.aborted) return;
@@ -234,7 +232,7 @@ export default function CustomerDashboardPage() {
         last_search_result_count: res.results.length,
       });
       
-      postInteraction(tid, 'search_results_found', {
+      postInteraction(tid, 'search_performed', {
         result_count: res.results.length,
       });
 
