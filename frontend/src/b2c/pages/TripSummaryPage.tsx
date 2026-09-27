@@ -109,7 +109,7 @@ export default function TripSummaryPage() {
         amount: order.amount,
         currency: order.currency,
         order_id: order.order_id,
-        name: t('tripSummary.companyName', 'Green & Inclusive Travel'),
+        name: t('tripSummary.companyName', 'CLARITY'),
         description: t('tripSummary.paymentDescription', 'Secure your trip'),
         handler: async function (response: any) {
           setIsProcessing(true);

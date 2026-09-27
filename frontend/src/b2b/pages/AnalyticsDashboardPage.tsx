@@ -90,8 +90,8 @@ export default function AnalyticsDashboardPage() {
     }
   };
 
-  return (
-    <main className="w-full min-h-screen bg-[#FAF9F7] text-[#26382D] font-sans pb-24">
+  const renderContent = () => (
+    <div className="w-full min-h-screen bg-[#FAF9F7] text-[#26382D] font-sans pb-24">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10">
         
         {/* TOAST */}
@@ -442,6 +442,20 @@ export default function AnalyticsDashboardPage() {
           period={data?.period || 'this_week'} 
         />
       </div>
-    </main>
+    </div>
+  );
+
+  return (
+    <>
+      {/* MOBILE LAYOUT */}
+      <div className="flex md:hidden flex-col bg-[#FAF9F7] min-h-screen w-full">
+        {renderContent()}
+      </div>
+
+      {/* DESKTOP LAYOUT */}
+      <div className="hidden md:flex flex-col bg-[#FAF9F7] min-h-screen w-full">
+        {renderContent()}
+      </div>
+    </>
   );
 }

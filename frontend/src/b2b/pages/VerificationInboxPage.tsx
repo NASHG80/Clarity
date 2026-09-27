@@ -140,7 +140,7 @@ export default function BusinessProfilePage() {
     { id: 'location', label: t('profileNav.location', 'Location') }
   ];
 
-  return (
+  const renderContent = () => (
     <div className="min-h-screen bg-[#FDFBF7] font-sans text-[#1C2B22]">
       
       {/* ── BREADCRUMB ── */}
@@ -573,7 +573,20 @@ export default function BusinessProfilePage() {
           </button>
         </div>
       )}
-
     </div>
+  );
+
+  return (
+    <>
+      {/* MOBILE LAYOUT */}
+      <div className="flex md:hidden flex-col bg-[#FDFBF7] min-h-screen w-full">
+        {renderContent()}
+      </div>
+
+      {/* DESKTOP LAYOUT */}
+      <div className="hidden md:flex flex-col bg-[#FDFBF7] min-h-screen w-full">
+        {renderContent()}
+      </div>
+    </>
   );
 }

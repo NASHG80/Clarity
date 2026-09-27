@@ -26,21 +26,21 @@ export default function HotelResultsSection({
 
   if (results.length === 0) {
     return (
-      <div className="bg-[#F8F6F3] rounded-2xl border border-[#D8C9BE] p-8 text-center">
-        <Building2 className="w-8 h-8 text-[#D8C9BE] mx-auto mb-3" />
-        <p className="font-serif text-[18px] text-[#26382D] mb-2">{t('planning.noResults')}</p>
-        <p className="text-[12px] text-[#A99587]">{t('planning.noResultsHelper')}</p>
+      <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 text-center shadow-sm">
+        <Building2 className="w-10 h-10 text-[#A69C8E] mx-auto mb-4" />
+        <p className="font-serif text-xl font-bold text-[#1C2B22] mb-2">{t('planning.noResults')}</p>
+        <p className="text-[14px] text-[#5B6D62]">{t('planning.noResultsHelper')}</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2 mb-3">
-        <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-[#7C9278]">
+      <div className="flex items-center gap-2 mb-4 mt-2">
+        <p className="text-xs font-bold tracking-[0.1em] uppercase text-[#5B6D62]">
           {t('planning.resultsTitle')}
         </p>
-        <span className="text-[10px] text-[#A99587]">({results.length})</span>
+        <span className="text-xs text-[#A69C8E]">({results.length})</span>
       </div>
       <div className="flex flex-col gap-3">
         {results.map(result => (

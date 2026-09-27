@@ -1,4 +1,4 @@
-"""DB package for Green & Inclusive Travel."""
+"""DB package for CLARITY."""
 
 from .mongo import (
     get_mongo_client,

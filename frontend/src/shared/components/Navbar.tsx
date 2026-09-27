@@ -28,13 +28,13 @@ export function Navbar({ navItems, brandName }: { navItems?: NavItem[], brandNam
           <button 
             onClick={() => navigate('/')} 
             className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] rounded-md"
-            aria-label={brandName || t('accessibility.home', 'Green & Inclusive Travel Homepage')}
+            aria-label={brandName || t('accessibility.home', 'CLARITY Homepage')}
           >
             <div className="w-8 h-8 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-xs">
               <Leaf className="w-4 h-4" />
             </div>
             <span className="font-serif text-xl tracking-tight font-medium text-[#26382D]">
-              {brandName || 'EcoWay'}
+              {brandName || 'CLARITY'}
             </span>
           </button>
         </div>

@@ -141,7 +141,7 @@ export default function ListingDetailPage() {
         amount: order.amount,
         currency: order.currency,
         order_id: order.order_id,
-        name: 'EcoWay — Green & Inclusive Travel',
+        name: 'CLARITY',
         description: `Booking for ${hotelName}`,
         handler: async function (response: any) {
           setIsProcessing(true);
@@ -223,14 +223,14 @@ export default function ListingDetailPage() {
     <div className="min-h-screen bg-[#F8F6F3] flex flex-col font-sans text-[#26382D]">
       {/* TOP HEADER BAR — ALWAYS VISIBLE, NO FLOATING NAVBAR OVERLAY */}
       <header className="bg-white border-b border-[#D8C9BE]/70 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <button
             onClick={handleBack}
             id="back-to-search-btn"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-[#26382D] bg-[#F1EDE9] hover:bg-[#E5DFD6] active:scale-95 transition-all shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-sm font-semibold text-[#26382D] bg-[#F1EDE9] hover:bg-[#E5DFD6] active:scale-95 transition-all shadow-xs cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 text-[#7C9278]" />
-            <span>{t('accommodation.backToSearch', 'Back to Search')}</span>
+            <span className="hidden sm:inline">{t('accommodation.backToSearch', 'Back to Search')}</span>
           </button>
 
           <span className="text-xs font-semibold uppercase tracking-wider text-[#7C9278] bg-[#F1EDE9] px-3.5 py-1 rounded-full border border-[#D8C9BE]/50">

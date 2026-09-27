@@ -142,7 +142,7 @@
   "tripSummary.free": "नि:शुल्क",
   "tripSummary.processing": "प्रक्रिया हो रही है...",
   "tripSummary.scriptLoadError": "रेजरपे स्क्रिप्ट लोड होने में विफल। कृपया अपना कनेक्शन जांचें।",
-  "tripSummary.companyName": "Green & Inclusive Travel",
+  "tripSummary.companyName": "CLARITY",
   "tripSummary.paymentDescription": "अपनी यात्रा सुरक्षित करें",
   "tripSummary.verificationFailed": "भुगतान सत्यापन विफल रहा। कृपया पुनः प्रयास करें।",
   "tripSummary.verificationError": "भुगतान सत्यापित करने में त्रुटि।",
@@ -167,7 +167,7 @@
   "listing.confirmations.disputedByLabel_one": "विवाद",
   "listing.confirmations.disputedByLabel_other": "विवाद",
   "home": {
-    "brandName": "Green & Inclusive Travel",
+    "brandName": "CLARITY",
     "tagline": "भारत में सतत और सुलभ यात्रा के लिए व्यक्तिगत निर्णय इंजन",
     "nav": {
       "planTrip": "यात्रा योजना",
@@ -310,13 +310,13 @@
       "toastMessage": "सेटअप सुरक्षित हो गया। आप विकल्प देखने के लिए तैयार हैं।"
     },
     "footer": {
-      "brand": "Green & Inclusive Travel",
+      "brand": "CLARITY",
       "description": "भारत भर में कम कार्बन और सार्वभौमिक रूप से सुलभ यात्राओं के लिए समर्पित व्यक्तिगत निर्णय इंजन।",
       "planTrip": "यात्रा योजना",
       "explore": "खोजें",
       "forBusinesses": "व्यवसायों के लिए",
       "about": "हमारे बारे में",
-      "copyright": "© 2026 Green & Inclusive Travel Inc. भारत में सतत एवं सुलभ यात्रा के लिए।"
+      "copyright": "© 2026 CLARITY Inc. भारत में सतत एवं सुलभ यात्रा के लिए।"
     },
     "bottomNav": {
       "search": "खोजें",
@@ -433,4 +433,4 @@
   "memory.result_saved": "होटल सहेजा",
   "memory.filter_changed_after_results": "फ़िल्टर अपडेट",
   "memory.search_refreshed": "खोज ताज़ा की"
-}
+}

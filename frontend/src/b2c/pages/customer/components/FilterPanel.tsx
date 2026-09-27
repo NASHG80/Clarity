@@ -62,7 +62,7 @@ function Chip({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-bold tracking-[0.12em] uppercase text-[#7C9278] mb-2">
+    <p className="text-xs font-bold tracking-[0.1em] uppercase text-[#5B6D62] mb-3">
       {children}
     </p>
   );
@@ -130,7 +130,7 @@ export default function FilterPanel({
   }
 
   return (
-    <div className="bg-[#F8F6F3] rounded-2xl border border-[#D8C9BE] shadow-[0_4px_16px_rgba(38,56,45,0.03)] p-4">
+    <div className="bg-white rounded-2xl border border-[#E5DFD6] shadow-sm p-5 lg:p-6 transition-shadow hover:shadow-md">
       {/* Trip summary */}
       {phase !== 'EMPTY' && (
         <>

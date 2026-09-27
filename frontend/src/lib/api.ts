@@ -1252,7 +1252,14 @@ export const mockGetAiAnalyticsSummary = async (businessId: string, period: stri
 
 export const getAiAnalyticsSummary = async (businessId: string, period: string): Promise<AIAnalyticsSummaryResponse> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/analytics/ai-summary?business_id=${businessId}&period=${period}`);
+    const response = await fetch(`${API_BASE_URL}/api/business/${encodeURIComponent(businessId)}/analytics/ai-summary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ period })
+    });
+    
     if (response.ok) {
       return await response.json();
     }
