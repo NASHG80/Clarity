@@ -11,7 +11,7 @@ import { PhotoUploadStep, LocalPhotoSelection } from '../components/onboarding/P
 import { AiAnalysisStep, AiAnalysisData } from '../components/onboarding/AiAnalysisStep';
 import { AiAnalysisReviewStep } from '../components/onboarding/AiAnalysisReviewStep';
 import { AiConfirmationStep } from '../components/onboarding/AiConfirmationStep';
-import { DetectionConfirmationItem } from '../../lib/api';
+import { DetectionConfirmationItem, createListing } from '../../lib/api';
 import { Navbar } from '../../shared/components/Navbar';
 import { Check, Eye, Edit2 } from 'lucide-react';
 import { PropertyDetailTemplate } from '../components/property/PropertyDetailTemplate';
@@ -140,7 +140,7 @@ export default function OnboardingPage() {
     handleComplete();
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     // Collects B4, B5, B6, B7, B8, B9, B10 payload ready for backend onboarding submission (C1/C13)
     console.log('Onboarding data prepared with confirmed AI findings:', { 
       basicInfo, 
@@ -149,7 +149,40 @@ export default function OnboardingPage() {
       photoSelection, 
       aiAnalysis 
     });
-    navigate('/b2b/opportunity-detector');
+
+    try {
+      const accessibility_items = Object.keys(accessibilityInfo)
+        .filter(key => (accessibilityInfo as any)[key])
+        .map(key => ({
+          label: key,
+          value: true,
+          data_state: 'reported' as any
+        }));
+
+      const sustainability_items = Object.keys(sustainabilityInfo)
+        .filter(key => (sustainabilityInfo as any)[key])
+        .map(key => ({
+          label: key,
+          value: true,
+          data_state: 'reported' as any
+        }));
+
+      await createListing({
+        name: basicInfo.name || 'New Property',
+        city: basicInfo.city || 'Goa',
+        price_inr_per_night: parseInt(basicInfo.price) || null,
+        star_rating: basicInfo.starRating,
+        accessibility_items,
+        sustainability_items,
+        data_state: 'reported'
+      });
+
+      navigate('/b2b/listings');
+    } catch (err) {
+      console.error("Failed to create listing:", err);
+      // Fallback navigation if creation fails
+      navigate('/b2b/listings');
+    }
   };
 
   const steps = [
@@ -180,9 +213,9 @@ export default function OnboardingPage() {
 
   return (
     <div className="h-screen flex flex-col font-sans overflow-hidden bg-[#F1EDE9]">
-      <Navbar />
+      <Navbar navItems={[]} brandName="GreenStay Partner" />
 
-      <main className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
+      <main className="flex-1 flex flex-col md:flex-row relative overflow-hidden pt-24">
         
         {/* Mobile Toggle Bar */}
         <div className="md:hidden flex items-center bg-[#F8F6F3] border-b border-[#D8C9BE] p-2 shrink-0">

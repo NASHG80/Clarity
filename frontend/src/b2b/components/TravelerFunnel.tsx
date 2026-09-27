@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnalyticsFunnel } from '../../lib/api';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface TravelerFunnelProps {
   funnel: AnalyticsFunnel;
@@ -18,87 +19,35 @@ export default function TravelerFunnel({ funnel }: TravelerFunnelProps) {
     { key: 'bookings', label: t('analytics.bookings', 'Bookings'), value: funnel.bookings ?? 0 },
   ];
 
-  // Calculate drop-offs
-  const enrichedStages = stages.map((stage, i) => {
-    let dropOffPct = 0;
-    if (i < stages.length - 1) {
-      const nextValue = stages[i + 1].value;
-      if (stage.value > 0) {
-        dropOffPct = 100 - (nextValue / stage.value) * 100;
-      }
-    }
-    return { ...stage, dropOffPct: Math.round(dropOffPct * 10) / 10 };
-  });
+
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)]">
-      <div className="mb-10">
-        <h2 className="text-2xl font-serif font-bold text-[#1C2B22]">Customer Journey</h2>
-        <p className="text-[#3E5245] text-[15px] mt-1">How travelers move from discovery to booking.</p>
+    <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] h-full flex flex-col min-h-[400px]">
+      <div className="mb-8">
+        <h2 className="text-2xl font-serif font-bold text-[#1C2B22]">{t('dashboard.customerJourney', 'Customer Journey')}</h2>
+        <p className="text-[#3E5245] text-[15px] mt-1">{t('dashboard.journeyDesc', 'How travelers move from discovery to booking.')}</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row justify-between relative">
-        
-        {/* Horizontal Connector Line for Desktop */}
-        <div className="hidden lg:block absolute top-[52px] left-0 right-0 h-px bg-[#F0EBE1] -z-10" />
-
-        {enrichedStages.map((stage, i) => {
-          const isLast = i === enrichedStages.length - 1;
-          const nextStageVal = !isLast ? enrichedStages[i+1].value : 0;
-          const conversion = stage.value > 0 && !isLast ? Math.round((nextStageVal / stage.value) * 1000) / 10 : 0;
-
-          return (
-            <div key={stage.key} className="relative flex flex-col lg:items-center flex-1">
-              {/* Mobile visual connector */}
-              {!isLast && (
-                <div className="lg:hidden absolute left-6 top-24 bottom-0 w-px bg-[#F0EBE1] -z-10" />
-              )}
-              
-              <div className="flex lg:flex-col items-center lg:items-center gap-6 lg:gap-0 w-full mb-8 lg:mb-0">
-                {/* Metric Node */}
-                <div className="bg-white border-4 border-[#F8F6F3] rounded-full w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center shrink-0 z-10 shadow-sm relative">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-[#F5F3ED] rounded-full flex items-center justify-center text-[#7C9278] font-bold text-sm lg:text-base">
-                    {i + 1}
-                  </div>
-                </div>
-
-                {/* Text Content */}
-                <div className="lg:text-center lg:mt-6 flex-1">
-                  <p className="text-3xl font-serif font-bold text-[#1C2B22] mb-1">{stage.value.toLocaleString()}</p>
-                  <p className="text-[12px] font-bold text-[#5B6D62] uppercase tracking-[0.1em] leading-tight">{stage.label}</p>
-                </div>
-              </div>
-
-              {/* Conversion indicator */}
-              {!isLast && (
-                <div className="lg:absolute lg:top-[-40px] lg:left-[50%] lg:w-full lg:flex lg:justify-center">
-                  <div className="ml-[68px] lg:ml-0 mb-8 lg:mb-0 bg-[#F5F3ED] text-[#5B6D62] text-[11px] font-bold px-3 py-1.5 rounded-full border border-[#E5DFD6] inline-flex items-center gap-1 shrink-0 z-10">
-                    <svg className="w-3 h-3 text-[#7C9278] lg:-rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                    {conversion}%
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Funnel Insight */}
-      <div className="mt-12 pt-8 border-t border-[#F0EBE1] flex items-start gap-4">
-        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0 border border-red-100">
-          <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-          </svg>
-        </div>
-        <div>
-          <p className="text-[13px] font-bold text-red-800 uppercase tracking-[0.1em] mb-1">Largest observed drop-off</p>
-          <p className="text-[#1C2B22] text-[15px] font-medium">Detail Views → Saves</p>
-          <p className="text-[#5B6D62] text-sm mt-1">
-            83.9% did not save the listing after viewing the detail page.
-          </p>
-        </div>
+      <div className="flex-1 w-full min-h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={stages} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#7C9278" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#7C9278" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0EBE1" />
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#5B6D62' }} dy={10} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#5B6D62' }} />
+            <Tooltip 
+              contentStyle={{ borderRadius: '12px', border: '1px solid #E5DFD6', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+              itemStyle={{ color: '#1C2B22', fontWeight: 'bold' }}
+              labelStyle={{ color: '#5B6D62', marginBottom: '4px', fontSize: '13px' }}
+            />
+            <Area type="monotone" dataKey="value" stroke="#7C9278" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

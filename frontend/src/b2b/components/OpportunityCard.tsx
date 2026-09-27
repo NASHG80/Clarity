@@ -1,8 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { UnifiedOpportunity } from '../types/opportunity';
 import { DataStateBadge } from '../../shared/components/DataStateBadge';
-import { ArrowRight, AlertCircle, LineChart, FileQuestion, Users, CheckCircle2, ShieldCheck, Leaf } from 'lucide-react';
+import { ArrowRight, AlertCircle, LineChart, Users, Leaf, ArrowUpRight } from 'lucide-react';
 
 interface OpportunityCardProps {
   opportunity: UnifiedOpportunity;
@@ -10,64 +11,88 @@ interface OpportunityCardProps {
 
 export default function OpportunityCard({ opportunity }: OpportunityCardProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   
   // Decide Icon based on type
   let Icon = LineChart;
   if (opportunity.type === 'demand_gap') Icon = Users;
   else if (opportunity.title.toLowerCase().includes('water') || opportunity.title.toLowerCase().includes('waste')) Icon = Leaf;
 
+  const getSeverityStyle = (severity?: string) => {
+    return 'border-[#E5DFD6] bg-[#F8F6F3] text-[#5B6D62]';
+  };
+  
+  const getSeverityLabel = (severity?: string) => {
+    switch (severity?.toLowerCase()) {
+      case 'high':
+      case 'red':
+        return t('severity.red', 'RED');
+      case 'medium':
+      case 'yellow':
+        return t('severity.yellow', 'YELLOW');
+      default:
+        return t('severity.neutral', 'NEUTRAL');
+    }
+  };
+
+  const getCategory = () => {
+    if (opportunity.type === 'demand_gap') return t('category.accessibility', 'ACCESSIBILITY');
+    if (opportunity.title.toLowerCase().includes('water') || opportunity.title.toLowerCase().includes('waste')) return t('category.sustainability', 'SUSTAINABILITY');
+    return t('category.operations', 'OPERATIONS');
+  };
+
+  const severityStyle = getSeverityStyle(opportunity.severity);
+
   return (
-    <div className="bg-white rounded-2xl border border-[#E5DFD6] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col md:flex-row group">
-      
-      {/* Icon Area */}
-      <div className="bg-[#FAF9F7] md:border-r border-[#F0EBE1] p-6 flex flex-col items-center justify-center shrink-0 w-full md:w-32 border-b md:border-b-0">
-        <div className="w-12 h-12 rounded-full bg-white border border-[#E5DFD6] shadow-sm flex items-center justify-center mb-3">
-          <Icon className="w-5 h-5 text-[#5B6D62]" />
-        </div>
-        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#5B6D62] text-center">
-          {opportunity.type === 'demand_gap' ? 'Demand Gap' : 'Resource'}
-        </span>
-      </div>
-      
-      {/* Content Area */}
-      <div className="p-6 md:p-8 flex-1 flex flex-col justify-center">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          
-          <div className="flex-1">
-            <h3 className="text-xl font-serif font-bold text-[#1C2B22] mb-1">
-              {opportunity.title}
-            </h3>
-            
-            {/* Metric or Estimate */}
-            {(opportunity.estimate || opportunity.label) && (
-              <div className="mt-2 mb-3 inline-flex items-center gap-2 bg-[#F5F3ED] border border-[#E5DFD6] px-3 py-1 rounded-md text-[13px] font-bold text-[#5B6D62]">
-                {opportunity.type === 'demand_gap' ? (
-                  <>{opportunity.demand_count || opportunity.estimate || 'High'} searches</>
-                ) : (
-                  <>{opportunity.estimate}</>
-                )}
-              </div>
+    <div className="rounded-xl border border-[#E5DFD6] bg-white shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow relative">
+      <div className="p-6 md:p-8 flex-1 flex flex-col">
+        {/* Header line */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${severityStyle}`}>
+              {getSeverityLabel(opportunity.severity)} &middot; {getCategory()}
+            </div>
+            {opportunity.is_demo_data && (
+              <DataStateBadge state="demo_synthetic" />
             )}
-            
-            <p className="text-[#3E5245] text-[15px] leading-relaxed max-w-2xl">
-              {opportunity.type === 'demand_gap' 
-                ? 'Property information is currently not verified.' 
-                : 'Potential efficiency improvement available.'}
+          </div>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-xl font-serif font-bold text-[#1C2B22] mb-4 capitalize">
+          {opportunity.type === 'demand_gap' 
+            ? (opportunity.title.toLowerCase().startsWith('demand gap:') 
+                ? opportunity.title 
+                : `${t('opportunity.demandGapPrefix', 'Demand gap:')} ${opportunity.title.replace(/_/g, ' ')}`)
+            : opportunity.title}
+        </h3>
+        
+        {/* Reasoning / Metric */}
+        <div className="mb-6 text-[#3E5245] text-[15px] leading-relaxed">
+          {opportunity.type === 'demand_gap' ? (
+            <p>{opportunity.demand_count} {t('opportunity.travelerSearched', 'travelers searched for this feature')}</p>
+          ) : (
+            <p>{opportunity.estimate}</p>
+          )}
+        </div>
+
+        <div className="mt-auto pt-5 border-t border-[#F0EBE1] flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <p className="text-[12px] font-bold uppercase tracking-widest text-[#5B6D62] mb-1">
+              {t('opportunity.suggestedAction', 'Suggested action')}
+            </p>
+            <p className="text-[#1C2B22] font-medium">
+              {opportunity.suggested_action || t('opportunity.defaultAction', 'Review and update property information')}
             </p>
           </div>
-
-          <div className="shrink-0 flex flex-col items-start md:items-end">
-            <button className="inline-flex items-center gap-2 text-[#7C9278] font-bold text-sm hover:text-[#1C2B22] transition-colors mt-2 md:mt-0">
-              {opportunity.suggested_action}
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-            {opportunity.is_demo_data && (
-              <div className="mt-4">
-                <DataStateBadge state="demo_synthetic" />
-              </div>
-            )}
-          </div>
-
+          
+          <button 
+            onClick={() => navigate('/b2b/listings')}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#26382D] text-white rounded-lg text-sm font-bold hover:bg-[#1C2B22] transition-colors shrink-0 group"
+          >
+            {t('opportunity.viewDetails', 'View details')}
+            <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </button>
         </div>
       </div>
     </div>

@@ -283,32 +283,60 @@ async def get_demand(business_id: str) -> BusinessDemandResponse:
 
 @router.get("/api/business/{business_id}/opportunities", response_model=OpportunitiesResponse)
 async def get_opportunities(business_id: str) -> OpportunitiesResponse:
-    """Opportunity Detector feed — resource + demand-gap opportunities.
-
-    C1 stub: returns hardcoded opportunities matching
-    docs/API_CONTRACT.md §GET /api/business/{id}/opportunities.
-    Both resource-based and demand-gap types are included.
-    Real logic (connecting analytics demand gaps to the feed) implemented in C15/C16.
-    """
-    return OpportunitiesResponse(
-        opportunities=[
+    """Opportunity Detector feed — resource + demand-gap opportunities."""
+    
+    # Get actual demand data to identify gaps
+    demand_response = await get_demand(business_id)
+    opportunities = []
+    
+    # 1. Demand Gap Opportunities
+    for gap in demand_response.gaps:
+        if gap.count > 100:
+            severity = "red"
+        elif gap.count > 30:
+            severity = "yellow"
+        else:
+            severity = "neutral"
+            
+        opportunities.append(
+            Opportunity(
+                severity=severity,
+                title=f"Demand gap: {gap.label}",
+                suggested_action=f"Confirm or add this feature — {gap.count} recent traveler searches",
+                is_demo_data=demand_response.is_demo_data,
+                type="demand_gap"
+            )
+        )
+        
+    # 2. Add static resource opportunities (since resource analytics aren't fully modeled yet)
+    opportunities.append(
+        Opportunity(
+            severity="yellow",
+            title="Water consumption",
+            estimate="220L / guest night",
+            suggested_action="Consider low-flow fixtures in common areas to reduce footprint",
+            is_demo_data=True,
+            type="resource"
+        )
+    )
+    
+    if len(opportunities) < 2:
+        opportunities.append(
             Opportunity(
                 severity="red",
                 title="Food Waste",
                 estimate="18 kg/day",
                 suggested_action="Reduce buffet production by ~10%",
                 is_demo_data=True,
-                type="resource",
-            ),
-            Opportunity(
-                severity="red",
-                title="Demand gap: roll-in shower",
-                suggested_action="Confirm or add this feature — 214 recent traveler searches",
-                is_demo_data=True,
-                type="demand_gap",
-            ),
-        ]
-    )
+                type="resource"
+            )
+        )
+    
+    # Sort opportunities: red first, then yellow, then neutral
+    severity_order = {"red": 0, "yellow": 1, "neutral": 2}
+    opportunities.sort(key=lambda x: severity_order.get(x.severity, 3))
+    
+    return OpportunitiesResponse(opportunities=opportunities)
 
 
 @router.get("/api/explore/{city}", response_model=ExploreResponse)

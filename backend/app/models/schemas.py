@@ -335,6 +335,8 @@ class ListingCreateRequest(_StrictBase):
     city: Optional[str] = None
     price_inr_per_night: Optional[float] = None
     star_rating: Optional[int] = None
+    accessibility_items: List[ChecklistItem] = Field(default_factory=list)
+    sustainability_items: List[ChecklistItem] = Field(default_factory=list)
 
 
 class ListingCreateResponse(BaseModel):

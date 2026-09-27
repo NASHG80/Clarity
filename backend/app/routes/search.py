@@ -150,7 +150,10 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
             pass
 
     # 1. Fetch seeded
-    seeded_cursor = db.hotels.find({"city": req.destination_city})
+    query = {}
+    if req.destination_city and req.destination_city != "ALL":
+        query["city"] = req.destination_city
+    seeded_cursor = db.hotels.find(query)
     results = []
     for doc in seeded_cursor:
         if "_id" in doc:
@@ -159,9 +162,12 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
         results.append(doc)
         
     # 2. Fetch live data
-    check_in = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-    check_out = (datetime.datetime.now() + datetime.timedelta(days=9)).strftime("%Y-%m-%d")
-    live_hotels = await fetch_serpapi_hotels(req.destination_city, check_in, check_out)
+    if req.destination_city and req.destination_city != "ALL":
+        check_in = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+        check_out = (datetime.datetime.now() + datetime.timedelta(days=9)).strftime("%Y-%m-%d")
+        live_hotels = await fetch_serpapi_hotels(req.destination_city, check_in, check_out)
+    else:
+        live_hotels = []
     
     # 3. Deduplicate
     seen_names = {r.get("name", "").lower() for r in results if r.get("name")}

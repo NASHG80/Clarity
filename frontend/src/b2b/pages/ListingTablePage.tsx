@@ -4,28 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../shared/components/Button';
 import { Plus, Edit2, Eye, MapPin, Star, Building2, Map } from 'lucide-react';
 import { DataStateBadge } from '../../shared/components/DataStateBadge';
-import { searchAccommodation, AccommodationResult } from '../../lib/api';
+import { API_BASE_URL } from '../../lib/api';
 
 export default function ListingTablePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [properties, setProperties] = useState<AccommodationResult[]>([]);
+  const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadProperties() {
       try {
-        const res = await searchAccommodation({
-          origin: '',
-          destination: 'Goa',
-          destination_city: 'Goa',
-          budget_max: 100000,
-          time_max_hours: 100,
-          accessibility_required: [],
-          weights: { environmental: 1, accessibility: 1, affordability: 1, convenience: 1 },
-          include_unverified: true
-        });
-        setProperties(res.results);
+        const res = await fetch(`${API_BASE_URL}/api/listings`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setProperties(data);
       } catch (err) {
         console.error("Failed to load listings", err);
       } finally {
@@ -45,6 +38,12 @@ export default function ListingTablePage() {
           <p className="text-[#26382D]/70 mt-1 text-sm">
             {t('listings.manageSubtitle', 'Preview exactly how travelers see your listings.')}
           </p>
+        </div>
+        <div className="shrink-0">
+          <Button variant="primary" onClick={() => navigate('/onboarding')} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            {t('listings.create', 'Create Listing')}
+          </Button>
         </div>
       </div>
 
@@ -107,12 +106,12 @@ export default function ListingTablePage() {
 
                   {/* Highlights (Accessibility & Sustainability) */}
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {prop.accessibility_items?.slice(0, 2).map((item, idx) => (
+                    {prop.accessibility_items?.slice(0, 2).map((item: any, idx: number) => (
                       <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#F8F6F3] text-xs font-medium text-[#26382D] border border-[#D8C9BE]/50">
                         {item.label.replace(/_/g, ' ')}
                       </span>
                     ))}
-                    {prop.sustainability_items?.slice(0, 1).map((item, idx) => (
+                    {prop.sustainability_items?.slice(0, 1).map((item: any, idx: number) => (
                       <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md bg-[#E8F0E6] text-xs font-medium text-[#26382D] border border-[#7C9278]/20">
                         {item.label.replace(/_/g, ' ')}
                       </span>

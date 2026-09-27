@@ -28,7 +28,7 @@ export default function B2bLayout() {
         navItems={desktopNavItems} 
         brandName="GreenStay Partner"
       />
-      <div className="flex-1 pb-16 md:pb-0">
+      <div className="flex-1 pt-28 pb-16 md:pb-0">
         <Outlet />
       </div>
       <BottomNavBar items={mobileNavItems} />

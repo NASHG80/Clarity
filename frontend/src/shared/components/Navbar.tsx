@@ -34,42 +34,59 @@ export function Navbar({ navItems, brandName }: { navItems?: NavItem[], brandNam
               <Leaf className="w-4 h-4" />
             </div>
             <span className="font-serif text-xl tracking-tight font-medium text-[#26382D]">
-              EcoWay
+              {brandName || 'EcoWay'}
             </span>
           </button>
         </div>
 
         {/* Center Links */}
         <nav className="hidden md:flex items-center gap-9 text-[15px] font-medium tracking-wide text-[#26382D]/85">
-          <button 
-            onClick={() => navigate('/')} 
-            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
-          >
-            {t('home.nav.planTrip', 'Plan a Trip')}
-          </button>
-          <button 
-            onClick={() => navigate('/explore/Goa')} 
-            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
-          >
-            {t('home.nav.explore', 'Explore')}
-          </button>
-          <button 
-            className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
-          >
-            {t('home.nav.trips', 'Trips')}
-          </button>
+          {navItems ? (
+            navItems.map((item, idx) => (
+              <button 
+                key={idx}
+                onClick={() => navigate(item.href)} 
+                className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
+              >
+                {item.label}
+              </button>
+            ))
+          ) : (
+            <>
+              <button 
+                onClick={() => navigate('/')} 
+                className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
+              >
+                {t('home.nav.planTrip', 'Plan a Trip')}
+              </button>
+              <button 
+                onClick={() => navigate('/explore/Goa')} 
+                className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
+              >
+                {t('home.nav.explore', 'Explore')}
+              </button>
+              <button 
+                className="hover:text-[#26382D] transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#26382D] hover:after:w-full after:transition-all cursor-pointer"
+              >
+                {t('home.nav.trips', 'Trips')}
+              </button>
+            </>
+          )}
         </nav>
 
         {/* Right: For Businesses + Language Switcher */}
         <div className="hidden md:flex items-center gap-5 text-sm">
-          <button
-            className="text-[14px] font-medium text-[#26382D]/75 hover:text-[#26382D] transition-colors flex items-center gap-1.5 py-1.5 px-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] cursor-pointer"
-          >
-            <span>{t('home.nav.forBusinesses', 'For Businesses')}</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-[#7C9278]" />
-          </button>
-
-          <span className="w-[1px] h-4 bg-[#D8C9BE]" aria-hidden="true" />
+          {!navItems && (
+            <>
+              <button
+                className="text-[14px] font-medium text-[#26382D]/75 hover:text-[#26382D] transition-colors flex items-center gap-1.5 py-1.5 px-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] cursor-pointer"
+              >
+                <span>{t('home.nav.forBusinesses', 'For Businesses')}</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-[#7C9278]" />
+              </button>
+              <span className="w-[1px] h-4 bg-[#D8C9BE]" aria-hidden="true" />
+            </>
+          )}
 
           {/* Language Switcher */}
           <div className="relative mr-2">
@@ -117,12 +134,14 @@ export function Navbar({ navItems, brandName }: { navItems?: NavItem[], brandNam
             )}
           </div>
 
-          <button
-            onClick={() => navigate('/auth')}
-            className="bg-[#26382D] text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-2 hover:bg-[#1A261E] transition-colors"
-          >
-            START PLANNING <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          {!navItems && (
+            <button
+              onClick={() => navigate('/auth')}
+              className="bg-[#26382D] text-white px-5 py-2.5 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-2 hover:bg-[#1A261E] transition-colors"
+            >
+              START PLANNING <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </header>

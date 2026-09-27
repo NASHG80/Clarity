@@ -21,8 +21,35 @@ from app.models.schemas import (
     TranslationEntry,
     Translations,
 )
+from app.db.mongo import get_db
+
+from typing import List, Any
 
 router = APIRouter(prefix="/api", tags=["Listings"])
+
+
+# ---------------------------------------------------------------------------
+# GET /api/listings — return ALL hotels (B2B use, no recommendation filters)
+# ---------------------------------------------------------------------------
+
+@router.get("/listings", response_model=List[Any])
+async def list_all_listings():
+    """Return all hotel documents from MongoDB.
+
+    Used by the B2B Listings page so business owners see every property
+    they have created, regardless of price/accessibility filter eligibility.
+    """
+    db = get_db()
+    hotels = []
+    for doc in db["hotels"].find({}):
+        doc["id"] = str(doc.pop("_id"))
+        # Build a minimal translations block from bare `name` field if missing
+        if "translations" not in doc or not doc["translations"]:
+            doc["translations"] = {
+                "en": {"name": doc.get("name", "Unnamed Property"), "description": ""}
+            }
+        hotels.append(doc)
+    return hotels
 
 
 # ---------------------------------------------------------------------------
@@ -77,10 +104,31 @@ async def create_listing(payload: ListingCreateRequest) -> ListingCreateResponse
     Contract rule: only "reported" or "demo_synthetic" are accepted here.
     "verified" is rejected at the Pydantic layer via ListingSubmitDataState enum.
     """
-    # C1 stub — no MongoDB write yet
+    db = get_db()
+    hotels_coll = db["hotels"]
+    
+    # Generate a new ID
+    import uuid
+    new_id = f"hotel_{uuid.uuid4().hex[:8]}"
+    
+    # Build document
+    doc = payload.model_dump()
+    doc["_id"] = new_id
+    
+    # We must have translations to show up properly
+    if "translations" not in doc or not doc["translations"]:
+        doc["translations"] = {
+            "en": {
+                "name": doc.get("name", "New Property"),
+                "description": ""
+            }
+        }
+        
+    hotels_coll.insert_one(doc)
+
     return ListingCreateResponse(
-        status="stub_created",
-        id="listing_stub_001",
+        status="created",
+        id=new_id,
         data_state=payload.data_state,
-        note="C1 stub — not persisted to MongoDB. Real write implemented in later C tasks.",
+        note="Persisted to MongoDB.",
     )
