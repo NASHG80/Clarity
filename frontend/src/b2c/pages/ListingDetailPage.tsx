@@ -67,8 +67,15 @@ export default function ListingDetailPage() {
                   : (prev.photos && prev.photos.length > 0 ? prev.photos : data.photos),
               city: prev.city || data.city,
               price_inr_per_night: prev.price_inr_per_night || data.price_inr_per_night,
-              translations:
-                Object.keys(data.translations || {}).length > 0 ? data.translations : prev.translations,
+              translations: prev?.translations
+                ? {
+                    ...prev.translations,
+                    en: {
+                      name: prev.translations.en?.name || data.translations?.en?.name || 'Hotel',
+                      description: data.translations?.en?.description || prev.translations.en?.description,
+                    },
+                  }
+                : data.translations,
               accessibility_items:
                 data.accessibility_items && data.accessibility_items.length > 0
                   ? data.accessibility_items
