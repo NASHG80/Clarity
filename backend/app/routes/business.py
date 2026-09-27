@@ -21,6 +21,8 @@ import os
 import time
 import hashlib
 import httpx
+import json
+from groq import AsyncGroq
 
 from app.models.schemas import (
     AnalyticsFunnel,
