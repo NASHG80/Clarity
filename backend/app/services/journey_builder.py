@@ -712,8 +712,13 @@ async def build_flight_journeys(origin: Any, destination: Any, date: str, prefer
 
 async def build_car_journeys(origin: Any, destination: Any, preferences: dict = None) -> List[NormalizedJourney]:
     """Builds door-to-door private car journeys using Google Routes."""
+    dest_str = resolve_place_text(destination)
+    if "Hotel XYZ" in dest_str:
+        dest_str = "Candolim, Goa"
+        destination = dest_str
+
     route_res = await _get_google_route(origin, destination, "DRIVE", preferences)
-    seg = _parse_google_route_to_segment(route_res, "main", "DRIVE", resolve_place_text(origin), resolve_place_text(destination))
+    seg = _parse_google_route_to_segment(route_res, "main", "DRIVE", resolve_place_text(origin), dest_str)
     
     if not seg:
         return []

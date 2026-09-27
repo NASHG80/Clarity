@@ -347,7 +347,6 @@ export default function TripSummaryPage() {
 
       {/* DESKTOP LAYOUT */}
       <div className="hidden md:flex flex-col min-h-screen bg-[#F8F6F3] font-sans">
-        <Navbar />
         
         <div className="max-w-5xl mx-auto px-8 pt-12 w-full pb-12">
           <div className="mb-8 flex items-center gap-4">

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../../shared/components/Navbar';
 import RouteMap from '../components/RouteMap';
-import { 
-  Train, Plane, Car, Navigation, MapPin, 
-  Leaf, Sliders, ChevronRight, User, Info, MessageCircle, AlertCircle, Loader, ArrowRight
+import {
+  Train, Plane, Car, Navigation, MapPin,
+  Leaf, Sliders, ChevronRight, User, Info, MessageCircle, AlertCircle, Loader, ArrowRight, X
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import TrainCard from '../components/transport/TrainCard';
@@ -25,11 +25,12 @@ export default function TransportResultsPage() {
   const [results, setResults] = useState<any[]>([]);
   const [selectedOption, setSelectedOption] = useState<any>(null);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
-  const [selectedSubStep, setSelectedSubStep] = useState<{polyline: string, label: string} | null>(null);
+  const [selectedSubStep, setSelectedSubStep] = useState<{ polyline: string, label: string } | null>(null);
 
   // Chat State
-  const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
+  const [chatMessages, setChatMessages] = useState<{ role: string, content: string }[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   // Handlers
@@ -56,10 +57,10 @@ export default function TransportResultsPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
-    
+
     setIsLoading(true);
     setStep('RESULTS');
-    
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/search/transport`, {
         method: 'POST',
@@ -70,9 +71,9 @@ export default function TransportResultsPage() {
           mode: selectedMode?.toLowerCase() || "train",
           date: formData.get('date') || trip?.date || "2026-09-27",
           vehicle_preferences: {
-             fuel_type: formData.get('fuel_type') || "petrol",
-             board_station: formData.get('board_code') || formData.get('board'),
-             dest_station: formData.get('dest_code') || formData.get('dest'),
+            fuel_type: formData.get('fuel_type') || "petrol",
+            board_station: formData.get('board_code') || formData.get('board'),
+            dest_station: formData.get('dest_code') || formData.get('dest'),
           }
         })
       });
@@ -95,21 +96,21 @@ export default function TransportResultsPage() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const prefs = formData.getAll('routePref') as string[];
-    
+
     const weights = {
       affordability: prefs.includes('Lowest cost') ? 1.0 : 0.5,
       convenience: (prefs.includes('Fastest') || prefs.includes('Less walking') || prefs.includes('Fewer transfers')) ? 1.0 : 0.5,
       environmental: prefs.includes('Lowest CO₂') ? 1.0 : 0.5,
       accessibility: prefs.includes('Wheelchair accessible') ? 1.0 : 0.5,
     };
-    
+
     setIsLoading(true);
     setStep('RESULTS');
     try {
       const boardCode = (document.querySelector('input[name="board_code"]') as HTMLInputElement)?.value
-                     || (document.querySelector('input[name="board"]') as HTMLInputElement)?.value;
+        || (document.querySelector('input[name="board"]') as HTMLInputElement)?.value;
       const destCode = (document.querySelector('input[name="dest_code"]') as HTMLInputElement)?.value
-                    || (document.querySelector('input[name="dest"]') as HTMLInputElement)?.value;
+        || (document.querySelector('input[name="dest"]') as HTMLInputElement)?.value;
       const res = await fetch(`${API_BASE_URL}/api/search/transport`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,17 +122,17 @@ export default function TransportResultsPage() {
           weights: weights,
           budget_max: formData.get('budget') ? parseFloat(formData.get('budget') as string) : undefined,
           vehicle_preferences: {
-             fuel_type: (document.querySelector('select[name="fuel_type"]') as HTMLSelectElement)?.value || 'petrol',
-             avoid_tolls: formData.get('avoidTolls') === 'on',
-             avoid_highways: formData.get('avoidHighways') === 'on',
-             eco_friendly: prefs.includes('Lowest CO₂'),
-             less_walking: prefs.includes('Less walking'),
-             fewer_transfers: prefs.includes('Fewer transfers'),
-             fastest: prefs.includes('Fastest'),
-             lowest_cost: prefs.includes('Lowest cost'),
-             wheelchair_accessible: prefs.includes('Wheelchair accessible'),
-             board_station: boardCode,
-             dest_station: destCode,
+            fuel_type: (document.querySelector('select[name="fuel_type"]') as HTMLSelectElement)?.value || 'petrol',
+            avoid_tolls: formData.get('avoidTolls') === 'on',
+            avoid_highways: formData.get('avoidHighways') === 'on',
+            eco_friendly: prefs.includes('Lowest CO₂'),
+            less_walking: prefs.includes('Less walking'),
+            fewer_transfers: prefs.includes('Fewer transfers'),
+            fastest: prefs.includes('Fastest'),
+            lowest_cost: prefs.includes('Lowest cost'),
+            wheelchair_accessible: prefs.includes('Wheelchair accessible'),
+            board_station: boardCode,
+            dest_station: destCode,
           }
         })
       });
@@ -149,11 +150,11 @@ export default function TransportResultsPage() {
     if (!chatInput.trim()) return;
     setChatMessages(prev => [...prev, { role: 'user', content: chatInput.trim() }]);
     setChatInput('');
-    
+
     setTimeout(() => {
-      setChatMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: 'This recommendation is based on a balanced weighting of your preferences. The train is currently ranked higher because it costs less and has a lower estimated CO₂, even though it requires more travel time.' 
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'This recommendation is based on a balanced weighting of your preferences. The train is currently ranked higher because it costs less and has a lower estimated CO₂, even though it requires more travel time.'
       }]);
     }, 800);
   };
@@ -172,12 +173,10 @@ export default function TransportResultsPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F6F3] font-sans">
-      <Navbar />
-
       <div className="flex flex-1 max-w-7xl w-full mx-auto relative pt-4 md:pt-6">
-        
+
         {/* LEFT SIDEBAR: Persistent Filters */}
-        <aside className="hidden lg:block w-72 shrink-0 pr-6 pb-24">
+        <aside className="hidden lg:block w-72 shrink-0 pr-6 pb-12">
           <form onSubmit={handleApplyFilters} className="sticky top-24 space-y-6">
             <div>
               <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Travel Mode</h3>
@@ -201,7 +200,7 @@ export default function TransportResultsPage() {
                 ].map(pref => (
                   <label key={pref.id} className="flex items-start gap-3 cursor-pointer group">
                     <div className="pt-0.5">
-                      <input type="checkbox" name="routePref" value={pref.id} defaultChecked={pref.id==='Best route'} className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded cursor-pointer" />
+                      <input type="checkbox" name="routePref" value={pref.id} defaultChecked={pref.id === 'Best route'} className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded cursor-pointer" />
                     </div>
                     <div>
                       <div className="text-[#26382D] text-sm font-medium">{pref.label}</div>
@@ -211,7 +210,7 @@ export default function TransportResultsPage() {
                 ))}
               </div>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Accessibility</h3>
               <div className="space-y-3">
@@ -254,8 +253,8 @@ export default function TransportResultsPage() {
         </aside>
 
         {/* MAIN AREA */}
-        <main className="flex-1 px-4 lg:px-0 pb-48 w-full">
-          
+        <main className="flex-1 px-4 lg:px-0 pb-12 w-full">
+
           {step === 'TRIP_FORM' && (
             <div className="max-w-2xl bg-white border border-[#D8C9BE] rounded-2xl shadow-sm p-6 sm:p-8">
               <h2 className="font-serif text-2xl text-[#26382D] mb-6">Let's plan your journey</h2>
@@ -266,7 +265,7 @@ export default function TransportResultsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1.5">To</label>
-                  <input name="destination" defaultValue={location.state?.hotelResult?.translations?.en?.name || location.state?.hotelResult?.city || "Goa"} className="w-full border-b-2 border-[#D8C9BE] py-2 focus:border-[#26382D] outline-none text-[#26382D]" />
+                  <input name="destination" defaultValue={location.state?.hotelResult?.translations?.en?.name || location.state?.hotelResult?.city || "Candolim, Goa"} className="w-full border-b-2 border-[#D8C9BE] py-2 focus:border-[#26382D] outline-none text-[#26382D]" />
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
@@ -428,55 +427,55 @@ export default function TransportResultsPage() {
                     </div>
                   ) : results.map(opt => {
                     if (opt.mode === 'train') {
-                  return <TrainCard key={opt.id} option={opt} onSelect={() => handleSelectOption(opt)} />;
-                } else if (opt.mode === 'flight') {
-                  return <FlightCard key={opt.id} option={opt} onSelect={() => handleSelectOption(opt)} />;
-                }
-                
-                // Fallback for car or others
-                return (
-                <div key={opt.id} className="bg-white border border-[#D8C9BE] rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row">
-                  <div className="flex-1 p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <Car className="w-5 h-5 text-[#26382D]" />
-                        <h4 className="font-bold text-[#26382D] text-lg">{opt.provider_details?.train_number || opt.provider_details?.flight_number || (opt.mode + " Route")}</h4>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-xl font-semibold text-[#26382D]">{"Departure"}</span>
-                        <span className="text-sm text-[#7C9278]">{opt.segments?.[0]?.origin?.name?.split(' ')[0] || "Origin"}</span>
-                      </div>
-                      <div className="flex-1 px-4 flex flex-col items-center justify-center relative">
-                        <span className="text-xs text-[#7C9278] mb-1">{Math.floor(opt.duration_minutes/60)}h {opt.duration_minutes%60}m</span>
-                        <div className="w-full border-t-2 border-dashed border-[#D8C9BE] relative">
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-[10px] text-[#A99587]">
-                            {opt.segments?.find((s:any) => s.details)?.details?.train_name || opt.segments?.find((s:any) => s.details)?.details?.airline || 'Transfers: ' + opt.transfer_count}
+                      return <TrainCard key={opt.id} option={opt} onSelect={() => handleSelectOption(opt)} />;
+                    } else if (opt.mode === 'flight') {
+                      return <FlightCard key={opt.id} option={opt} onSelect={() => handleSelectOption(opt)} />;
+                    }
+
+                    // Fallback for car or others
+                    return (
+                      <div key={opt.id} className="bg-white border border-[#D8C9BE] rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row">
+                        <div className="flex-1 p-5">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <Car className="w-5 h-5 text-[#26382D]" />
+                              <h4 className="font-bold text-[#26382D] text-lg">{opt.provider_details?.train_number || opt.provider_details?.flight_number || (opt.mode + " Route")}</h4>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-xl font-semibold text-[#26382D]">{"Departure"}</span>
+                              <span className="text-sm text-[#7C9278]">{opt.segments?.[0]?.origin?.name?.split(' ')[0] || "Origin"}</span>
+                            </div>
+                            <div className="flex-1 px-4 flex flex-col items-center justify-center relative">
+                              <span className="text-xs text-[#7C9278] mb-1">{Math.floor(opt.duration_minutes / 60)}h {opt.duration_minutes % 60}m</span>
+                              <div className="w-full border-t-2 border-dashed border-[#D8C9BE] relative">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-[10px] text-[#A99587]">
+                                  {opt.segments?.find((s: any) => s.details)?.details?.train_name || opt.segments?.find((s: any) => s.details)?.details?.airline || 'Transfers: ' + opt.transfer_count}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-xl font-semibold text-[#26382D]">{"Arrival"}</span>
+                              <span className="text-sm text-[#7C9278]">{opt.segments?.[opt.segments?.length - 1]?.destination?.name?.split(' ')[0] || "Dest"}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-xl font-semibold text-[#26382D]">{"Arrival"}</span>
-                        <span className="text-sm text-[#7C9278]">{opt.segments?.[opt.segments?.length-1]?.destination?.name?.split(' ')[0] || "Dest"}</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="w-full md:w-48 bg-[#F8F6F3] p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-[#D8C9BE]">
-                    <div>
-                      <div className="text-xl font-bold text-[#26382D] mb-1">₹{opt.cost_inr?.toFixed(2) || '0.00'}</div>
-                      <div className="text-xs text-[#7C9278] flex items-center gap-1"><Leaf className="w-3 h-3"/> {opt.emissions?.co2e_kg?.toFixed(1) || 0} kg CO₂e</div>
-                    </div>
-                    <button onClick={() => handleSelectOption(opt)} className="w-full mt-4 bg-[#26382D] text-white py-2 rounded-xl text-sm font-medium hover:bg-[#1a261f]">
-                      View Journey
-                    </button>
-                  </div>
-                </div>
-                );
-              })}
-              </>
+                        <div className="w-full md:w-48 bg-[#F8F6F3] p-5 flex flex-col justify-between border-t md:border-t-0 md:border-l border-[#D8C9BE]">
+                          <div>
+                            <div className="text-xl font-bold text-[#26382D] mb-1">₹{opt.cost_inr?.toFixed(2) || '0.00'}</div>
+                            <div className="text-xs text-[#7C9278] flex items-center gap-1"><Leaf className="w-3 h-3" /> {opt.emissions?.co2e_kg?.toFixed(1) || 0} kg CO₂e</div>
+                          </div>
+                          <button onClick={() => handleSelectOption(opt)} className="w-full mt-4 bg-[#26382D] text-white py-2 rounded-xl text-sm font-medium hover:bg-[#1a261f]">
+                            View Journey
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
               )}
             </div>
           )}
@@ -490,7 +489,7 @@ export default function TransportResultsPage() {
                   </button>
                   <h2 className="font-serif text-2xl text-[#26382D]">Complete Journey</h2>
                 </div>
-                <button 
+                <button
                   onClick={() => navigate('/journey', { state: { result: selectedOption } })}
                   className="bg-[#26382D] text-white px-6 py-2.5 rounded-xl font-medium text-sm hover:bg-[#1a261f]"
                 >
@@ -514,7 +513,7 @@ export default function TransportResultsPage() {
                 return (
                   <div className="bg-[#EAF0EB] border border-[#C5D9CB] rounded-2xl p-5 sm:p-6 mb-8 flex flex-col sm:flex-row gap-6">
                     <div className="flex-1">
-                      <h3 className="flex items-center gap-2 font-bold text-[#1F4029] mb-3"><Info className="w-5 h-5"/> Why this route?</h3>
+                      <h3 className="flex items-center gap-2 font-bold text-[#1F4029] mb-3"><Info className="w-5 h-5" /> Why this route?</h3>
                       <ul className="space-y-1.5 text-sm">
                         {usesTransit && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-green-600 font-bold">✓</span> Uses public transit for first/last mile — lower emissions</li>}
                         {co2 < 30 && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-green-600 font-bold">✓</span> Low estimated CO₂: {co2.toFixed(1)} kg total journey</li>}
@@ -533,14 +532,14 @@ export default function TransportResultsPage() {
                         <div className="flex justify-between text-[#1F4029] border-t border-[#C5D9CB] pt-2"><span>Walking</span><strong>{walkKm.toFixed(1)} km</strong></div>
                         <div className="flex justify-between text-[#1F4029] border-t border-[#C5D9CB] pt-2"><span>Transfers</span><strong>{transfers}</strong></div>
                       </div>
-                      <button 
+                      <button
                         onClick={handleProceedToCheckout}
                         disabled={isCheckingOut}
                         className="mt-4 w-full bg-[#26382D] text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1a261f] transition-colors disabled:opacity-50"
                       >
                         {isCheckingOut ? (
                           <>
-                            <Loader className="w-4 h-4 animate-spin" /> 
+                            <Loader className="w-4 h-4 animate-spin" />
                             <span className="text-sm">
                               {selectedOption?.mode === 'flight' ? 'Confirming price with airline...' : 'Confirming price...'}
                             </span>
@@ -563,52 +562,52 @@ export default function TransportResultsPage() {
                   </div>
                   <div className="p-4 lg:p-6">
                     {(() => {
-                      const firstMile = selectedOption.segments.find((s:any) => s.segment_type === 'first_mile');
-                      const mainSeg = selectedOption.segments.find((s:any) => s.segment_type === 'main');
-                      const lastMile = selectedOption.segments.find((s:any) => s.segment_type === 'last_mile');
+                      const firstMile = selectedOption.segments.find((s: any) => s.segment_type === 'first_mile');
+                      const mainSeg = selectedOption.segments.find((s: any) => s.segment_type === 'main');
+                      const lastMile = selectedOption.segments.find((s: any) => s.segment_type === 'last_mile');
 
                       const renderSubSteps = (segment: any, title: string) => {
                         if (!segment) return null;
-                        
+
                         // MAIN TRAIN
                         if (segment.segment_type === 'main' && segment.mode === 'TRAIN') {
-                           return (
-                             <div className="mb-6 relative">
-                               <div className="bg-[#26382D] text-white px-5 py-2 text-sm font-bold tracking-wider rounded-t-xl flex justify-between">
-                                 <span>🚆 {segment.origin?.name?.split(' ')[0] || 'START'} &rarr; {segment.destination?.name?.split(' ')[0] || 'END'}</span>
-                               </div>
-                               <div className={`bg-white border-x border-b p-5 rounded-b-xl shadow-sm cursor-pointer transition-colors ${selectedSegmentId === segment.id ? 'border-[#7C9278] ring-1 ring-[#7C9278]' : 'border-[#D8C9BE] hover:border-[#7C9278]'}`} onClick={() => setSelectedSegmentId(segment.id)}>
-                                  <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                      <h4 className="font-bold text-[#26382D] text-lg">{segment.details?.train_number || ''} {segment.details?.train_name || 'Train'}</h4>
-                                      <div className="text-xs text-[#7C9278]">{segment.details?.classes?.join(' • ')}</div>
-                                    </div>
-                                    <div className="text-right">
-                                      <div className="font-bold text-[#26382D] text-lg">₹{segment.cost_inr}</div>
-                                    </div>
+                          return (
+                            <div className="mb-6 relative">
+                              <div className="bg-[#26382D] text-white px-5 py-2 text-sm font-bold tracking-wider rounded-t-xl flex justify-between">
+                                <span>🚆 {segment.origin?.name?.split(' ')[0] || 'START'} &rarr; {segment.destination?.name?.split(' ')[0] || 'END'}</span>
+                              </div>
+                              <div className={`bg-white border-x border-b p-5 rounded-b-xl shadow-sm cursor-pointer transition-colors ${selectedSegmentId === segment.id ? 'border-[#7C9278] ring-1 ring-[#7C9278]' : 'border-[#D8C9BE] hover:border-[#7C9278]'}`} onClick={() => setSelectedSegmentId(segment.id)}>
+                                <div className="flex justify-between items-start mb-4">
+                                  <div>
+                                    <h4 className="font-bold text-[#26382D] text-lg">{segment.details?.train_number || ''} {segment.details?.train_name || 'Train'}</h4>
+                                    <div className="text-xs text-[#7C9278]">{segment.details?.classes?.join(' • ')}</div>
                                   </div>
-                                  <div className="flex justify-between items-center text-sm font-medium text-[#26382D] mb-4">
-                                    <div className="text-left w-20">
-                                      <div className="text-lg">{segment.details?.departure_time || segment.origin?.time || ''}</div>
-                                      <div className="text-xs text-[#7C9278]">{segment.origin?.name}</div>
-                                    </div>
-                                    <div className="flex-1 px-2 text-center">
-                                      <div className="text-xs text-[#7C9278] mb-1">{Math.floor(segment.duration_minutes/60)}h {segment.duration_minutes%60}m</div>
-                                      <div className="w-full border-t border-dashed border-[#D8C9BE]"></div>
-                                      <div className="text-xs text-[#A99587] mt-1">{segment.distance_km?.toFixed(0)} km</div>
-                                    </div>
-                                    <div className="text-right w-20">
-                                      <div className="text-lg">{segment.details?.arrival_time || segment.destination?.time || ''}</div>
-                                      <div className="text-xs text-[#7C9278]">{segment.destination?.name}</div>
-                                    </div>
+                                  <div className="text-right">
+                                    <div className="font-bold text-[#26382D] text-lg">₹{segment.cost_inr}</div>
                                   </div>
-                                  <div className="flex gap-4 pt-3 border-t border-[#F8F6F3]">
-                                    <button className="text-sm font-semibold text-[#2563EB] hover:underline">View train details</button>
-                                    {segment.details?.live_status && <button className="text-sm font-semibold text-green-600 hover:underline">Track live</button>}
+                                </div>
+                                <div className="flex justify-between items-center text-sm font-medium text-[#26382D] mb-4">
+                                  <div className="text-left w-20">
+                                    <div className="text-lg">{segment.details?.departure_time || segment.origin?.time || ''}</div>
+                                    <div className="text-xs text-[#7C9278]">{segment.origin?.name}</div>
                                   </div>
-                               </div>
-                             </div>
-                           );
+                                  <div className="flex-1 px-2 text-center">
+                                    <div className="text-xs text-[#7C9278] mb-1">{Math.floor(segment.duration_minutes / 60)}h {segment.duration_minutes % 60}m</div>
+                                    <div className="w-full border-t border-dashed border-[#D8C9BE]"></div>
+                                    <div className="text-xs text-[#A99587] mt-1">{segment.distance_km?.toFixed(0)} km</div>
+                                  </div>
+                                  <div className="text-right w-20">
+                                    <div className="text-lg">{segment.details?.arrival_time || segment.destination?.time || ''}</div>
+                                    <div className="text-xs text-[#7C9278]">{segment.destination?.name}</div>
+                                  </div>
+                                </div>
+                                <div className="flex gap-4 pt-3 border-t border-[#F8F6F3]">
+                                  <button className="text-sm font-semibold text-[#2563EB] hover:underline">View train details</button>
+                                  {segment.details?.live_status && <button className="text-sm font-semibold text-green-600 hover:underline">Track live</button>}
+                                </div>
+                              </div>
+                            </div>
+                          );
                         }
 
                         // FLIGHT MAIN
@@ -618,7 +617,7 @@ export default function TransportResultsPage() {
                               <div className={`bg-white border p-5 rounded-xl shadow-sm cursor-pointer transition-colors ${selectedSegmentId === segment.id ? 'border-[#7C9278] ring-1 ring-[#7C9278] bg-[#F8F6F3]' : 'border-[#D8C9BE] hover:border-[#7C9278]'}`}>
                                 <div className="font-bold text-[#26382D] text-lg mb-2">✈️ Flight {segment.details?.flight_number || ''}</div>
                                 <div className="text-sm text-[#7C9278]">{segment.origin?.name} &rarr; {segment.destination?.name}</div>
-                                <div className="text-sm font-semibold text-[#26382D] mt-2">{Math.floor(segment.duration_minutes/60)}h {segment.duration_minutes%60}m</div>
+                                <div className="text-sm font-semibold text-[#26382D] mt-2">{Math.floor(segment.duration_minutes / 60)}h {segment.duration_minutes % 60}m</div>
                               </div>
                             </div>
                           );
@@ -633,7 +632,7 @@ export default function TransportResultsPage() {
                         return (
                           <div className="mb-6">
                             <div className="text-xs font-bold text-[#7C9278] uppercase tracking-wider mb-3">{title}</div>
-                            
+
                             {/* DRIVE: single clean summary card — no sub-steps */}
                             {isDrive && (
                               <div
@@ -644,7 +643,7 @@ export default function TransportResultsPage() {
                                 <div className="font-semibold text-[#26382D]">Cab / Car</div>
                                 <div className="text-sm text-[#3A5043] mt-0.5">{segment.origin?.name} → {segment.destination?.name}</div>
                                 <div className="flex gap-4 mt-2 text-xs text-[#7C9278]">
-                                  <span>{Math.floor(segment.duration_minutes/60) > 0 ? `${Math.floor(segment.duration_minutes/60)}h ` : ''}{segment.duration_minutes % 60}m</span>
+                                  <span>{Math.floor(segment.duration_minutes / 60) > 0 ? `${Math.floor(segment.duration_minutes / 60)}h ` : ''}{segment.duration_minutes % 60}m</span>
                                   <span>•</span>
                                   <span>{segment.distance_km?.toFixed(1)} km</span>
                                   {segment.co2_kg != null && <><span>•</span><span>{segment.co2_kg.toFixed(1)} kg CO₂</span></>}
@@ -664,7 +663,7 @@ export default function TransportResultsPage() {
                                 <div className="absolute left-4 top-5 text-lg">{modeIcon}</div>
                                 <div className="font-medium text-[#26382D]">{modeLabel}</div>
                                 <div className="text-sm text-[#3A5043]">{segment.origin?.name} → {segment.destination?.name}</div>
-                                <div className="text-xs text-[#7C9278] mt-1">{Math.floor(segment.duration_minutes/60) > 0 ? `${Math.floor(segment.duration_minutes/60)}h ` : ''}{segment.duration_minutes%60}m • {segment.distance_km?.toFixed(1)} km</div>
+                                <div className="text-xs text-[#7C9278] mt-1">{Math.floor(segment.duration_minutes / 60) > 0 ? `${Math.floor(segment.duration_minutes / 60)}h ` : ''}{segment.duration_minutes % 60}m • {segment.distance_km?.toFixed(1)} km</div>
                               </div>
                             )}
 
@@ -705,13 +704,11 @@ export default function TransportResultsPage() {
                                           setSelectedSubStep(null);
                                         }
                                       }}
-                                      className={`relative pl-12 pr-4 py-3 cursor-pointer transition-colors border-t border-[#F8F6F3] ${
-                                        isStepSelected ? (isWalk ? 'bg-[#F0FDF4]' : 'bg-[#EFF6FF]') : 'hover:bg-[#F8F6F3]'
-                                      }`}
+                                      className={`relative pl-12 pr-4 py-3 cursor-pointer transition-colors border-t border-[#F8F6F3] ${isStepSelected ? (isWalk ? 'bg-[#F0FDF4]' : 'bg-[#EFF6FF]') : 'hover:bg-[#F8F6F3]'
+                                        }`}
                                     >
-                                      <div className={`absolute left-[22px] top-[18px] w-3 h-3 rounded-full border-2 border-white z-10 ${
-                                        isWalk ? 'bg-[#22c55e]' : 'bg-[#2563EB]'
-                                      }`} />
+                                      <div className={`absolute left-[22px] top-[18px] w-3 h-3 rounded-full border-2 border-white z-10 ${isWalk ? 'bg-[#22c55e]' : 'bg-[#2563EB]'
+                                        }`} />
                                       <div className="flex items-start justify-between gap-2">
                                         <div>
                                           <div className="font-semibold text-[#26382D] capitalize text-sm">{modeTitle}</div>
@@ -760,44 +757,42 @@ export default function TransportResultsPage() {
                     </div>
                   )}
                   <div className="flex-1">
-                  <RouteMap 
-                    center={{ lat: 19.229, lng: 72.857 }} 
-                    zoom={10} 
-                    routes={
-                      selectedSubStep
-                        // When a sub-step is selected: show only that sub-step's polyline
-                        ? [{ id: 'substep', encodedPolyline: selectedSubStep.polyline, color: '#2563EB', weight: 6, isSelected: true }]
-                        // Otherwise show all segment geometries
-                        : selectedOption.segments.filter((s:any) => s.geometry).map((s:any) => {
-                            const modeColor = 
+                    <RouteMap
+                      center={{ lat: 19.229, lng: 72.857 }}
+                      zoom={10}
+                      routes={
+                        selectedSubStep
+                          // When a sub-step is selected: show only that sub-step's polyline
+                          ? [{ id: 'substep', encodedPolyline: selectedSubStep.polyline, color: '#2563EB', weight: 6, isSelected: true }]
+                          // Otherwise show all segment geometries
+                          : selectedOption.segments.filter((s: any) => s.geometry).map((s: any) => {
+                            const modeColor =
                               s.mode === 'TRAIN' ? '#1e3a5f' :
-                              s.mode === 'WALK' ? '#22c55e' :
-                              s.mode === 'TRANSIT' ? '#2563EB' :
-                              s.mode === 'DRIVE' ? '#f59e0b' : '#7C9278';
+                                s.mode === 'WALK' ? '#22c55e' :
+                                  s.mode === 'TRANSIT' ? '#8b5cf6' :
+                                    s.mode === 'DRIVE' ? '#2563EB' : '#7C9278';
                             return {
                               id: s.id,
                               encodedPolyline: typeof s.geometry === 'string' ? s.geometry : undefined,
                               geoJson: typeof s.geometry === 'object' ? s.geometry : undefined,
                               color: modeColor,
-                              weight: s.segment_type === 'main' ? 7 : 5,
+                              weight: s.segment_type === 'main' ? 6 : 4,
                               isSelected: selectedSegmentId === s.id
                             };
                           })
-                    } 
-                    markers={selectedSubStep ? [] : [
-                      ...(selectedOption.segments?.[0]?.origin?.lat && selectedOption.segments?.[0]?.origin?.lng ? [{
-                        id: 'start',
-                        position: { lat: selectedOption.segments[0].origin.lat, lng: selectedOption.segments[0].origin.lng },
-                        label: '🏠'
-                      }] : []),
-                      ...(selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lat && selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lng ? [{
-                        id: 'end',
-                        position: { lat: selectedOption.segments[selectedOption.segments.length - 1].destination.lat, lng: selectedOption.segments[selectedOption.segments.length - 1].destination.lng },
-                        label: '🏨'
-                      }] : [])
-                    ]}
-                    selectedSegmentId={selectedSubStep ? 'substep' : (selectedSegmentId || undefined)} 
-                  />
+                      }
+                      markers={selectedSubStep ? [] : [
+                        ...(selectedOption.segments?.[0]?.origin?.lat && selectedOption.segments?.[0]?.origin?.lng ? [{
+                          id: 'start',
+                          position: { lat: selectedOption.segments[0].origin.lat, lng: selectedOption.segments[0].origin.lng }
+                        }] : []),
+                        ...(selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lat && selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lng ? [{
+                          id: 'end',
+                          position: { lat: selectedOption.segments[selectedOption.segments.length - 1].destination.lat, lng: selectedOption.segments[selectedOption.segments.length - 1].destination.lng }
+                        }] : [])
+                      ]}
+                      selectedSegmentId={selectedSubStep ? 'substep' : (selectedSegmentId || undefined)}
+                    />
                   </div>
                 </div>
               </div>
@@ -808,53 +803,82 @@ export default function TransportResultsPage() {
         </main>
       </div>
 
-      {/* FIXED CONTEXTUAL CHAT INPUT AT BOTTOM */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#F8F6F3]/95 backdrop-blur-md border-t border-[#D8C9BE] z-40 pb-safe shadow-[0_-4px_24px_rgba(38,56,45,0.05)]">
-        <div className="max-w-7xl mx-auto px-4 lg:px-0 lg:pl-72 flex flex-col pb-4 pt-4">
-          
-          {/* Chat History Container (only visible if there are messages) */}
-          {chatMessages.length > 0 && (
-            <div className="flex flex-col gap-3 mb-4 max-h-[30vh] overflow-y-auto px-2 scrollbar-hide">
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed border ${
-                    msg.role === 'user' 
-                      ? 'bg-[#26382D] text-white border-[#26382D] rounded-br-sm' 
-                      : 'bg-white text-[#26382D] border-[#D8C9BE] rounded-bl-sm'
-                  }`}>
-                    {msg.content}
-                  </div>
+      {/* FLOATING CHAT WIDGET */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        {/* Chat Window */}
+        {isChatOpen && (
+          <div className="bg-white w-[350px] sm:w-[400px] h-[500px] max-h-[70vh] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-[#D8C9BE] flex flex-col mb-4 overflow-hidden">
+            {/* Header */}
+            <div className="bg-[#26382D] text-white px-5 py-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <Leaf className="w-4 h-4 text-white" />
                 </div>
-              ))}
+                <div className="font-semibold text-sm">Clarity AI Guide</div>
+              </div>
+              <button onClick={() => setIsChatOpen(false)} className="text-white/70 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          )}
 
-          {/* Chat Input */}
-          <form onSubmit={handleChatSubmit} className="relative w-full max-w-4xl mx-auto">
-            <input 
-              type="text" 
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Ask about this journey... (e.g. 'Why is this route cheaper?')" 
-              className="w-full bg-white border border-[#D8C9BE] rounded-full pl-6 pr-14 py-4 text-[#26382D] placeholder-[#A99587] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7C9278] text-base"
-            />
-            <button 
-              type="submit"
-              disabled={!chatInput.trim()}
-              className="absolute right-2 top-2 bottom-2 aspect-square bg-[#26382D] text-white rounded-full flex items-center justify-center hover:bg-[#1a261f] disabled:opacity-50 transition-colors"
-            >
-              <Navigation className="w-5 h-5 transform rotate-45" />
-            </button>
-          </form>
-          
-          {/* Contextual Chips */}
-          <div className="hidden sm:flex gap-2 mt-3 max-w-4xl mx-auto overflow-x-auto scrollbar-hide text-xs w-full">
-            <button onClick={() => setChatInput("Why did you recommend the train?")} className="bg-white border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-[#F8F6F3]">Why did you recommend the train?</button>
-            <button onClick={() => setChatInput("How did you calculate CO₂?")} className="bg-white border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-[#F8F6F3]">How did you calculate CO₂?</button>
-            <button onClick={() => setChatInput("Why is the flight faster?")} className="bg-white border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-[#F8F6F3]">Why is the flight faster?</button>
+            {/* Chat History */}
+            <div className="flex-1 overflow-y-auto p-4 bg-[#F8F6F3] space-y-4">
+              {chatMessages.length === 0 ? (
+                <div className="text-center text-[#7C9278] text-sm mt-8">
+                  Ask me anything about your journey options!
+                </div>
+              ) : (
+                chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed border shadow-sm ${msg.role === 'user'
+                      ? 'bg-[#26382D] text-white border-[#26382D] rounded-br-sm'
+                      : 'bg-white text-[#26382D] border-[#D8C9BE] rounded-bl-sm'
+                      }`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Suggestions */}
+            <div className="bg-white px-3 pt-3 pb-2 border-t border-[#D8C9BE] shrink-0 overflow-x-auto scrollbar-hide whitespace-nowrap flex gap-2">
+              <button onClick={() => setChatInput("Why did you recommend the train?")} className="bg-[#F8F6F3] border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full text-xs hover:bg-[#EAF0EB] transition-colors shrink-0">Why the train?</button>
+              <button onClick={() => setChatInput("How did you calculate CO₂?")} className="bg-[#F8F6F3] border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full text-xs hover:bg-[#EAF0EB] transition-colors shrink-0">How is CO₂ calc?</button>
+            </div>
+
+            {/* Input Form */}
+            <form onSubmit={handleChatSubmit} className="bg-white p-3 shrink-0">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Ask about this journey..."
+                  className="w-full bg-[#F8F6F3] border border-[#D8C9BE] rounded-full pl-4 pr-12 py-3 text-[#26382D] placeholder-[#A99587] focus:outline-none focus:border-[#7C9278] text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={!chatInput.trim()}
+                  className="absolute right-1.5 top-1.5 bottom-1.5 aspect-square bg-[#26382D] text-white rounded-full flex items-center justify-center hover:bg-[#1a261f] disabled:opacity-50 transition-colors"
+                >
+                  <Navigation className="w-4 h-4 transform rotate-45" />
+                </button>
+              </div>
+            </form>
           </div>
-        </div>
+        )}
+
+        {/* Floating Toggle Button */}
+        {!isChatOpen && (
+          <button
+            onClick={() => setIsChatOpen(true)}
+            className="w-14 h-14 bg-[#26382D] text-white rounded-full shadow-[0_4px_14px_rgba(38,56,45,0.4)] flex items-center justify-center hover:bg-[#1a261f] hover:scale-105 transition-all active:scale-95"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </button>
+        )}
       </div>
     </div>
   );
-}
+}
