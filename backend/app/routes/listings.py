@@ -52,6 +52,8 @@ async def list_all_listings() -> List[Any]:
     return hotels
 
 
+from bson import ObjectId
+
 # ---------------------------------------------------------------------------
 # GET /api/listings/{listing_id} — full listing detail
 # ---------------------------------------------------------------------------
@@ -67,7 +69,10 @@ async def get_listing(listing_id: str) -> ListingDetailResponse:
     # 1. Try MongoDB
     try:
         db = get_db()
-        hotel = db.hotels.find_one({"$or": [{"_id": listing_id}, {"id": listing_id}]})
+        query = [{"id": listing_id}]
+        if ObjectId.is_valid(listing_id):
+            query.append({"_id": ObjectId(listing_id)})
+        hotel = db.hotels.find_one({"$or": query})
     except Exception:
         pass
 
@@ -134,6 +139,12 @@ async def get_listing(listing_id: str) -> ListingDetailResponse:
             reviews_count=hotel.get("reviews_count", 0),
             confirmations_count=hotel.get("confirmations_count", 0),
             photos=hotel.get("photos", []),
+            rooms=hotel.get("rooms"),
+            rules=hotel.get("rules"),
+            reviews=hotel.get("reviews"),
+            amenities=hotel.get("amenities"),
+            address=hotel.get("address"),
+            location=hotel.get("location"),
         )
 
     # 4. Fallback for unseeded / live hotel IDs

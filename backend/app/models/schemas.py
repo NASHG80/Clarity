@@ -412,7 +412,7 @@ class ListingCreateResponse(BaseModel):
 
 class ListingDetailResponse(BaseModel):
     """Full listing detail — returned by GET /api/listings/{id}."""
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="allow")
 
     id: str
     data_state: DataState
@@ -425,7 +425,13 @@ class ListingDetailResponse(BaseModel):
     reviews_count: Optional[int] = None
     confirmations_count: Optional[int] = None
     photos: List[str] = Field(default_factory=list)
-
+    rooms: Optional[List[Any]] = None
+    rules: Optional[dict[str, Any]] = None
+    reviews: Optional[List[Any]] = None
+    amenities: Optional[List[str]] = None
+    address: Optional[str] = None
+    location: Optional[dict[str, float]] = None
+    property_rules: Optional[List[str]] = None
 
 # ===========================================================================
 # EXPLORE — GET /api/explore/{city}

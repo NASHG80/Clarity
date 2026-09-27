@@ -224,6 +224,22 @@ async def get_analytics(business_id: str) -> BusinessAnalyticsResponse:
     )
 
 
+@router.get("/api/business/{business_id}/benchmarks")
+async def get_benchmarks(business_id: str):
+    """Fetch market benchmarks from the database."""
+    db = get_db()
+    benchmarks = db["market_benchmarks"].find_one({"business_id": business_id})
+    if benchmarks:
+        benchmarks["_id"] = str(benchmarks["_id"])
+        return benchmarks
+    
+    # Fallback to defaults
+    return {
+        "conversion_rate": {"property": 2.4, "median": 1.8, "top_10": 3.1},
+        "eco_badge_impact": {"verified": 15.0, "self_reported": 7.5, "no_data": 0.0}
+    }
+
+
 @router.get("/api/business/{business_id}/demand", response_model=BusinessDemandResponse)
 async def get_demand(business_id: str) -> BusinessDemandResponse:
     """Traveler demand analytics — search counts + property gaps.
@@ -308,27 +324,18 @@ async def get_opportunities(business_id: str) -> OpportunitiesResponse:
             )
         )
         
-    # 2. Add static resource opportunities (since resource analytics aren't fully modeled yet)
-    opportunities.append(
-        Opportunity(
-            severity="yellow",
-            title="Water consumption",
-            estimate="220L / guest night",
-            suggested_action="Consider low-flow fixtures in common areas to reduce footprint",
-            is_demo_data=True,
-            type="resource"
-        )
-    )
-    
-    if len(opportunities) < 2:
+    # 2. Fetch resource opportunities from database
+    db = get_db()
+    db_opps = list(db["opportunities"].find({"business_id": business_id}))
+    for o in db_opps:
         opportunities.append(
             Opportunity(
-                severity="red",
-                title="Food Waste",
-                estimate="18 kg/day",
-                suggested_action="Reduce buffet production by ~10%",
-                is_demo_data=True,
-                type="resource"
+                severity=o.get("severity", "neutral"),
+                title=o.get("title", ""),
+                estimate=o.get("estimate"),
+                suggested_action=o.get("suggested_action", ""),
+                is_demo_data=o.get("is_demo_data", False),
+                type=o.get("type", "resource")
             )
         )
     

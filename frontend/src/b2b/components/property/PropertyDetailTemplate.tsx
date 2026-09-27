@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Building2, MapPin, Star, Camera, Info, Check, 
@@ -149,7 +149,7 @@ export function PropertyDetailTemplate({ listing, mode, onEdit, actionButton }: 
             {listing.price_inr_per_night ? (
               <>
                 <p className="text-sm text-[#26382D]/70">{t('preview.priceFrom', 'Price from')}</p>
-                <p className="text-3xl font-serif font-bold text-[#26382D]">â‚¹{listing.price_inr_per_night.toLocaleString()}</p>
+                <p className="text-3xl font-serif font-bold text-[#26382D]">₹{listing.price_inr_per_night.toLocaleString()}</p>
                 <p className="text-sm text-[#26382D]/70">{t('preview.perNight', 'per night')}</p>
               </>
             ) : (
@@ -464,12 +464,40 @@ export function PropertyDetailTemplate({ listing, mode, onEdit, actionButton }: 
         {/* USER REVIEWS TAB */}
         {activeTab === 'reviews' && (
           <section>
-            <h2 className="text-2xl font-serif font-bold text-[#26382D] mb-6">{t('preview.reviews', 'Ratings & Reviews')}</h2>
-            <div className="bg-[#F8F6F3] p-12 rounded-2xl border-2 border-dashed border-[#D8C9BE] text-center">
-              <StarHalf className="w-14 h-14 text-[#D4AF37]/30 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-[#26382D] mb-2">{t('preview.noReviewsTitle', 'No reviews yet')}</h3>
-              <p className="text-[#26382D]/60 max-w-sm mx-auto">{t('preview.noReviewsDesc', 'When travelers stay at your property, their reviews will appear here.')}</p>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-serif font-bold text-[#26382D]">{t('preview.reviews', 'Ratings & Reviews')}</h2>
             </div>
+            
+            {(listing as any).reviews && (listing as any).reviews.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {(listing as any).reviews.map((rev: any, idx: number) => (
+                  <div key={idx} className="bg-white p-6 rounded-2xl border border-[#D8C9BE] shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#E8F0E6] flex items-center justify-center text-[#7C9278] font-bold text-lg">
+                          {rev.author.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-[#1C2B22]">{rev.author}</p>
+                          <p className="text-xs text-[#5B6D62]">{rev.date}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 bg-[#F0EBE1] px-2.5 py-1 rounded-md">
+                        <Star className="w-3.5 h-3.5 fill-[#D4AF37] text-[#D4AF37]" />
+                        <span className="text-sm font-bold text-[#1C2B22]">{rev.rating}.0</span>
+                      </div>
+                    </div>
+                    <p className="text-[#5B6D62] leading-relaxed text-sm">{rev.text}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[#F8F6F3] p-12 rounded-2xl border-2 border-dashed border-[#D8C9BE] text-center">
+                <StarHalf className="w-14 h-14 text-[#D4AF37]/30 mx-auto mb-4" />
+                <h3 className="text-xl font-medium text-[#26382D] mb-2">{t('preview.noReviewsTitle', 'No reviews yet')}</h3>
+                <p className="text-[#26382D]/60 max-w-sm mx-auto">{t('preview.noReviewsDesc', 'When travelers stay at your property, their reviews will appear here.')}</p>
+              </div>
+            )}
           </section>
         )}
 

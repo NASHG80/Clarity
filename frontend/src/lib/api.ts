@@ -412,6 +412,31 @@ export const getAnalytics = async (businessId: string): Promise<AnalyticsRespons
   }
 };
 
+export interface MarketBenchmarks {
+  conversion_rate: {
+    property: number;
+    median: number;
+    top_10: number;
+  };
+  eco_badge_impact: {
+    verified: number;
+    self_reported: number;
+    no_data: number;
+  };
+}
+
+export const getBenchmarks = async (businessId: string): Promise<MarketBenchmarks> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/business/${businessId}/benchmarks`);
+    if (response.ok) {
+      return await response.json();
+    }
+    throw new Error(`Failed to fetch benchmarks with status ${response.status}`);
+  } catch (error: any) {
+    throw error;
+  }
+};
+
 export interface DemandCount {
   label: string;
   count: number;
