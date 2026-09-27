@@ -488,8 +488,8 @@ function PhotoConfirmationCard({
           </div>
 
           {/* Bucket Badge */}
-          <div className="absolute top-4 left-4 bg-white/95 text-[#26382D] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded shadow-sm backdrop-blur-sm border border-[#D8C9BE]/40">
-            {bucket}
+          <div className="absolute top-4 left-4 bg-white/95 text-[#26382D] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded shadow-sm backdrop-blur-sm border border-[#D8C9BE]/40 capitalize">
+            {bucket.replace(/_/g, ' ')}
           </div>
         </div>
 
@@ -500,8 +500,8 @@ function PhotoConfirmationCard({
               <h3 className="text-xs font-bold text-[#26382D] uppercase tracking-wider">
                 {t('onboarding.confirmAi.candidateFeature', 'AI Detected Features')} ({detections.length})
               </h3>
-              <span className="text-[11px] text-[#26382D]/60">
-                {bucket}
+              <span className="text-[11px] text-[#26382D]/60 capitalize">
+                {bucket.replace(/_/g, ' ')}
               </span>
             </div>
 
@@ -717,7 +717,7 @@ function DetectionDecisionCard({
           {isPending && (
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#26382D]/60 bg-[#F1EDE9] px-2 py-0.5 rounded-full border border-[#D8C9BE]/50">
               <Clock className="w-3 h-3 text-[#26382D]/50" />
-              {t('onboarding.confirmAi.pending', 'Pending decision')}
+              {t('onboarding.confirmAi.pending', 'Pending')}
             </span>
           )}
         </div>

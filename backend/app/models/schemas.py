@@ -397,11 +397,9 @@ class ListingCreateRequest(BaseModel):
     address: Optional[str] = None
     price_inr_per_night: Optional[float] = None
     star_rating: Optional[int] = None
-    amenity_items: List[ChecklistItem] = Field(default_factory=list)
+    # Checklist items — optional so that basic listings without items are accepted
     accessibility_items: List[ChecklistItem] = Field(default_factory=list)
     sustainability_items: List[ChecklistItem] = Field(default_factory=list)
-    rooms: List[Any] = Field(default_factory=list)
-    rules: Optional[Any] = None
 
 
 class ListingCreateResponse(BaseModel):
@@ -414,7 +412,7 @@ class ListingCreateResponse(BaseModel):
 
 class ListingDetailResponse(BaseModel):
     """Full listing detail — returned by GET /api/listings/{id}."""
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="allow")
 
     id: str
     data_state: DataState
@@ -427,7 +425,13 @@ class ListingDetailResponse(BaseModel):
     reviews_count: Optional[int] = None
     confirmations_count: Optional[int] = None
     photos: List[str] = Field(default_factory=list)
-
+    rooms: Optional[List[Any]] = None
+    rules: Optional[dict[str, Any]] = None
+    reviews: Optional[List[Any]] = None
+    amenities: Optional[List[str]] = None
+    address: Optional[str] = None
+    location: Optional[dict[str, float]] = None
+    property_rules: Optional[List[str]] = None
 
 # ===========================================================================
 # EXPLORE — GET /api/explore/{city}
@@ -507,6 +511,25 @@ class AnalyticsSignal(BaseModel):
     type: str
     text: str
 
+
+class BusinessProfileUpdateRequest(_StrictBase):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+    contactEmail: Optional[str] = None
+    contactPhone: Optional[str] = None
+    website: Optional[str] = None
+
+class BusinessProfileResponse(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+    industry: Optional[str] = None
+    location: Optional[str] = None
+    contactEmail: Optional[str] = None
+    contactPhone: Optional[str] = None
+    website: Optional[str] = None
 
 class BusinessAnalyticsResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")

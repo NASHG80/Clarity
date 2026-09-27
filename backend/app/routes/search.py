@@ -220,26 +220,30 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
             pass
 
     # 1. Fetch seeded
-    seeded_cursor = db.hotels.find({
-        "$or": [
-            {"city": {"$regex": req.destination_city, "$options": "i"}},
-            {"name": {"$regex": req.destination_city, "$options": "i"}},
-            {"address": {"$regex": req.destination_city, "$options": "i"}}
-        ]
-    })
+    if req.destination_city == "ALL":
+        seeded_cursor = db.hotels.find({})
+    else:
+        seeded_cursor = db.hotels.find({
+            "$or": [
+                {"city": {"$regex": req.destination_city, "$options": "i"}},
+                {"name": {"$regex": req.destination_city, "$options": "i"}},
+                {"address": {"$regex": req.destination_city, "$options": "i"}}
+            ]
+        })
+        
+        # If no exact match and destination_city contains commas (e.g. "Candolim, Goa"), try matching the last part
+        if "," in req.destination_city:
+            broad_city = req.destination_city.split(",")[-1].strip()
+            if broad_city:
+                broad_cursor = db.hotels.find({
+                    "$or": [
+                        {"city": {"$regex": broad_city, "$options": "i"}},
+                        {"address": {"$regex": broad_city, "$options": "i"}}
+                    ]
+                })
+                # Combine the results
+                seeded_cursor = list(seeded_cursor) + list(broad_cursor)
     
-    # If no exact match and destination_city contains commas (e.g. "Candolim, Goa"), try matching the last part
-    if "," in req.destination_city:
-        broad_city = req.destination_city.split(",")[-1].strip()
-        if broad_city:
-            broad_cursor = db.hotels.find({
-                "$or": [
-                    {"city": {"$regex": broad_city, "$options": "i"}},
-                    {"address": {"$regex": broad_city, "$options": "i"}}
-                ]
-            })
-            # Combine the results
-            seeded_cursor = list(seeded_cursor) + list(broad_cursor)
     results = []
     seen_seeded_names = set()
     for doc in seeded_cursor:
@@ -254,13 +258,16 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
         results.append(doc)
         
     # 2. Fetch live data — use trip dates when supplied, else fall back to +7/+9 days
-    if req.arrival_date and req.departure_date:
-        check_in  = req.arrival_date
-        check_out = req.departure_date
+    if req.destination_city and req.destination_city != "ALL":
+        if req.arrival_date and req.departure_date:
+            check_in  = req.arrival_date
+            check_out = req.departure_date
+        else:
+            check_in  = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+            check_out = (datetime.datetime.now() + datetime.timedelta(days=9)).strftime("%Y-%m-%d")
+        live_hotels = await fetch_serpapi_hotels(req.destination_city, check_in, check_out)
     else:
-        check_in  = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-        check_out = (datetime.datetime.now() + datetime.timedelta(days=9)).strftime("%Y-%m-%d")
-    live_hotels = await fetch_serpapi_hotels(req.destination_city, check_in, check_out)
+        live_hotels = []
     
     # 3. Deduplicate
     seen_names = {r.get("name", "").lower() for r in results if r.get("name")}

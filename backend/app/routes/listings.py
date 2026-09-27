@@ -1,4 +1,4 @@
-"""Listings routes — GET /api/listings/{id}, GET /api/listings, and POST /api/listings.
+"""Listings routes — GET /api/listings, GET /api/listings/{id}, and POST /api/listings.
 
 Rules (AGENTS.md / API_CONTRACT.md):
   - POST /api/listings accepts only data_state "reported" or "demo_synthetic".
@@ -9,8 +9,9 @@ Rules (AGENTS.md / API_CONTRACT.md):
 import json
 import uuid
 from pathlib import Path
-from typing import List, Optional
-from fastapi import APIRouter, HTTPException
+from typing import List, Any
+
+from fastapi import APIRouter
 
 from app.db.mongo import get_db
 from app.models.schemas import (
@@ -28,25 +29,30 @@ router = APIRouter(prefix="/api", tags=["Listings"])
 
 
 # ---------------------------------------------------------------------------
-# GET /api/listings — list all listings (for business dashboard)
+# GET /api/listings — return ALL hotels (B2B dashboard, no rec-engine filters)
 # ---------------------------------------------------------------------------
 
-@router.get("/listings", response_model=List[ListingDetailResponse])
-async def list_all_listings() -> List[ListingDetailResponse]:
-    """Return all listings (for business dashboard)."""
-    db = get_db()
-    cursor = db.hotels.find()
-    results = []
-    for doc in cursor:
-        doc["id"] = str(doc.pop("_id"))
-        if "translations" not in doc:
-            doc["translations"] = {"en": {"name": doc.get("name", doc["id"]), "description": ""}}
-        try:
-            results.append(ListingDetailResponse(**doc))
-        except Exception:
-            pass
-    return results
+@router.get("/listings", response_model=List[Any])
+async def list_all_listings() -> List[Any]:
+    """Return all hotel documents from MongoDB.
 
+    Used by the B2B Listings page so business owners see every property
+    they have created, regardless of price/accessibility filter eligibility.
+    """
+    db = get_db()
+    hotels = []
+    for doc in db["hotels"].find({}):
+        doc["id"] = str(doc.pop("_id"))
+        # Build a minimal translations block from bare `name` field if missing
+        if "translations" not in doc or not doc["translations"]:
+            doc["translations"] = {
+                "en": {"name": doc.get("name", "Unnamed Property"), "description": ""}
+            }
+        hotels.append(doc)
+    return hotels
+
+
+from bson import ObjectId
 
 # ---------------------------------------------------------------------------
 # GET /api/listings/{listing_id} — full listing detail
@@ -63,7 +69,10 @@ async def get_listing(listing_id: str) -> ListingDetailResponse:
     # 1. Try MongoDB
     try:
         db = get_db()
-        hotel = db.hotels.find_one({"$or": [{"_id": listing_id}, {"id": listing_id}]})
+        query = [{"id": listing_id}]
+        if ObjectId.is_valid(listing_id):
+            query.append({"_id": ObjectId(listing_id)})
+        hotel = db.hotels.find_one({"$or": query})
     except Exception:
         pass
 
@@ -130,9 +139,15 @@ async def get_listing(listing_id: str) -> ListingDetailResponse:
             reviews_count=hotel.get("reviews_count", 0),
             confirmations_count=hotel.get("confirmations_count", 0),
             photos=hotel.get("photos", []),
+            rooms=hotel.get("rooms"),
+            rules=hotel.get("rules"),
+            reviews=hotel.get("reviews"),
+            amenities=hotel.get("amenities"),
+            address=hotel.get("address"),
+            location=hotel.get("location"),
         )
 
-    # 4. Fallback for unseeded / live hotel IDs (echo ID, don't hardcode fixed 14000)
+    # 4. Fallback for unseeded / live hotel IDs
     return ListingDetailResponse(
         id=listing_id,
         data_state=DataState.reported,
@@ -159,42 +174,43 @@ async def get_listing(listing_id: str) -> ListingDetailResponse:
 
 
 # ---------------------------------------------------------------------------
-# POST /api/listings — create listing
+# POST /api/listings — create listing (persists to MongoDB)
 # ---------------------------------------------------------------------------
 
 @router.post("/listings", status_code=201, response_model=ListingCreateResponse)
 async def create_listing(payload: ListingCreateRequest) -> ListingCreateResponse:
-    """Create a listing manually (persists to MongoDB).
+    """Create a listing manually — persists to MongoDB.
 
     Contract rule: only "reported" or "demo_synthetic" are accepted here.
     "verified" is rejected at the Pydantic layer via ListingSubmitDataState enum.
     """
     db = get_db()
-    listing_id = f"hotel_{uuid.uuid4().hex[:8]}"
+    new_id = f"hotel_{uuid.uuid4().hex[:8]}"
 
     doc = payload.model_dump()
-    doc["_id"] = listing_id
+    doc["_id"] = new_id
+    # Normalise data_state to string for MongoDB storage
     doc["data_state"] = payload.data_state.value
-    doc["translations"] = {
-        "en": {
-            "name": payload.name or "Unnamed Property",
-            "description": "Newly onboarded property."
-        }
-    }
 
-    # Optional fields expected by models
-    if "reviews_count" not in doc:
-        doc["reviews_count"] = 0
-    if "confirmations_count" not in doc:
-        doc["confirmations_count"] = 0
-    if "photos" not in doc:
-        doc["photos"] = []
+    # Build translations from bare name if not already present
+    if not doc.get("translations"):
+        doc["translations"] = {
+            "en": {
+                "name": payload.name or "New Property",
+                "description": payload.description or "Newly onboarded property."
+            }
+        }
+
+    # Optional fields expected by downstream models
+    doc.setdefault("reviews_count", 0)
+    doc.setdefault("confirmations_count", 0)
+    doc.setdefault("photos", [])
 
     db.hotels.insert_one(doc)
 
     return ListingCreateResponse(
         status="created",
-        id=listing_id,
+        id=new_id,
         data_state=payload.data_state,
-        note="Listing persisted to MongoDB."
+        note="Listing persisted to MongoDB.",
     )

@@ -199,11 +199,11 @@ export function AiAnalyticsPanel({ businessId, period, isOpen, onClose }: AiAnal
                 </section>
               )}
 
-              {data.next_actions.length > 0 && (
+              {data.next_actions && data.next_actions.length > 0 && (
                 <section className="border-t border-[#F0EBE1] pt-8">
                   <h4 className="text-[12px] font-bold uppercase tracking-[0.15em] text-[#5B6D62] mb-4">Next Things To Look At</h4>
                   <ol className="space-y-4 counter-reset-list pl-0">
-                    {data.next_actions.map((item, i) => (
+                    {data.next_actions.map((item: any, i: number) => (
                       <li key={i} className="flex gap-3 items-start relative">
                         <span className="text-[12px] font-bold text-[#7C9278] mt-0.5 min-w-[16px]">{i + 1}.</span>
                         <div>

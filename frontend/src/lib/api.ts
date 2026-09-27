@@ -2,36 +2,8 @@
 export const API_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000";
 
 // =============================================================================
-// B2B — AI Inspection & Confirmation (C11/C13) & Photo Upload (B7/B8)
+// B2B — AI Inspection & Confirmation (C11/C13)
 // =============================================================================
-
-export interface PhotoUploadResponse {
-  url: string;
-  public_id: string;
-  bucket: string;
-}
-
-/**
- * Proxies the photo to backend, which uploads to Cloudinary securely.
- * This ensures Cloudinary secrets are never exposed to the frontend.
- */
-export const uploadPhotoToCloudinary = async (file: File, bucket: string): Promise<PhotoUploadResponse> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('bucket', bucket);
-
-  const response = await fetch(`${API_BASE_URL}/api/business/upload-photo`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Upload failed: ${response.status} ${errorText}`);
-  }
-
-  return await response.json();
-};
 
 import { Detection } from '../b2b/components/onboarding/AiAnalysisStep';
 
@@ -173,22 +145,7 @@ export const confirmDetections = async (
 
     if (response.ok) {
       const data = await response.json();
-      
-      // Transform backend schema to frontend expected format
-      const updatedChecklistItems: string[] = [];
-      (data.confirmed_labels || []).forEach((label: string) => {
-        const mapped = mapDetectionLabelToChecklistKey(label);
-        if (mapped && !updatedChecklistItems.includes(mapped)) {
-          updatedChecklistItems.push(mapped);
-        }
-      });
-
-      return {
-        success: data.status === 'processed',
-        confirmed_count: (data.confirmed_labels || []).length,
-        rejected_count: (data.rejected_labels || []).length,
-        updated_checklist_items: updatedChecklistItems
-      };
+      return data;
     }
 
     if (response.status === 404 || response.status === 501) {
@@ -374,14 +331,8 @@ export const getOpportunities = async (businessId: string): Promise<Opportunitie
     if (response.ok) {
       return await response.json();
     }
-    if (response.status === 404 || response.status === 501) {
-      return await mockGetOpportunities(businessId);
-    }
     throw new Error(`Failed to fetch opportunities with status ${response.status}`);
   } catch (error: any) {
-    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
-      return await mockGetOpportunities(businessId);
-    }
     throw error;
   }
 };
@@ -455,82 +406,33 @@ export const getAnalytics = async (businessId: string): Promise<AnalyticsRespons
     if (response.ok) {
       return await response.json();
     }
-    if (response.status === 404 || response.status === 501) {
-      return await mockGetAnalytics(businessId);
-    }
     throw new Error(`Failed to fetch analytics with status ${response.status}`);
   } catch (error: any) {
-    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
-      return await mockGetAnalytics(businessId);
-    }
     throw error;
   }
 };
 
-export interface AIAnalyticsInsight {
-  title: string;
-  description: string;
-}
-
-export interface AIAnalyticsSummaryResponse {
-  summary: string;
-  key_findings: AIAnalyticsInsight[];
-  demand_insights: AIAnalyticsInsight[];
-  data_gaps: AIAnalyticsInsight[];
-  opportunities: AIAnalyticsInsight[];
-  next_actions: AIAnalyticsInsight[];
-}
-
-export const mockGetAiAnalyticsSummary = async (businessId: string): Promise<AIAnalyticsSummaryResponse> => {
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  if (businessId === 'error_case') {
-    throw new Error('Deterministic network timeout');
-  }
-
-  return {
-    summary: "Your property is seeing strong demand for accessibility, but missing verification is causing detail viewers to drop off.",
-    key_findings: [
-      { title: "High Conversion to Detail", description: "70.5% of listing opens result in a detail view." },
-      { title: "Drop-off at Save", description: "Only 16% of detail viewers save the listing." }
-    ],
-    demand_insights: [
-      { title: "Step-free Entrance", description: "Most searched accessibility requirement in your area." }
-    ],
-    data_gaps: [
-      { title: "Roll-in Shower", description: "214 recent searches while your property remains not verified." }
-    ],
-    opportunities: [
-      { title: "Confirm Accessibility", description: "Add roll-in shower info to capture lost demand." }
-    ],
-    next_actions: [
-      { title: "Update Listing", description: "Go to Onboarding and complete the Accessibility section." }
-    ]
+export interface MarketBenchmarks {
+  conversion_rate: {
+    property: number;
+    median: number;
+    top_10: number;
   };
-};
+  eco_badge_impact: {
+    verified: number;
+    self_reported: number;
+    no_data: number;
+  };
+}
 
-export const getAiAnalyticsSummary = async (businessId: string, period: string = 'this_week'): Promise<AIAnalyticsSummaryResponse> => {
+export const getBenchmarks = async (businessId: string): Promise<MarketBenchmarks> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/business/${businessId}/analytics/ai-summary`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ period }),
-    });
-    
+    const response = await fetch(`${API_BASE_URL}/api/business/${businessId}/benchmarks`);
     if (response.ok) {
       return await response.json();
     }
-    
-    if (response.status === 404 || response.status === 501) {
-      return await mockGetAiAnalyticsSummary(businessId);
-    }
-    throw new Error(`Failed to fetch AI analytics with status ${response.status}`);
+    throw new Error(`Failed to fetch benchmarks with status ${response.status}`);
   } catch (error: any) {
-    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
-      return await mockGetAiAnalyticsSummary(businessId);
-    }
     throw error;
   }
 };
@@ -589,14 +491,8 @@ export const getDemand = async (businessId: string): Promise<DemandResponse> => 
     if (response.ok) {
       return await response.json();
     }
-    if (response.status === 404 || response.status === 501) {
-      return await mockGetDemand(businessId);
-    }
     throw new Error(`Failed to fetch demand with status ${response.status}`);
   } catch (error: any) {
-    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
-      return await mockGetDemand(businessId);
-    }
     throw error;
   }
 };
@@ -975,7 +871,7 @@ function getAccommodationMockData(payload: AccommodationSearchRequest): Accommod
           hi: { name: "सुलभ रिज़ॉर्ट और स्पा" },
           mr: { name: "सुलभ रिसॉर्ट आणि स्पा" }
         },
-        city: payload.destination_city || payload.destination,
+        city: payload.destination_city || (payload as any).destination,
         price_inr_per_night: 8500,
         star_rating: 4,
         photos: ["https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"],
@@ -996,7 +892,7 @@ function getAccommodationMockData(payload: AccommodationSearchRequest): Accommod
           en: { name: "City Center Budget Inn" }
           // intentionally missing HI/MR to test fallback
         },
-        city: payload.destination_city || payload.destination,
+        city: payload.destination_city || (payload as any).destination,
         price_inr_per_night: 3200,
         star_rating: 3,
         photos: [],
@@ -1317,6 +1213,101 @@ export async function verifyBookingPayment(payload: VerifyPaymentRequest): Promi
   }
 }
 
+export interface AIAnalyticsSummaryResponse {
+  summary: string;
+  key_findings: { title: string; description: string; }[];
+  demand_insights: { title: string; description: string; }[];
+  data_gaps: { title: string; description: string; }[];
+  opportunities: { title: string; description: string; }[];
+  next_actions?: { title: string; description: string; actionText?: string; actionLink?: string; }[];
+}
+
+export const mockGetAiAnalyticsSummary = async (businessId: string, period: string): Promise<AIAnalyticsSummaryResponse> => {
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  return {
+    summary: "Your property has shown strong engagement from travelers prioritizing accessibility, though there are key gaps in your sustainability reporting that may be costing you bookings.",
+    key_findings: [
+      { title: "Increased view rates", description: "Views from users applying mobility filters increased 14% over the period." },
+      { title: "Drop-off at checkout", description: "30% of users viewing your page abandoned before booking." }
+    ],
+    demand_insights: [
+      { title: "Wheelchair accessibility", description: "High volume of users searching for wheelchair accessible rooms in your area." }
+    ],
+    data_gaps: [
+      { title: "Energy usage", description: "You haven't reported energy usage data." },
+      { title: "Water conservation", description: "Missing details on water conservation practices." }
+    ],
+    opportunities: [
+      { title: "Add ramp photos", description: "Uploading photos of your ramps could increase conversion." },
+      { title: "Verify sustainability", description: "Get a third-party audit for your sustainability practices." }
+    ]
+  };
+};
+
+export const getAiAnalyticsSummary = async (businessId: string, period: string): Promise<AIAnalyticsSummaryResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/analytics/ai-summary?business_id=${businessId}&period=${period}`);
+    if (response.ok) {
+      return await response.json();
+    }
+    if (response.status === 404 || response.status === 501) {
+      return await mockGetAiAnalyticsSummary(businessId, period);
+    }
+    throw new Error(`Failed to fetch AI analytics with status ${response.status}`);
+  } catch (error: any) {
+    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
+      return await mockGetAiAnalyticsSummary(businessId, period);
+    }
+    throw error;
+  }
+};
+
+export interface BusinessProfileResponse {
+  id: string;
+  name: string;
+  description?: string;
+  industry?: string;
+  location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+}
+
+export interface BusinessProfileUpdateRequest {
+  name?: string;
+  description?: string;
+  industry?: string;
+  location?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  website?: string;
+}
+
+export async function getBusinessProfile(businessId: string): Promise<BusinessProfileResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/business/${businessId}/profile`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch business profile: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function updateBusinessProfile(businessId: string, payload: BusinessProfileUpdateRequest): Promise<BusinessProfileResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/business/${businessId}/profile`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to update business profile: ${response.status}`);
+  }
+  return response.json();
+}
+
+export const uploadPhotoToCloudinary = async (file: File, signatureInfo?: any): Promise<{ url: string; public_id: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  return { url: URL.createObjectURL(file), public_id: 'mock_id_' + Date.now() };
+};
+
 // =============================================================================
 // B2C — Customer Dashboard Trip API
 // =============================================================================
@@ -1454,3 +1445,4 @@ export async function getTripInteractions(
   }
   return response.json();
 }
+

@@ -8,7 +8,7 @@ import { searchAccommodation, AccommodationSearchRequest, AccommodationResult } 
 import AccommodationResultCard from '../components/AccommodationResultCard';
 
 interface RouteState {
-  searchPayload?: Omit<AccommodationSearchRequest, 'destination_city'>;
+  searchPayload?: any;
   transportResult?: any;
 }
 

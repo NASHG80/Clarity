@@ -18,23 +18,13 @@ export default function TravelerFunnel({ funnel }: TravelerFunnelProps) {
     { key: 'bookings', label: t('analytics.bookings', 'Bookings'), value: funnel.bookings ?? 0 },
   ];
 
-  // Calculate drop-offs
-  const enrichedStages = stages.map((stage, i) => {
-    let dropOffPct = 0;
-    if (i < stages.length - 1) {
-      const nextValue = stages[i + 1].value;
-      if (stage.value > 0) {
-        dropOffPct = 100 - (nextValue / stage.value) * 100;
-      }
-    }
-    return { ...stage, dropOffPct: Math.round(dropOffPct * 10) / 10 };
-  });
+  const enrichedStages = stages;
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)]">
-      <div className="mb-10">
-        <h2 className="text-2xl font-serif font-bold text-[#1C2B22]">Customer Journey</h2>
-        <p className="text-[#3E5245] text-[15px] mt-1">How travelers move from discovery to booking.</p>
+    <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] h-full flex flex-col min-h-[400px]">
+      <div className="mb-8">
+        <h2 className="text-2xl font-serif font-bold text-[#1C2B22]">{t('dashboard.customerJourney', 'Customer Journey')}</h2>
+        <p className="text-[#3E5245] text-[15px] mt-1">{t('dashboard.journeyDesc', 'How travelers move from discovery to booking.')}</p>
       </div>
 
       <div className="flex flex-col lg:flex-row justify-between relative">
@@ -96,7 +86,7 @@ export default function TravelerFunnel({ funnel }: TravelerFunnelProps) {
           <p className="text-[13px] font-bold text-red-800 uppercase tracking-[0.1em] mb-1">Largest observed drop-off</p>
           <p className="text-[#1C2B22] text-[15px] font-medium">Detail Views → Saves</p>
           <p className="text-[#5B6D62] text-sm mt-1">
-            83.9% did not save the listing after viewing the detail page.
+            76.6% did not save the listing after viewing the detail page.
           </p>
         </div>
       </div>

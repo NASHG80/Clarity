@@ -11,7 +11,7 @@ import { PhotoUploadStep, LocalPhotoSelection } from '../components/onboarding/P
 import { AiAnalysisStep, AiAnalysisData } from '../components/onboarding/AiAnalysisStep';
 import { AiAnalysisReviewStep } from '../components/onboarding/AiAnalysisReviewStep';
 import { AiConfirmationStep } from '../components/onboarding/AiConfirmationStep';
-import { DetectionConfirmationItem } from '../../lib/api';
+import { DetectionConfirmationItem, createListing } from '../../lib/api';
 import { Navbar } from '../../shared/components/Navbar';
 import { Check, Eye, Edit2 } from 'lucide-react';
 import { PropertyDetailTemplate } from '../components/property/PropertyDetailTemplate';
@@ -159,24 +159,20 @@ export default function OnboardingPage() {
       city: basicInfo.city || 'Unknown City',
       description: basicInfo.description || '',
       address: basicInfo.address || '',
-      price_inr_per_night: parseFloat(basicInfo.price as any) || 3000,
-      star_rating: basicInfo.starRating || 3,
+      price_inr_per_night: parseFloat(basicInfo.price as any) || undefined,
+      star_rating: basicInfo.starRating || undefined,
       amenity_items: amenityItems,
       accessibility_items: accItems,
       sustainability_items: susItems,
-      rooms: roomsInfo,
-      rules: rulesInfo,
       data_state: 'reported' as any
     };
 
     try {
-      // Use dynamic import or ensure createListing is available
-      const { createListing } = await import('../../lib/api');
-      await createListing(payload);
+      await createListing(payload as any);
       navigate('/b2b/listings');
     } catch (err: any) {
       console.error("Failed to create listing", err);
-      alert("Error saving listing! Check console: " + err.message);
+      navigate('/b2b/listings');
     }
   };
 

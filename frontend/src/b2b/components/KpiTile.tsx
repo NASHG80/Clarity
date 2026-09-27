@@ -4,11 +4,12 @@ import { AlertCircle, ArrowUpCircle, Info } from 'lucide-react';
 interface KpiTileProps {
   label: string;
   value: number | string;
+  subtitle?: string;
   severity: 'red' | 'yellow' | 'neutral';
   className?: string;
 }
 
-export default function KpiTile({ label, value, severity, className = '' }: KpiTileProps) {
+export default function KpiTile({ label, value, subtitle, severity, className = '' }: KpiTileProps) {
   let bgColor = 'bg-white';
   let borderColor = 'border-[#D8C9BE]';
   let iconColor = 'text-[#26382D]/50';
@@ -40,6 +41,11 @@ export default function KpiTile({ label, value, severity, className = '' }: KpiT
       <div className="text-4xl font-serif font-bold text-[#26382D]">
         {value}
       </div>
+      {subtitle && (
+        <div className="mt-2 text-[14px] text-[#5B6D62] font-medium">
+          {subtitle}
+        </div>
+      )}
     </div>
   );
 }
