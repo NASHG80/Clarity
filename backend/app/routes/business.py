@@ -41,6 +41,8 @@ from app.models.schemas import (
     OpportunitiesResponse,
     OpportunitiesResponse,
     RequirementSearchCount,
+    BusinessProfileResponse,
+    BusinessProfileUpdateRequest,
     AIAnalyticsSummaryRequest,
     AIAnalyticsSummaryResponse,
     AIAnalyticsInsight,
@@ -57,6 +59,64 @@ router = APIRouter(tags=["Business & Explore"])
 # ---------------------------------------------------------------------------
 # C1 STUBS — real MongoDB + aggregation logic in later C tasks
 # ---------------------------------------------------------------------------
+
+from app.db import get_businesses_collection
+
+@router.get("/api/business/{business_id}/profile", response_model=BusinessProfileResponse)
+async def get_business_profile(business_id: str):
+    col = get_businesses_collection()
+    biz = col.find_one({"_id": business_id})
+    if biz:
+        return BusinessProfileResponse(
+            id=str(biz["_id"]),
+            name=biz.get("name", ""),
+            description=biz.get("description"),
+            industry=biz.get("industry"),
+            location=biz.get("location"),
+            contactEmail=biz.get("contactEmail"),
+            contactPhone=biz.get("contactPhone"),
+            website=biz.get("website")
+        )
+        
+    # Return mock/default if not found
+    return BusinessProfileResponse(
+        id=business_id,
+        name='Green Hotels Group',
+        description='A collection of sustainable properties committed to eco-friendly practices across India. We believe in green travel and making a positive impact on the environment.',
+        industry='Hospitality Management',
+        location='Mumbai, Maharashtra',
+        contactEmail='contact@greenhotels.com',
+        contactPhone='+91 98765 43210',
+        website='www.greenhotels.in'
+    )
+
+@router.put("/api/business/{business_id}/profile", response_model=BusinessProfileResponse)
+async def update_business_profile(business_id: str, payload: BusinessProfileUpdateRequest):
+    col = get_businesses_collection()
+    
+    update_data = {k: v for k, v in payload.model_dump(exclude_unset=True).items() if v is not None}
+    
+    if update_data:
+        col.update_one(
+            {"_id": business_id},
+            {"$set": update_data},
+            upsert=True
+        )
+        
+    biz = col.find_one({"_id": business_id})
+    if biz:
+        return BusinessProfileResponse(
+            id=str(biz["_id"]),
+            name=biz.get("name", ""),
+            description=biz.get("description"),
+            industry=biz.get("industry"),
+            location=biz.get("location"),
+            contactEmail=biz.get("contactEmail"),
+            contactPhone=biz.get("contactPhone"),
+            website=biz.get("website")
+        )
+        
+    raise HTTPException(status_code=500, detail="Failed to update profile")
 
 @router.post("/api/business/onboard", status_code=201, response_model=OnboardResponse)
 async def onboard_business(payload: OnboardRequest) -> OnboardResponse:
