@@ -40,7 +40,7 @@ export default function JourneyViewPage() {
         key: key_id,
         amount: order.amount,
         currency: order.currency,
-        name: 'Green & Inclusive Travel',
+        name: 'CLARITY',
         description: 'Test Booking',
         order_id: order.order_id,
         handler: async function (response: any) {

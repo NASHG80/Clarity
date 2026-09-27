@@ -99,7 +99,7 @@ export default function AuthPage() {
           <div className="w-8 h-8 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center">
             <Leaf className="w-4 h-4" />
           </div>
-          <span className="font-serif text-xl tracking-tight font-medium">EcoWay</span>
+          <span className="font-serif text-xl tracking-tight font-medium">CLARITY</span>
         </button>
       </div>
 

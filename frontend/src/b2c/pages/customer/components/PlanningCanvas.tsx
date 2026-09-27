@@ -291,9 +291,9 @@ export default function PlanningCanvas({
     <div className="flex flex-col gap-4">
       {/* EMPTY: big welcome */}
       {phase === 'EMPTY' && (
-        <div className="bg-[#F8F6F3] rounded-2xl border border-[#D8C9BE] p-8 shadow-[0_4px_16px_rgba(38,56,45,0.03)]">
-          <h1 className="font-serif text-3xl text-[#26382D] mb-2">{t('dashboard.emptyHeading')}</h1>
-          <p className="text-[#A99587] text-[14px] mb-6">{t('dashboard.emptySubheading')}</p>
+        <div className="bg-white rounded-2xl border border-[#E5DFD6] p-8 lg:p-10 shadow-sm">
+          <h1 className="font-serif text-3xl font-bold text-[#1C2B22] mb-2 leading-tight">{t('dashboard.emptyHeading')}</h1>
+          <p className="text-[#5B6D62] text-[15px] mb-8">{t('dashboard.emptySubheading')}</p>
           <TripBasicsForm onSubmit={onBasicsSubmit} />
         </div>
       )}

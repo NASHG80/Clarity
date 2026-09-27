@@ -43,7 +43,7 @@ from app.routes import (  # noqa: E402  (imports after load_dotenv is intentiona
 # FastAPI application
 # ---------------------------------------------------------------------------
 app = FastAPI(
-    title="Green & Inclusive Travel — Backend API",
+    title="CLARITY — Backend API",
     description=(
         "Personalized Travel Decision Engine for sustainable + accessible travel in India. "
         "B2C: natural-language intake → recommendation engine → Razorpay test payment. "

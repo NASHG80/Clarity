@@ -142,7 +142,7 @@
   "tripSummary.free": "Free",
   "tripSummary.processing": "Processing...",
   "tripSummary.scriptLoadError": "Razorpay script failed to load. Please check your connection.",
-  "tripSummary.companyName": "Green & Inclusive Travel",
+  "tripSummary.companyName": "CLARITY",
   "tripSummary.paymentDescription": "Secure your trip",
   "tripSummary.verificationFailed": "Payment verification failed. Please try again.",
   "tripSummary.verificationError": "Error verifying payment.",
@@ -167,7 +167,7 @@
   "listing.confirmations.disputedByLabel_one": "Dispute",
   "listing.confirmations.disputedByLabel_other": "Disputes",
   "home": {
-    "brandName": "Green & Inclusive Travel",
+    "brandName": "CLARITY",
     "tagline": "Personalized Travel Decision Engine for sustainable and accessible travel in India",
     "nav": {
       "planTrip": "Plan a Trip",
@@ -272,7 +272,7 @@
       "heading": "A better way to choose your journey.",
       "supporting": "We compare travel options across accessibility, cost, time, convenience and environmental impact — so you can understand the trade-offs before you choose.",
       "manifesto": "“True luxury in modern India is knowing that every member of your family can move freely, without friction, while leaving the sacred landscapes we visit undisturbed.”",
-      "attribution": "The Green & Inclusive Travel Charter",
+      "attribution": "The CLARITY Charter",
       "bullet1Title": "Zero Assumptions on Mobility",
       "bullet1Desc": "We audit doorway widths, curb ramps, battery wheelchair charging points, and station porters across Indian routes.",
       "bullet2Title": "Carbon Transparency, Simplified",
@@ -310,13 +310,13 @@
       "toastMessage": "Setup saved. You are ready to proceed with these verified parameters."
     },
     "footer": {
-      "brand": "Green & Inclusive Travel",
+      "brand": "CLARITY",
       "description": "A personalized travel decision engine dedicated to low-carbon, universally accessible journeys across India.",
       "planTrip": "Plan a Trip",
       "explore": "Explore",
       "forBusinesses": "For Businesses",
       "about": "About",
-      "copyright": "© 2026 Green & Inclusive Travel Inc. Designed for sustainable and accessible travel in India."
+      "copyright": "© 2026 CLARITY Inc. Designed for sustainable and accessible travel in India."
     },
     "bottomNav": {
       "search": "Search",
@@ -358,7 +358,7 @@
   "duration.minutes_one": "{{count}} min",
   "duration.minutes_other": "{{count}} mins",
   "accessibility.closeDialog": "Close dialog",
-  "accessibility.home": "Green & Inclusive Travel Homepage",
+  "accessibility.home": "CLARITY Homepage",
   "accessibility.languageSelector": "Language selector",
   "accessibility.toggleMenu": "Toggle menu",
   "accessibility.increase": "Increase",
@@ -433,4 +433,4 @@
   "memory.result_saved": "Hotel saved",
   "memory.filter_changed_after_results": "Filter updated",
   "memory.search_refreshed": "Search refreshed"
-}
+}

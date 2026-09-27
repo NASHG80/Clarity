@@ -853,7 +853,7 @@ export default function TransportResultsPage() {
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                   <Leaf className="w-4 h-4 text-white" />
                 </div>
-                <div className="font-semibold text-sm">Clarity AI Guide</div>
+                <div className="font-semibold text-sm">CLARITY AI Guide</div>
               </div>
               <button onClick={() => setIsChatOpen(false)} className="text-white/70 hover:text-white transition-colors">
                 <X className="w-5 h-5" />

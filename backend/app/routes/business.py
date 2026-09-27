@@ -81,13 +81,13 @@ async def get_business_profile(business_id: str):
     # Return mock/default if not found
     return BusinessProfileResponse(
         id=business_id,
-        name='Green Hotels Group',
+        name='CLARITY Hotels Group',
         description='A collection of sustainable properties committed to eco-friendly practices across India. We believe in green travel and making a positive impact on the environment.',
         industry='Hospitality Management',
         location='Mumbai, Maharashtra',
-        contactEmail='contact@greenhotels.com',
+        contactEmail='contact@clarity.in',
         contactPhone='+91 98765 43210',
-        website='www.greenhotels.in'
+        website='www.clarity.in'
     )
 
 @router.put("/api/business/{business_id}/profile", response_model=BusinessProfileResponse)
@@ -139,7 +139,7 @@ async def upload_photo(file: UploadFile = File(...), bucket: str = Form("general
     """Upload photo proxy to Cloudinary.
     
     Implements secure backend proxy to Cloudinary to avoid exposing API secrets in browser code.
-    Uploads to a specific folder 'Clarity/{bucket}'.
+    Uploads to a specific folder 'CLARITY/{bucket}'.
     """
     cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME")
     api_key = os.getenv("CLOUDINARY_API_KEY")
@@ -149,7 +149,7 @@ async def upload_photo(file: UploadFile = File(...), bucket: str = Form("general
         raise HTTPException(status_code=500, detail="Cloudinary configuration missing on server")
         
     timestamp = str(int(time.time()))
-    folder = f"Clarity/{bucket}"
+    folder = f"CLARITY/{bucket}"
     
     # Generate Cloudinary signature
     # Signature formula: sha1(folder=folder&timestamp=timestamp{api_secret})

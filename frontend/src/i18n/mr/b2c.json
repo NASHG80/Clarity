@@ -142,7 +142,7 @@
   "tripSummary.free": "मोफत",
   "tripSummary.processing": "प्रक्रिया सुरू आहे...",
   "tripSummary.scriptLoadError": "Razorpay स्क्रिप्ट लोड करण्यात अयशस्वी. कृपया आपले कनेक्शन तपासा.",
-  "tripSummary.companyName": "Green & Inclusive Travel",
+  "tripSummary.companyName": "CLARITY",
   "tripSummary.paymentDescription": "तुमचा प्रवास सुरक्षित करा",
   "tripSummary.verificationFailed": "पेमेंट पडताळणी अयशस्वी. कृपया पुन्हा प्रयत्न करा.",
   "tripSummary.verificationError": "पेमेंट पडताळणी करताना त्रुटी.",
@@ -167,7 +167,7 @@
   "listing.confirmations.disputedByLabel_one": "विवाद",
   "listing.confirmations.disputedByLabel_other": "विवाद",
   "home": {
-    "brandName": "Green & Inclusive Travel",
+    "brandName": "CLARITY",
     "tagline": "भारतातील शाश्वत आणि सुलभ प्रवासासाठी वैयक्तिक प्रवास निर्णय इंजिन",
     "nav": {
       "planTrip": "प्रवास नियोजन",
@@ -310,13 +310,13 @@
       "toastMessage": "माहिती सुरक्षित झाली. तुम्ही पर्याय पाहण्यासाठी तयार आहात."
     },
     "footer": {
-      "brand": "Green & Inclusive Travel",
+      "brand": "CLARITY",
       "description": "कमी कार्बन आणि सर्वांसाठी सुलभ प्रवासासाठी भारतातील वैयक्तिक प्रवास निर्णय इंजिन.",
       "planTrip": "प्रवास नियोजन",
       "explore": "शोधा",
       "forBusinesses": "व्यवसायांसाठी",
       "about": "आमच्याबद्दल",
-      "copyright": "© २०२६ Green & Inclusive Travel Inc. शाश्वत आणि सुलभ प्रवासासाठी."
+      "copyright": "© २०२६ CLARITY Inc. शाश्वत आणि सुलभ प्रवासासाठी."
     },
     "bottomNav": {
       "search": "शोधा",
@@ -433,4 +433,4 @@
   "memory.result_saved": "हॉटेल जतन केले",
   "memory.filter_changed_after_results": "फिल्टर अपडेट",
   "memory.search_refreshed": "शोध ताजे केले"
-}
+}

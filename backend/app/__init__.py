@@ -1,1 +1,1 @@
-"""Clarity backend application package."""
+"""CLARITY backend application package."""
