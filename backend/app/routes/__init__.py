@@ -23,6 +23,7 @@ from app.routes import (
     payments,
     confirmations,
     proxy,
+    weather,
 )
 
 __all__ = [

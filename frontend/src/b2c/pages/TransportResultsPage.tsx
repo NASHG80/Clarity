@@ -4,7 +4,8 @@ import Navbar from '../../shared/components/Navbar';
 import RouteMap from '../components/RouteMap';
 import {
   Train, Plane, Car, Navigation, MapPin,
-  Leaf, Sliders, ChevronRight, User, Info, MessageCircle, AlertCircle, Loader, ArrowRight, X
+  Leaf, Sliders, ChevronRight, User, Info, MessageCircle, AlertCircle, Loader, ArrowRight, X,
+  Banknote, Bus, Footprints, Coins
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import TrainCard from '../components/transport/TrainCard';
@@ -12,6 +13,7 @@ import FlightCard from '../components/transport/FlightCard';
 import StationAutocomplete from '../components/transport/StationAutocomplete';
 import AirportAutocomplete from '../components/transport/AirportAutocomplete';
 import FlightPriceInsights from '../components/transport/FlightPriceInsights';
+import DigitalTwinPanel from '../components/transport/DigitalTwinPanel';
 import { API_BASE_URL } from '../../lib/api';
 
 export default function TransportResultsPage() {
@@ -33,6 +35,7 @@ export default function TransportResultsPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showDigitalTwin, setShowDigitalTwin] = useState(false);
   // Handlers
   const handleTripSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,7 +283,7 @@ export default function TransportResultsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1.5">To</label>
-                  <input name="destination" defaultValue={location.state?.hotelResult?.translations?.en?.name || location.state?.hotelResult?.city || "Candolim, Goa"} className="w-full border-b-2 border-[#D8C9BE] py-2 focus:border-[#26382D] outline-none text-[#26382D]" />
+                  <input name="destination" defaultValue={location.state?.hotelResult?.city || "Candolim, Goa"} className="w-full border-b-2 border-[#D8C9BE] py-2 focus:border-[#26382D] outline-none text-[#26382D]" />
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
@@ -497,12 +500,30 @@ export default function TransportResultsPage() {
 
           {step === 'BREAKDOWN' && selectedOption && (
             <div className="w-full">
+              {/* Digital Twin Panel overlay */}
+              {showDigitalTwin && selectedOption.mode === 'car' && (
+                <DigitalTwinPanel
+                  carOption={selectedOption}
+                  onClose={() => setShowDigitalTwin(false)}
+                />
+              )}
+
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <button onClick={() => setStep('RESULTS')} className="text-[#7C9278] hover:text-[#26382D]">
                     <ChevronRight className="w-5 h-5 rotate-180" />
                   </button>
                   <h2 className="font-serif text-2xl text-[#26382D]">Complete Journey</h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  {selectedOption.mode === 'car' && (
+                    <button
+                      onClick={() => setShowDigitalTwin(true)}
+                      className="flex items-center gap-2 bg-white border border-[#D8C9BE] text-[#26382D] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#EAF0EB] hover:border-[#7C9278] transition-colors shadow-sm"
+                    >
+                      ☁️ <span>Weather Analysis</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -531,6 +552,19 @@ export default function TransportResultsPage() {
                         {transfers > 2 && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-amber-600 font-bold">⚠</span> {transfers} transfers — more than a direct option</li>}
                         {reasons.map((r: string, i: number) => <li key={i} className="flex items-start gap-2 text-[#3A5043]"><span className="text-green-600 font-bold">✓</span>{r}</li>)}
                         {tradeoffs.map((t: string, i: number) => <li key={i} className="flex items-start gap-2 text-[#3A5043]"><span className="text-amber-600 font-bold">⚠</span>{t}</li>)}
+                        
+                        {/* Fallback if list is entirely empty */}
+                        {!usesTransit && co2 >= 30 && cost >= 3000 && walkKm === 0 && transfers <= 2 && reasons.length === 0 && tradeoffs.length === 0 && (
+                          <li className="flex items-start gap-2 text-[#3A5043]">
+                            <span className="text-green-600 font-bold">✓</span>
+                            {selectedOption.mode === 'car' ? 'Direct door-to-door journey' : 'Standard route matching your search'}
+                          </li>
+                        )}
+                        {selectedOption.mode === 'car' && transfers === 0 && reasons.length === 0 && (
+                           <li className="flex items-start gap-2 text-[#3A5043]">
+                             <span className="text-green-600 font-bold">✓</span> Comfortable private journey, no transfers required
+                           </li>
+                        )}
                       </ul>
                     </div>
                     <div className="w-full sm:w-44 shrink-0 space-y-2 text-sm flex flex-col justify-between">
@@ -582,8 +616,8 @@ export default function TransportResultsPage() {
                         if (segment.segment_type === 'main' && segment.mode === 'TRAIN') {
                           return (
                             <div className="mb-6 relative">
-                              <div className="bg-[#26382D] text-white px-5 py-2 text-sm font-bold tracking-wider rounded-t-xl flex justify-between">
-                                <span>🚆 {segment.origin?.name?.split(' ')[0] || 'START'} &rarr; {segment.destination?.name?.split(' ')[0] || 'END'}</span>
+                              <div className="bg-[#26382D] text-white px-5 py-2 text-sm font-bold tracking-wider rounded-t-xl flex justify-between items-center">
+                                <span className="flex items-center gap-2"><Train className="w-4 h-4" /> {segment.origin?.name?.split(' ')[0] || 'START'} &rarr; {segment.destination?.name?.split(' ')[0] || 'END'}</span>
                               </div>
                               <div className={`bg-white border-x border-b p-5 rounded-b-xl shadow-sm cursor-pointer transition-colors ${selectedSegmentId === segment.id ? 'border-[#7C9278] ring-1 ring-[#7C9278]' : 'border-[#D8C9BE] hover:border-[#7C9278]'}`} onClick={() => setSelectedSegmentId(segment.id)}>
                                 <div className="flex justify-between items-start mb-4">
@@ -625,12 +659,16 @@ export default function TransportResultsPage() {
                           const dm = segment.duration_minutes % 60;
                           return (
                             <div className="mb-6">
-                              <div className="text-xs font-bold text-[#7C9278] uppercase tracking-wider mb-3">🚗 Your Route</div>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-[#7C9278] uppercase tracking-wider mb-3">
+                                <Car className="w-4 h-4" /> Your Route
+                              </div>
                               <div
                                 onClick={() => { setSelectedSegmentId(segment.id); setSelectedSubStep(null); }}
                                 className={`relative pl-14 pr-4 py-5 cursor-pointer rounded-2xl transition-all border shadow-sm ${selectedSegmentId === segment.id ? 'bg-[#FEF3C7] border-[#f59e0b] ring-1 ring-[#f59e0b]' : 'bg-white border-[#D8C9BE] hover:bg-[#FEF9EE]'}`}
                               >
-                                <div className="absolute left-4 top-5 text-2xl">🚗</div>
+                                <div className="absolute left-4 top-5 text-[#26382D]">
+                                  <Car className="w-6 h-6" />
+                                </div>
                                 <div className="font-bold text-[#26382D] text-base">{segment.origin?.name}</div>
                                 <div className="flex items-center gap-2 my-1.5">
                                   <div className="w-1.5 h-1.5 rounded-full bg-[#D8C9BE]" />
@@ -640,12 +678,12 @@ export default function TransportResultsPage() {
                                   <div className="w-1.5 h-1.5 rounded-full bg-[#26382D]" />
                                 </div>
                                 <div className="font-bold text-[#26382D] text-base">{segment.destination?.name}</div>
-                                <div className="flex gap-4 mt-3 pt-3 border-t border-[#F8F6F3] text-xs text-[#7C9278]">
-                                  <span>💰 Est. ₹{segment.cost_inr?.toFixed(0) || (segment.distance_km * 12).toFixed(0)}</span>
+                                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#F8F6F3] text-xs text-[#7C9278]">
+                                  <span className="flex items-center gap-1"><Banknote className="w-3.5 h-3.5 text-[#A99587]" /> Est. ₹{segment.cost_inr?.toFixed(0) || (segment.distance_km * 12).toFixed(0)}</span>
                                   <span>·</span>
-                                  <span>🌿 {segment.co2_kg?.toFixed(1)} kg CO₂ (estimated)</span>
+                                  <span className="flex items-center gap-1"><Leaf className="w-3.5 h-3.5 text-[#7C9278]" /> {segment.co2_kg?.toFixed(1)} kg CO₂ (estimated)</span>
                                 </div>
-                                {selectedSegmentId === segment.id && <div className="mt-2 text-xs text-[#f59e0b] font-medium">↑ Route shown on map</div>}
+                                {selectedSegmentId === segment.id && <div className="mt-2 flex items-center gap-1 text-xs text-[#f59e0b] font-medium"><Navigation className="w-3.5 h-3.5" /> Route shown on map</div>}
                               </div>
                             </div>
                           );
@@ -656,7 +694,9 @@ export default function TransportResultsPage() {
                           return (
                             <div className="mb-6 relative" onClick={() => setSelectedSegmentId(segment.id)}>
                               <div className={`bg-white border p-5 rounded-xl shadow-sm cursor-pointer transition-colors ${selectedSegmentId === segment.id ? 'border-[#7C9278] ring-1 ring-[#7C9278] bg-[#F8F6F3]' : 'border-[#D8C9BE] hover:border-[#7C9278]'}`}>
-                                <div className="font-bold text-[#26382D] text-lg mb-2">✈️ Flight {segment.details?.flight_number || ''}</div>
+                                <div className="flex items-center gap-2 font-bold text-[#26382D] text-lg mb-2">
+                                  <Plane className="w-5 h-5 text-[#2563EB]" /> Flight {segment.details?.flight_number || ''}
+                                </div>
                                 <div className="text-sm text-[#7C9278]">{segment.origin?.name} &rarr; {segment.destination?.name}</div>
                                 <div className="text-sm font-semibold text-[#26382D] mt-2">{Math.floor(segment.duration_minutes / 60)}h {segment.duration_minutes % 60}m</div>
                               </div>
@@ -667,7 +707,7 @@ export default function TransportResultsPage() {
                         // FIRST MILE / LAST MILE / DRIVE
                         const hasSubsteps = segment.sub_steps && segment.sub_steps.length > 0;
                         const isDrive = segment.mode === 'DRIVE';
-                        const modeIcon = isDrive ? '🚕' : segment.mode === 'TRANSIT' ? '🚌' : '🚶';
+                        const modeIcon = isDrive ? <Car className="w-5 h-5" /> : segment.mode === 'TRANSIT' ? <Bus className="w-5 h-5" /> : <Footprints className="w-5 h-5" />;
                         const modeLabel = isDrive ? 'Cab / Car' : segment.mode === 'TRANSIT' ? 'Public Transit' : 'Walk';
 
                         return (
@@ -680,17 +720,21 @@ export default function TransportResultsPage() {
                                 onClick={() => { setSelectedSegmentId(segment.id); setSelectedSubStep(null); }}
                                 className={`relative pl-12 pr-4 py-4 cursor-pointer rounded-xl transition-all border ${selectedSegmentId === segment.id && !selectedSubStep ? 'bg-[#FEF3C7] border-[#f59e0b] shadow-sm' : 'bg-white border-[#D8C9BE] hover:bg-[#FEF9EE]'}`}
                               >
-                                <div className="absolute left-4 top-5 text-lg">🚕</div>
+                                <div className="absolute left-4 top-5 text-[#26382D]">
+                                  <Car className="w-5 h-5" />
+                                </div>
                                 <div className="font-semibold text-[#26382D]">Cab / Car</div>
                                 <div className="text-sm text-[#3A5043] mt-0.5">{segment.origin?.name} → {segment.destination?.name}</div>
-                                <div className="flex gap-4 mt-2 text-xs text-[#7C9278]">
+                                <div className="flex items-center gap-4 mt-2 text-xs text-[#7C9278]">
                                   <span>{Math.floor(segment.duration_minutes / 60) > 0 ? `${Math.floor(segment.duration_minutes / 60)}h ` : ''}{segment.duration_minutes % 60}m</span>
                                   <span>•</span>
                                   <span>{segment.distance_km?.toFixed(1)} km</span>
-                                  {segment.co2_kg != null && <><span>•</span><span>{segment.co2_kg.toFixed(1)} kg CO₂</span></>}
+                                  {segment.co2_kg != null && <><span>•</span><span className="flex items-center gap-1"><Leaf className="w-3 h-3" /> {segment.co2_kg.toFixed(1)} kg CO₂</span></>}
                                 </div>
                                 {segment.co2_kg != null && (
-                                  <div className="mt-2 text-xs text-amber-600 font-medium">ℹ Emissions estimated · Switch to Lowest CO₂ for greener options</div>
+                                  <div className="mt-2 flex items-center gap-1 text-xs text-amber-600 font-medium">
+                                    <Info className="w-3.5 h-3.5" /> Emissions estimated · Switch to Lowest CO₂ for greener options
+                                  </div>
                                 )}
                               </div>
                             )}
@@ -701,7 +745,7 @@ export default function TransportResultsPage() {
                                 onClick={() => { setSelectedSegmentId(segment.id); setSelectedSubStep(null); }}
                                 className={`relative pl-12 pr-4 py-4 cursor-pointer rounded-xl transition-all border ${selectedSegmentId === segment.id ? 'bg-[#EAF0EB] border-[#7C9278]' : 'bg-white border-[#D8C9BE] hover:bg-[#F8F6F3]'}`}
                               >
-                                <div className="absolute left-4 top-5 text-lg">{modeIcon}</div>
+                                <div className="absolute left-4 top-5 text-[#26382D]">{modeIcon}</div>
                                 <div className="font-medium text-[#26382D]">{modeLabel}</div>
                                 <div className="text-sm text-[#3A5043]">{segment.origin?.name} → {segment.destination?.name}</div>
                                 <div className="text-xs text-[#7C9278] mt-1">{Math.floor(segment.duration_minutes / 60) > 0 ? `${Math.floor(segment.duration_minutes / 60)}h ` : ''}{segment.duration_minutes % 60}m • {segment.distance_km?.toFixed(1)} km</div>
@@ -800,7 +844,7 @@ export default function TransportResultsPage() {
                 <div className="flex-1 w-full xl:w-auto h-[420px] xl:h-[auto] xl:min-h-[640px] bg-[#EAF0EB] rounded-2xl overflow-hidden border border-[#D8C9BE] sticky top-24 flex flex-col">
                   {selectedSubStep && (
                     <div className="flex items-center justify-between px-4 py-2 bg-[#26382D] text-white text-xs font-semibold">
-                      <span>📍 {selectedSubStep.label}</span>
+                      <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {selectedSubStep.label}</span>
                       <button onClick={() => setSelectedSubStep(null)} className="text-white/70 hover:text-white underline">Show full journey</button>
                     </div>
                   )}
@@ -837,12 +881,12 @@ export default function TransportResultsPage() {
                         ...(selectedOption.segments?.[0]?.origin?.lat && selectedOption.segments?.[0]?.origin?.lng ? [{
                           id: 'start',
                           position: { lat: selectedOption.segments[0].origin.lat, lng: selectedOption.segments[0].origin.lng },
-                          label: '🏠'
+                          label: 'A'
                         }] : []),
                         ...(selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lat && selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lng ? [{
                           id: 'end',
                           position: { lat: selectedOption.segments[selectedOption.segments.length - 1].destination.lat, lng: selectedOption.segments[selectedOption.segments.length - 1].destination.lng },
-                          label: '📍'
+                          label: 'B'
                         }] : [])
                       ]}
                       selectedSegmentId={selectedSubStep ? 'substep' : (selectedSegmentId || undefined)}

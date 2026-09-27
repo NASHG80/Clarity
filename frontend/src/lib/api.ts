@@ -19,33 +19,38 @@ export const FALLBACK_QUERIES = [
 
 const mockAttemptTracker: Record<string, number> = {};
 
-/**
- * Mocks the POST /api/ai/inspect-property-image endpoint.
- * This is used because the backend endpoint does not exist yet.
- */
-export const mockInspectPropertyImage = async (photoId: string, bucket: string): Promise<Detection[]> => {
-  // Simulate GPU inference latency
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  mockAttemptTracker[photoId] = (mockAttemptTracker[photoId] || 0) + 1;
-  
-  // Deterministic failure scenario:
-  // To demonstrate partial failure and independent retry, the 'parking' bucket will always 
-  // fail on the first attempt, and succeed on the second attempt.
-  if (bucket === 'parking' && mockAttemptTracker[photoId] === 1) {
-    throw new Error('Simulated network timeout');
-  }
-
-  // Deterministic success scenario:
-  // Return empty detections for 'room' to demonstrate successful empty analysis,
-  // otherwise return a mocked detection.
-  if (bucket === 'room') {
+export const mockInspectPropertyImage = async (photoId: string, bucket: string, file?: File): Promise<Detection[]> => {
+  if (!file) {
+    console.warn("No file provided to inspectPropertyImage");
     return [];
   }
 
-  return [
-    { label: FALLBACK_QUERIES[0], bbox: [10, 10, 100, 100], confidence: 0.85 }
-  ];
+  const formData = new FormData();
+  formData.append('image', file);
+  // Send the appropriate query based on bucket, or a generic list
+  const queries = bucket === 'parking' ? ['parking space', 'ev charger'] :
+                  bucket === 'entrance' ? ['wheelchair ramp', 'handrail', 'step free entrance'] :
+                  bucket === 'bathroom' ? ['grab bar', 'roll in shower'] :
+                  FALLBACK_QUERIES;
+  formData.append('queries', JSON.stringify(queries));
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/ai/inspect-property-image`, {
+      method: 'POST',
+      body: formData,
+      // Note: do not set Content-Type header manually when using FormData
+    });
+
+    if (!response.ok) {
+      throw new Error(`AI Inspection failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.detections || [];
+  } catch (error) {
+    console.error("AI inspection error:", error);
+    throw error;
+  }
 };
 
 /**
