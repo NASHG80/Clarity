@@ -151,12 +151,7 @@ async def get_listing(listing_id: str) -> ListingDetailResponse:
     return ListingDetailResponse(
         id=listing_id,
         data_state=DataState.reported,
-        translations=Translations(
-            en=TranslationEntry(
-                name="Hotel Stay",
-                description="Verified accommodation option.",
-            ),
-        ),
+        translations=None,
         city=None,
         price_inr_per_night=None,
         star_rating=4,

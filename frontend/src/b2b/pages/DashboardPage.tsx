@@ -178,8 +178,8 @@ export default function DashboardPage() {
   const lang = i18n.language as 'en' | 'hi' | 'mr';
   const propertyName = listing?.translations?.[lang]?.name || listing?.translations?.en?.name || t('dashboard.yourProperty', 'Your Property');
 
-  return (
-    <main className="w-full h-full flex flex-col bg-[#FAF9F7] font-sans pb-20">
+  const renderContent = () => (
+    <div className="w-full h-full flex flex-col bg-[#FAF9F7] font-sans pb-20">
       {/* HEADER HERO */}
       <header className="bg-white border-b border-[#D8C9BE] py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -625,6 +625,20 @@ export default function DashboardPage() {
           </>
         )}
       </div>
-    </main>
+    </div>
+  );
+
+  return (
+    <>
+      {/* MOBILE LAYOUT */}
+      <div className="flex md:hidden flex-col bg-[#FAF9F7] min-h-screen w-full">
+        {renderContent()}
+      </div>
+
+      {/* DESKTOP LAYOUT */}
+      <div className="hidden md:flex flex-col bg-[#FAF9F7] min-h-screen w-full">
+        {renderContent()}
+      </div>
+    </>
   );
 }

@@ -37,6 +37,7 @@ from app.routes import (  # noqa: E402  (imports after load_dotenv is intentiona
     auth,
     trips,
     proxy,
+    chat,
     weather,
 )
 
@@ -44,7 +45,7 @@ from app.routes import (  # noqa: E402  (imports after load_dotenv is intentiona
 # FastAPI application
 # ---------------------------------------------------------------------------
 app = FastAPI(
-    title="Green & Inclusive Travel — Backend API",
+    title="CLARITY — Backend API",
     description=(
         "Personalized Travel Decision Engine for sustainable + accessible travel in India. "
         "B2C: natural-language intake → recommendation engine → Razorpay test payment. "
@@ -91,4 +92,5 @@ app.include_router(confirmations.router)
 app.include_router(auth.router)
 app.include_router(trips.router)
 app.include_router(proxy.router)
+app.include_router(chat.router)
 app.include_router(weather.router)

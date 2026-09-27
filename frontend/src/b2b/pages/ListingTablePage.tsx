@@ -39,8 +39,8 @@ export default function ListingTablePage() {
     });
   }, [properties, searchQuery]);
 
-  return (
-    <main className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-[#F1EDE9] min-h-[calc(100vh-64px)]">
+  const renderContent = () => (
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-[#F1EDE9] min-h-[calc(100vh-64px)]">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-[#D8C9BE]/50 pb-6">
         <div>
           <h1 className="text-3xl font-serif font-bold text-[#26382D]">
@@ -202,6 +202,20 @@ export default function ListingTablePage() {
           )}
         </div>
       )}
-    </main>
+    </div>
+  );
+
+  return (
+    <>
+      {/* MOBILE LAYOUT */}
+      <div className="flex md:hidden flex-col bg-[#F1EDE9] min-h-screen w-full pb-20">
+        {renderContent()}
+      </div>
+
+      {/* DESKTOP LAYOUT */}
+      <div className="hidden md:flex flex-col bg-[#F1EDE9] min-h-screen w-full">
+        {renderContent()}
+      </div>
+    </>
   );
 }

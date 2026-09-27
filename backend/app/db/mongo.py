@@ -11,6 +11,11 @@ from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
 from pathlib import Path
+import dns.resolver
+
+# Fix for DNS SRV lookup failures on restrictive networks
+dns.resolver.default_resolver = dns.resolver.Resolver(configure=False)
+dns.resolver.default_resolver.nameservers = ['8.8.8.8', '8.8.4.4', '1.1.1.1']
 
 try:
     from dotenv import load_dotenv

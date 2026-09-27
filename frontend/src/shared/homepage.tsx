@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * 
- * Green & Inclusive Travel — Single-File Consolidated Homepage
+ * CLARITY — Single-File Consolidated Homepage
  * Location: /src/shared/homepage.tsx
  * 
  * Personalized Travel Decision Engine for sustainable and accessible travel in India.
@@ -438,13 +438,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onOpenRequirementForm }) => 
             <a 
               href="#top" 
               className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] rounded-md"
-              aria-label={tI18n('accessibility.home', 'Green & Inclusive Travel Homepage')}
+              aria-label={tI18n('accessibility.home', 'CLARITY Homepage')}
             >
               <div className="w-8 h-8 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-xs">
                 <Leaf className="w-4 h-4" />
               </div>
               <span className="font-serif text-xl tracking-tight font-medium text-[#26382D]">
-                EcoWay
+                CLARITY
               </span>
             </a>
           </div>

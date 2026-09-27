@@ -148,18 +148,33 @@ export default function TransportResultsPage() {
     }
   };
 
-  const handleChatSubmit = (e: React.FormEvent) => {
+  const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    setChatMessages(prev => [...prev, { role: 'user', content: chatInput.trim() }]);
+    
+    const userMessage = { role: 'user', content: chatInput.trim() };
+    setChatMessages(prev => [...prev, userMessage]);
     setChatInput('');
 
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'This recommendation is based on a balanced weighting of your preferences. The train is currently ranked higher because it costs less and has a lower estimated CO₂, even though it requires more travel time.'
-      }]);
-    }, 800);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/chat/transport`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: userMessage.content,
+          history: chatMessages,
+          context: {
+            results: results,
+            selectedOption: selectedOption
+          }
+        })
+      });
+      const data = await res.json();
+      setChatMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+    } catch (err) {
+      console.error(err);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error connecting to my AI.' }]);
+    }
   };
 
   const handleProceedToCheckout = () => {
@@ -897,7 +912,7 @@ export default function TransportResultsPage() {
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                   <Leaf className="w-4 h-4 text-white" />
                 </div>
-                <div className="font-semibold text-sm">Clarity AI Guide</div>
+                <div className="font-semibold text-sm">CLARITY AI Guide</div>
               </div>
               <button onClick={() => setIsChatOpen(false)} className="text-white/70 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
@@ -913,7 +928,7 @@ export default function TransportResultsPage() {
               ) : (
                 chatMessages.map((msg, i) => (
                   <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed border shadow-sm ${msg.role === 'user'
+                    <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed border shadow-sm whitespace-pre-wrap ${msg.role === 'user'
                       ? 'bg-[#26382D] text-white border-[#26382D] rounded-br-sm'
                       : 'bg-white text-[#26382D] border-[#D8C9BE] rounded-bl-sm'
                       }`}>
@@ -925,9 +940,16 @@ export default function TransportResultsPage() {
             </div>
 
             {/* Suggestions */}
-            <div className="bg-white px-3 pt-3 pb-2 border-t border-[#D8C9BE] shrink-0 overflow-x-auto scrollbar-hide whitespace-nowrap flex gap-2">
-              <button onClick={() => setChatInput("Why did you recommend the train?")} className="bg-[#F8F6F3] border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full text-xs hover:bg-[#EAF0EB] transition-colors shrink-0">Why the train?</button>
-              <button onClick={() => setChatInput("How did you calculate CO₂?")} className="bg-[#F8F6F3] border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full text-xs hover:bg-[#EAF0EB] transition-colors shrink-0">How is CO₂ calc?</button>
+            <div 
+              className="bg-white px-3 pt-3 pb-2 border-t border-[#D8C9BE] shrink-0 overflow-x-auto whitespace-nowrap flex gap-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <style dangerouslySetInnerHTML={{__html: `
+                .overflow-x-auto::-webkit-scrollbar { display: none; }
+              `}} />
+              <button onClick={() => setChatInput("Compare the best routes based on emissions")} className="bg-[#F8F6F3] border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full text-xs hover:bg-[#EAF0EB] transition-colors shrink-0">Compare routes by emissions</button>
+              <button onClick={() => setChatInput("Which option is the most budget-friendly?")} className="bg-[#F8F6F3] border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full text-xs hover:bg-[#EAF0EB] transition-colors shrink-0">Most budget-friendly?</button>
+              <button onClick={() => setChatInput("Which route has the fewest transfers?")} className="bg-[#F8F6F3] border border-[#D8C9BE] text-[#7C9278] px-3 py-1.5 rounded-full text-xs hover:bg-[#EAF0EB] transition-colors shrink-0">Fewest transfers?</button>
             </div>
 
             {/* Input Form */}
