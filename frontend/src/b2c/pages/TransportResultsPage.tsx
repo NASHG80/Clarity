@@ -504,9 +504,9 @@ export default function TransportResultsPage() {
                   {selectedOption.mode === 'car' && (
                     <button
                       onClick={() => setShowDigitalTwin(true)}
-                      className="flex items-center gap-2 bg-gradient-to-r from-[#1a3a5c] to-[#2563EB] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
+                      className="flex items-center gap-2 bg-white border border-[#D8C9BE] text-[#26382D] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#EAF0EB] hover:border-[#7C9278] transition-colors shadow-sm"
                     >
-                      <span>🌐</span> Weather Digital Twin
+                      ☁️ <span>Weather Analysis</span>
                     </button>
                   )}
                 </div>
