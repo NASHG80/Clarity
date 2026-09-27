@@ -92,11 +92,11 @@ export default function BookingConfirmationPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-xs text-[#A99587] mb-1">Departure</p>
-                      <p className="text-[#26382D] font-medium text-sm">{state.searchPayload?.origin || transportResult.segments?.[0]?.origin?.name || 'Origin City'}</p>
+                      <p className="text-[#26382D] font-medium text-sm">{state.searchPayload?.origin || 'Origin City'}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-[#A99587] mb-1">Date</p>
-                      <p className="text-[#26382D] font-medium text-sm">{state.searchPayload?.date || 'Confirmed Date'}</p>
+                      <p className="text-xs text-[#A99587] mb-1">Transport Mode</p>
+                      <p className="text-[#26382D] font-medium text-sm capitalize">{transportResult.mode}</p>
                     </div>
                   </div>
                 )}
@@ -182,11 +182,11 @@ export default function BookingConfirmationPage() {
                   <div className="grid grid-cols-2 gap-6 pb-6 border-b border-[#D8C9BE]">
                     <div>
                       <p className="text-sm font-medium text-[#7C9278] mb-1">Departure</p>
-                      <p className="text-[#26382D] font-medium text-lg">{state.searchPayload?.origin || transportResult.segments?.[0]?.origin?.name || 'Origin City'}</p>
+                      <p className="text-[#26382D] font-medium text-lg">{state.searchPayload?.origin || 'Origin City'}</p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-[#7C9278] mb-1">Date</p>
-                      <p className="text-[#26382D] font-medium text-lg">{state.searchPayload?.date || 'Confirmed Date'}</p>
+                      <p className="text-sm font-medium text-[#7C9278] mb-1">Transport Mode</p>
+                      <p className="text-[#26382D] font-medium capitalize text-lg">{transportResult.mode}</p>
                     </div>
                   </div>
                 )}
