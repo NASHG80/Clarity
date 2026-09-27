@@ -141,46 +141,37 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = async () => {
-    // Collects B4, B5, B6, B7, B8, B9, B10 payload ready for backend onboarding submission (C1/C13)
-    console.log('Onboarding data prepared with confirmed AI findings:', { 
-      basicInfo, 
-      accessibilityInfo, 
-      sustainabilityInfo, 
-      photoSelection, 
-      aiAnalysis 
-    });
+    // Build payload for backend using correct BasicInfoData field names
+    const accItems = Object.entries(accessibilityInfo)
+      .filter(([_, v]) => v === true)
+      .map(([k]) => ({ label: k, value: true, data_state: 'reported' as any }));
+
+    const susItems = Object.entries(sustainabilityInfo)
+      .filter(([_, v]) => v === true)
+      .map(([k]) => ({ label: k, value: true, data_state: 'reported' as any }));
+
+    const amenityItems = Object.entries(amenitiesInfo)
+      .filter(([_, v]) => v === true)
+      .map(([k]) => ({ label: k, value: true, data_state: 'reported' as any }));
+
+    const payload = {
+      name: basicInfo.name || 'New Property',
+      city: basicInfo.city || 'Unknown City',
+      description: basicInfo.description || '',
+      address: basicInfo.address || '',
+      price_inr_per_night: parseFloat(basicInfo.price as any) || undefined,
+      star_rating: basicInfo.starRating || undefined,
+      amenity_items: amenityItems,
+      accessibility_items: accItems,
+      sustainability_items: susItems,
+      data_state: 'reported' as any
+    };
 
     try {
-      const accessibility_items = Object.keys(accessibilityInfo)
-        .filter(key => (accessibilityInfo as any)[key])
-        .map(key => ({
-          label: key,
-          value: true,
-          data_state: 'reported' as any
-        }));
-
-      const sustainability_items = Object.keys(sustainabilityInfo)
-        .filter(key => (sustainabilityInfo as any)[key])
-        .map(key => ({
-          label: key,
-          value: true,
-          data_state: 'reported' as any
-        }));
-
-      await createListing({
-        name: basicInfo.name || 'New Property',
-        city: basicInfo.city || 'Goa',
-        price_inr_per_night: parseInt(basicInfo.price) || null,
-        star_rating: basicInfo.starRating,
-        accessibility_items,
-        sustainability_items,
-        data_state: 'reported'
-      });
-
+      await createListing(payload as any);
       navigate('/b2b/listings');
-    } catch (err) {
-      console.error("Failed to create listing:", err);
-      // Fallback navigation if creation fails
+    } catch (err: any) {
+      console.error("Failed to create listing", err);
       navigate('/b2b/listings');
     }
   };
@@ -215,7 +206,7 @@ export default function OnboardingPage() {
     <div className="h-screen flex flex-col font-sans overflow-hidden bg-[#F1EDE9]">
       <Navbar navItems={[]} brandName="GreenStay Partner" />
 
-      <main className="flex-1 flex flex-col md:flex-row relative overflow-hidden pt-24">
+      <main className="flex-1 flex flex-col md:flex-row relative overflow-hidden pt-24 md:pt-28">
         
         {/* Mobile Toggle Bar */}
         <div className="md:hidden flex items-center bg-[#F8F6F3] border-b border-[#D8C9BE] p-2 shrink-0">

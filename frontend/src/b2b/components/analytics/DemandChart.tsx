@@ -40,8 +40,8 @@ export function DemandChart({ demand }: DemandChartProps) {
             return (
               <div key={index} className="flex flex-col gap-2">
                 <div className="flex justify-between items-baseline text-sm">
-                  <span className="font-bold text-[#1C2B22] text-[15px]">{getLocalizedLabel(item.label, t)}</span>
-                  <span className="font-bold text-[#5B6D62] text-[13px] tracking-wide">{item.count.toLocaleString()} searches</span>
+                  <span className="font-bold text-[#1C2B22] text-[15px] truncate pr-4">{getLocalizedLabel(item.label, t)}</span>
+                  <span className="font-bold text-[#5B6D62] text-[13px] tracking-wide shrink-0">{item.count.toLocaleString()} searches</span>
                 </div>
                 <div className="w-full bg-[#F5F3ED] rounded-sm h-3 overflow-hidden">
                   <div 

@@ -8,17 +8,69 @@ from typing import Dict, Any, List
 import datetime
 
 from app.db.mongo import get_db
-from app.services.live_api import fetch_serpapi_flights, fetch_serpapi_hotels, fetch_railradar_trains
+from app.services.live_api import (
+    fetch_serpapi_hotels, railradar_autocomplete, google_places_autocomplete, google_places_details,
+    railradar_train_route, railradar_train_live, railradar_train_fare, railradar_train_seats
+)
+from app.services.journey_builder import build_train_journeys, build_flight_journeys, build_car_journeys
 from app.models.schemas import (
     TransportSearchRequest, AccommodationSearchRequest,
     TransportSearchResponse, AccommodationSearchResponse,
-    TransportResult, HotelResult
+    TransportResult, HotelResult, NormalizedJourney
 )
 from recommendation_engine.filters import filter_candidates
-from recommendation_engine.scoring import calculate_sub_scores
+from recommendation_engine.scoring import calculate_sub_scores, apply_sustainability_boost
 from recommendation_engine.rank import rank_candidates, generate_trade_offs
 
 router = APIRouter(prefix="/api/search", tags=["Search"])
+
+@router.get("/autocomplete/places")
+async def autocomplete_places(q: str):
+    return await google_places_autocomplete(q)
+
+@router.get("/autocomplete/station")
+async def autocomplete_station(q: str):
+    q = q.lower()
+    stations = [
+        {"code": "LTT", "name": "Mumbai LTT"},
+        {"code": "CSTM", "name": "Mumbai CSMT"},
+        {"code": "BCT", "name": "Mumbai Central"},
+        {"code": "MAO", "name": "Madgaon Jn (Goa)"},
+        {"code": "NDLS", "name": "New Delhi"},
+        {"code": "SBC", "name": "KSR Bengaluru"}
+    ]
+    return [s for s in stations if q in s["name"].lower() or q in s["code"].lower()]
+
+@router.get("/autocomplete/airport")
+async def autocomplete_airport(q: str):
+    q = q.lower()
+    airports = [
+        {"id": "BOM", "name": "Mumbai - Chhatrapati Shivaji Int"},
+        {"id": "GOI", "name": "Goa - Dabolim"},
+        {"id": "DEL", "name": "Delhi - Indira Gandhi Int"},
+        {"id": "BLR", "name": "Bangalore - Kempegowda Int"}
+    ]
+    return [a for a in airports if q in a["name"].lower() or q in a["id"].lower()]
+
+@router.get("/place/{place_id}")
+async def get_place_details(place_id: str):
+    return await google_places_details(place_id)
+
+@router.get("/transport/train/{train_number}/route")
+async def get_train_route(train_number: str):
+    return await railradar_train_route(train_number)
+
+@router.get("/transport/train/{train_number}/live")
+async def get_train_live(train_number: str):
+    return await railradar_train_live(train_number)
+
+@router.get("/transport/train/{train_number}/fare")
+async def get_train_fare(train_number: str, src: str, dst: str, date: str):
+    return await railradar_train_fare(train_number, src, dst, date)
+
+@router.get("/transport/train/{train_number}/seats")
+async def get_train_seats(train_number: str, src: str, dst: str, date: str):
+    return await railradar_train_seats(train_number, src, dst, date)
 
 def _build_trade_off_summary(trade_offs_data: dict, item_id: str) -> List[str]:
     if not trade_offs_data:
@@ -59,31 +111,38 @@ async def search_transport(req: TransportSearchRequest) -> TransportSearchRespon
         except Exception:
             pass
 
-    # 1. Fetch seeded data
-    seeded_cursor = db.transport_routes.find({
-        "origin": req.origin,
-        "destination": req.destination
-    })
+    # 1. We won't use seeded data for real transport logic unless specified
     results = []
-    for doc in seeded_cursor:
-        if "_id" in doc:
-            doc["id"] = str(doc.pop("_id"))
-        doc["source"] = "seeded"
-        results.append(doc)
     
-    # 2. Fetch live data
-    search_date = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-    live_flights = await fetch_serpapi_flights(req.origin, req.destination, search_date)
-    live_trains = await fetch_railradar_trains(req.origin, req.destination, search_date)
+    # 2. Fetch live journeys
+    mode = req.mode or "train"
+    date = req.date or (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
     
-    # 3. Combine and deduplicate
-    seen_ids = {r.get("id") for r in results if r.get("id")}
-    for item in live_flights + live_trains:
-        if "id" not in item:
-            item["id"] = f"live_{len(seen_ids)}"
-        if item["id"] not in seen_ids:
-            results.append(item)
-            seen_ids.add(item["id"])
+    preferences = {}
+    if req.weights:
+        # e.g., mapping convenience to fewer transfers or less walking if high
+        if req.weights.convenience and req.weights.convenience > 0.5:
+            preferences["fewer_transfers"] = True
+            
+    if req.vehicle_preferences:
+        preferences.update(req.vehicle_preferences)
+
+    try:
+        if mode == "train":
+            journeys = await build_train_journeys(req.origin, req.destination, date, preferences)
+        elif mode == "flight":
+            journeys = await build_flight_journeys(req.origin, req.destination, date, preferences)
+        elif mode == "car":
+            journeys = await build_car_journeys(req.origin, req.destination, preferences)
+        else:
+            journeys = []
+            
+        for j in journeys:
+            results.append(j.model_dump())
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        results = []
             
     # 4. Filter (C3/C4)
     filtered = filter_candidates(
@@ -115,19 +174,32 @@ async def search_transport(req: TransportSearchRequest) -> TransportSearchRespon
         
         # Pydantic will validate the strict schema.
         try:
+            emissions_data = cand.get("emissions", {
+                "method": "estimated",
+                "co2e_kg": cand.get("total_co2_kg", 0.0),
+                "distance_km": sum(s.get("distance_km", 0) for s in cand.get("segments", [])),
+                "emission_factor": 0.04
+            })
+            
             final_results.append(TransportResult(
                 id=cand_id,
                 mode=cand["mode"],
-                cost_inr=cand["cost_inr"],
-                duration_minutes=cand["duration_minutes"],
-                emissions=cand["emissions"],
-                accessibility=cand["accessibility"],
+                cost_inr=cand.get("total_cost_inr", 0),
+                duration_minutes=cand.get("total_duration_minutes", 0),
+                emissions=emissions_data,
+                accessibility=cand.get("accessibility", {"value": None, "data_state": "not_verified"}),
                 personal_match_pct=cand.get("personal_match_pct"),
                 trade_off_summary=cand.get("trade_off_summary", []),
-                segments=cand.get("segments", [])
+                recommendation_reasons=cand.get("recommendation_reasons", []),
+                total_walking_m=cand.get("total_walking_m", 0),
+                transfer_count=cand.get("transfer_count", 0),
+                segments=cand.get("segments", []),
+                provider_details=cand.get("provider_details")
             ))
         except Exception as e:
             # Skip invalid candidates
+            import logging
+            logging.error(f"Failed to map TransportResult: {e}")
             pass
 
     return TransportSearchResponse(results=final_results)
@@ -161,10 +233,14 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
         doc["source"] = "seeded"
         results.append(doc)
         
-    # 2. Fetch live data
+    # 2. Fetch live data — use trip dates when supplied, else fall back to +7/+9 days
     if req.destination_city and req.destination_city != "ALL":
-        check_in = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
-        check_out = (datetime.datetime.now() + datetime.timedelta(days=9)).strftime("%Y-%m-%d")
+        if req.arrival_date and req.departure_date:
+            check_in  = req.arrival_date
+            check_out = req.departure_date
+        else:
+            check_in  = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+            check_out = (datetime.datetime.now() + datetime.timedelta(days=9)).strftime("%Y-%m-%d")
         live_hotels = await fetch_serpapi_hotels(req.destination_city, check_in, check_out)
     else:
         live_hotels = []
@@ -189,7 +265,14 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
     
     # 5. Score
     sub_scores = calculate_sub_scores(filtered)
-    
+
+    # 5b. Sustainability soft boost (AGENTS.md §2.2 — not_verified items never boosted)
+    sub_scores = apply_sustainability_boost(
+        filtered,
+        sub_scores,
+        req.sustainability_preferred or [],
+    )
+
     # 6. Rank
     ranked_meta = rank_candidates(filtered, sub_scores, req.weights)
     

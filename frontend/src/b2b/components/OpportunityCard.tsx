@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { UnifiedOpportunity } from '../types/opportunity';
 import { DataStateBadge } from '../../shared/components/DataStateBadge';
-import { ArrowRight, AlertCircle, LineChart, Users, Leaf, ArrowUpRight } from 'lucide-react';
+import { ArrowRight, AlertCircle, LineChart, FileQuestion, Users, CheckCircle2, ShieldCheck, Leaf, ArrowUpRight } from 'lucide-react';
 
 interface OpportunityCardProps {
   opportunity: UnifiedOpportunity;

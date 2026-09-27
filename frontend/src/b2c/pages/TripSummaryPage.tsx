@@ -5,7 +5,7 @@ import { TransportResult, ExperienceResult, ListingDetailResponse, Accommodation
 import { loadRazorpayScript } from '../../lib/razorpay';
 import { formatCurrencyINR } from '../../lib/formatters';
 import { ArrowLeft, AlertCircle, Train, Plane, Bus, Car, Building2, MapPin, CheckCircle2, Loader2 } from 'lucide-react';
-import DataStateBadge from '../../shared/components/DataStateBadge';
+import { DataStateBadge } from '../../shared/components/DataStateBadge';
 import Navbar from '../../shared/components/Navbar';
 import BottomNavBar from '../../shared/components/BottomNavBar';
 

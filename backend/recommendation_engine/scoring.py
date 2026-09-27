@@ -61,10 +61,12 @@ def _score_numeric_axis(
 
 
 def extract_cost(candidate: Any) -> Optional[float]:
-    """Extract cost_inr (transport) or price_inr_per_night (accommodation)."""
+    """Extract cost_inr (transport) or price_inr_per_night (accommodation) or total_cost_inr (journey)."""
     cost = _get_field(candidate, "cost_inr")
     if cost is None:
         cost = _get_field(candidate, "price_inr_per_night")
+    if cost is None:
+        cost = _get_field(candidate, "total_cost_inr")
     
     try:
         return float(cost) if cost is not None else None
@@ -73,8 +75,10 @@ def extract_cost(candidate: Any) -> Optional[float]:
 
 
 def extract_duration(candidate: Any) -> Optional[float]:
-    """Extract duration_minutes."""
+    """Extract duration_minutes or total_duration_minutes."""
     duration = _get_field(candidate, "duration_minutes")
+    if duration is None:
+        duration = _get_field(candidate, "total_duration_minutes")
     try:
         return float(duration) if duration is not None else None
     except (ValueError, TypeError):
@@ -82,7 +86,14 @@ def extract_duration(candidate: Any) -> Optional[float]:
 
 
 def extract_emissions(candidate: Any) -> Optional[float]:
-    """Extract co2e_kg from a valid emissions object."""
+    """Extract co2e_kg from a valid emissions object or total_co2_kg."""
+    total_co2 = _get_field(candidate, "total_co2_kg")
+    if total_co2 is not None:
+        try:
+            return float(total_co2)
+        except (ValueError, TypeError):
+            pass
+
     emissions = _get_field(candidate, "emissions")
     if not emissions:
         return None
@@ -146,11 +157,29 @@ def score_accessibility(candidates: List[Any]) -> List[Optional[float]]:
     return _score_numeric_axis(candidates, extract_accessibility_ratio, lower_is_better=False)
 
 
+def extract_walking(candidate: Any) -> Optional[float]:
+    walk = _get_field(candidate, "total_walking_m")
+    try:
+        return float(walk) if walk is not None else None
+    except (ValueError, TypeError):
+        return None
+
+def extract_transfers(candidate: Any) -> Optional[float]:
+    transfers = _get_field(candidate, "transfer_count")
+    try:
+        return float(transfers) if transfers is not None else None
+    except (ValueError, TypeError):
+        return None
+
+def score_walking(candidates: List[Any]) -> List[Optional[float]]:
+    return _score_numeric_axis(candidates, extract_walking, lower_is_better=True)
+
+def score_transfers(candidates: List[Any]) -> List[Optional[float]]:
+    return _score_numeric_axis(candidates, extract_transfers, lower_is_better=True)
+
+
 def calculate_sub_scores(candidates: List[Any]) -> List[Dict[str, Optional[float]]]:
-    """Calculate all four axis sub-scores for a candidate set.
-    
-    Returns a list of score dictionaries parallel to the input candidate list.
-    """
+    """Calculate all axis sub-scores for a candidate set."""
     if not candidates:
         return []
         
@@ -158,6 +187,8 @@ def calculate_sub_scores(candidates: List[Any]) -> List[Dict[str, Optional[float
     convenience = score_convenience(candidates)
     environmental = score_environmental(candidates)
     accessibility = score_accessibility(candidates)
+    walking = score_walking(candidates)
+    transfers = score_transfers(candidates)
     
     results = []
     for i in range(len(candidates)):
@@ -166,6 +197,53 @@ def calculate_sub_scores(candidates: List[Any]) -> List[Dict[str, Optional[float
             "convenience": convenience[i],
             "environmental": environmental[i],
             "accessibility": accessibility[i],
+            "walking": walking[i],
+            "transfers": transfers[i],
         })
         
     return results
+
+
+def apply_sustainability_boost(
+    candidates: List[Any],
+    sub_scores_list: List[Dict[str, Optional[float]]],
+    sustainability_preferred: Optional[List[str]],
+    boost_per_match: float = 0.15,
+) -> List[Dict[str, Optional[float]]]:
+    """Boost the environmental sub-score for candidates with matching sustainability items.
+
+    Rules (AGENTS.md §2.1, §2.2):
+      - This is a soft ranking preference ONLY — never a hard filter.
+      - Only sustainability_items with data_state != 'not_verified' are eligible for boosting.
+      - 'not_verified' items are never boosted — their value is null/omitted and carries
+        no positive evidence.
+      - The boost is additive on the environmental sub-score, capped at 1.0.
+      - If sustainability_preferred is empty or None, the list is returned unchanged.
+      - If a candidate has no environmental sub-score (None), it stays None — we do not
+        fabricate an environmental score merely because sustainability items matched.
+      - Zero hotel results will never be caused solely by a sustainability preference.
+    """
+    if not sustainability_preferred:
+        return sub_scores_list
+
+    preferred_set = set(sustainability_preferred)
+    result = []
+
+    for cand, scores in zip(candidates, sub_scores_list):
+        new_scores = dict(scores)
+        items = _get_field(cand, "sustainability_items") or []
+
+        bonus = 0.0
+        for item in items:
+            label = _get_field(item, "label")
+            state = _get_field(item, "data_state")
+            # Only boost verified evidence — not_verified items are never boosted.
+            if label in preferred_set and state not in (None, "not_verified", DataState.not_verified):
+                bonus += boost_per_match
+
+        if bonus > 0.0 and new_scores.get("environmental") is not None:
+            new_scores["environmental"] = min(1.0, new_scores["environmental"] + bonus)
+
+        result.append(new_scores)
+
+    return result

@@ -64,16 +64,16 @@ export function AmenitiesStep({ value, onChange, onContinue, onBack }: Amenities
               <button
                 key={item.id}
                 onClick={() => toggleAmenity(item.id)}
-                className={`flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200 ${
+                className={`flex items-center gap-3 p-3 sm:p-4 rounded-xl border text-left transition-all duration-200 h-full ${
                   isSelected 
                     ? 'bg-white border-[#7C9278] shadow-sm ring-1 ring-[#7C9278]/20' 
                     : 'bg-white/50 border-[#D8C9BE]/60 hover:border-[#7C9278]/50 hover:bg-white'
                 }`}
               >
-                <div className={`p-2 rounded-lg ${isSelected ? 'bg-[#7C9278]/10 text-[#7C9278]' : 'bg-[#F1EDE9] text-[#26382D]/50'}`}>
+                <div className={`shrink-0 p-2 rounded-lg ${isSelected ? 'bg-[#7C9278]/10 text-[#7C9278]' : 'bg-[#F1EDE9] text-[#26382D]/50'}`}>
                   {item.icon}
                 </div>
-                <span className={`font-medium ${isSelected ? 'text-[#26382D]' : 'text-[#26382D]/70'}`}>
+                <span className={`flex-1 font-medium text-sm sm:text-base leading-tight break-words ${isSelected ? 'text-[#26382D]' : 'text-[#26382D]/70'}`}>
                   {item.label}
                 </span>
               </button>
@@ -87,12 +87,12 @@ export function AmenitiesStep({ value, onChange, onContinue, onBack }: Amenities
               <button
                 key={key}
                 onClick={() => toggleAmenity(key)}
-                className={`flex items-center gap-4 p-4 rounded-xl border text-left transition-all duration-200 bg-white border-[#7C9278] shadow-sm ring-1 ring-[#7C9278]/20`}
+                className={`flex items-center gap-3 p-3 sm:p-4 rounded-xl border text-left transition-all duration-200 h-full bg-white border-[#7C9278] shadow-sm ring-1 ring-[#7C9278]/20`}
               >
-                <div className="p-2 rounded-lg bg-[#7C9278]/10 text-[#7C9278]">
+                <div className="shrink-0 p-2 rounded-lg bg-[#7C9278]/10 text-[#7C9278]">
                   <Check className="w-5 h-5" />
                 </div>
-                <span className="font-medium text-[#26382D] capitalize">
+                <span className="flex-1 font-medium text-sm sm:text-base leading-tight break-words text-[#26382D] capitalize">
                   {key}
                 </span>
               </button>

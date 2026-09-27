@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ExperienceResult } from '../../lib/api';
-import DataStateBadge from '../../shared/components/DataStateBadge';
+import { DataStateBadge } from '../../shared/components/DataStateBadge';
 import { formatCurrencyINR, formatDuration } from '../../lib/formatters';
 import { Clock, MapPin, IndianRupee } from 'lucide-react';
 

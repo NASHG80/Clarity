@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, X, Check, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, X, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { getAiAnalyticsSummary, AIAnalyticsSummaryResponse } from '../../../lib/api';
 
 interface AiAnalyticsPanelProps {
@@ -215,6 +215,15 @@ export function AiAnalyticsPanel({ businessId, period, isOpen, onClose }: AiAnal
                   </ol>
                 </section>
               )}
+              <div className="pt-8 border-t border-[#F0EBE1] flex justify-center pb-8">
+                <button 
+                  onClick={handleFetch}
+                  className="flex items-center gap-2 bg-white border border-[#D8C9BE] text-[#26382D] hover:bg-[#FDFCFB] transition-colors py-2 px-4 rounded-lg text-sm font-medium"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Regenerate insights
+                </button>
+              </div>
             </>
           )}
         </div>

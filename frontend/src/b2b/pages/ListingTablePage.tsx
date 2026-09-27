@@ -18,7 +18,7 @@ export default function ListingTablePage() {
         const res = await fetch(`${API_BASE_URL}/api/listings`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        setProperties(data);
+        setProperties(data.reverse ? data.reverse() : data);
       } catch (err) {
         console.error("Failed to load listings", err);
       } finally {
@@ -56,7 +56,7 @@ export default function ListingTablePage() {
       ) : (
         <div className="flex flex-col gap-6">
           {properties.map((prop) => (
-            <div key={prop.id} className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
+            <div key={(prop as any).id || prop._id} className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden flex flex-col md:flex-row hover:shadow-md transition-shadow">
               
               {/* Left: Image */}
               <div className="w-full md:w-1/3 h-56 md:h-auto relative bg-[#E5DFD6]">
@@ -84,7 +84,7 @@ export default function ListingTablePage() {
                 <div>
                   <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-2">
                     <h2 className="text-xl md:text-2xl font-serif font-bold text-[#26382D] line-clamp-1">
-                      {prop.translations?.en?.name || 'Unnamed Property'}
+                      {prop.translations?.en?.name || (prop as any).name || 'Unnamed Property'}
                     </h2>
                     <div className="shrink-0 mt-1 sm:mt-0">
                       <DataStateBadge state={prop.data_state as any} />

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { TransportResult } from '../../lib/api';
 import JourneySegmentTimeline from '../components/JourneySegmentTimeline';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import Navbar from '../../shared/components/Navbar';
 import BottomNavBar from '../../shared/components/BottomNavBar';
 
@@ -18,6 +18,65 @@ export default function JourneyViewPage() {
 
   const state = location.state as RouteNavigationState | null;
   const result = state?.result;
+  const [isPaying, setIsPaying] = React.useState(false);
+
+  const handlePayment = async () => {
+    if (!result) return;
+    setIsPaying(true);
+    try {
+      const configRes = await fetch('/api/booking/config');
+      const { key_id } = await configRes.json();
+
+      const orderRes = await fetch('/api/booking/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount_inr: result.cost_inr, currency: 'INR', receipt_id: 'receipt_' + Date.now() })
+      });
+      
+      if (!orderRes.ok) throw new Error('Order creation failed');
+      const order = await orderRes.json();
+
+      const options = {
+        key: key_id,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'Green & Inclusive Travel',
+        description: 'Test Booking',
+        order_id: order.order_id,
+        handler: async function (response: any) {
+          const verifyRes = await fetch('/api/booking/verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.payment_verified) {
+             navigate('/booking-confirmation', { state: { result, payment: response } });
+          }
+        },
+        prefill: {
+          name: 'Test User',
+          email: 'test@example.com',
+          contact: '9999999999'
+        },
+        theme: {
+          color: '#26382D'
+        }
+      };
+
+      const rzp1 = new (window as any).Razorpay(options);
+      rzp1.open();
+    } catch (err) {
+      console.error(err);
+      alert('Payment initialization failed. Check console for details.');
+    } finally {
+      setIsPaying(false);
+    }
+  };
 
   const handleBackToResults = () => {
     navigate(-1); // Go back to results
@@ -167,9 +226,31 @@ export default function JourneyViewPage() {
             
             <div className="w-80 flex-shrink-0">
               <div className="bg-[#EAE4DD] rounded-xl p-6 border border-[#D8C9BE] sticky top-32">
-                <h3 className="font-serif text-lg font-medium text-[#26382D] mb-4">Journey Info</h3>
-                <p className="text-sm text-[#A99587]">
-                  Google Maps overlay is deferred (requires route geometry).
+                <h3 className="font-serif text-lg font-medium text-[#26382D] mb-4">Journey Summary</h3>
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between text-sm text-[#26382D]">
+                    <span>Total Cost</span>
+                    <span className="font-bold">₹{result.cost_inr}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-[#26382D]">
+                    <span>Total Duration</span>
+                    <span className="font-bold">{Math.floor(result.duration_minutes/60)}h {result.duration_minutes%60}m</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-[#26382D]">
+                    <span>Estimated CO₂e</span>
+                    <span className="font-bold">{result.emissions?.co2e_kg?.toFixed(1) || 0} kg</span>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={handlePayment}
+                  disabled={isPaying}
+                  className="w-full bg-[#26382D] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#1a261f] flex items-center justify-center gap-2"
+                >
+                  {isPaying ? <Loader2 className="w-5 h-5 animate-spin" /> : `Pay ₹${result.cost_inr} to Book`}
+                </button>
+                <p className="text-xs text-center text-[#7C9278] mt-3">
+                  This is a test checkout. No real money will be charged.
                 </p>
               </div>
             </div>

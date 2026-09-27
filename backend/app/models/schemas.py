@@ -190,18 +190,50 @@ class AttributeWithState(BaseModel):
         return self
 
 
-# ---------------------------------------------------------------------------
-# Transport segment
-# ---------------------------------------------------------------------------
-class Segment(BaseModel):
+class NormalizedPlace(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str
+    lat: float
+    lng: float
+    place_id: Optional[str] = None
+    code: Optional[str] = None
+    address: Optional[str] = None
+
+
+class NormalizedSegment(BaseModel):
     """One leg of a multi-modal transport route."""
     model_config = ConfigDict(extra="forbid")
 
-    type: str                               # e.g. "walk", "train", "flight"
-    duration_minutes: Optional[int] = None
-    distance_m: Optional[int] = None
-    accessible: Optional[bool] = None
-    data_state: DataState
+    id: str
+    segment_type: str  # "first_mile", "main", "last_mile"
+    mode: str          # "WALK", "TRANSIT", "DRIVE", "TRAIN", "FLIGHT"
+    provider: str
+    origin: NormalizedPlace
+    destination: NormalizedPlace
+    distance_km: float
+    duration_minutes: int
+    cost_inr: Optional[float] = None
+    co2_kg: Optional[float] = None
+    accessibility: Optional[AttributeWithState] = None
+    geometry: Optional[Any] = None  # Encoded polyline str or GeoJSON dict
+    sub_steps: List[Any] = Field(default_factory=list)
+    details: Optional[dict] = None
+
+
+class NormalizedJourney(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    journey_id: str
+    mode: str
+    segments: List[NormalizedSegment]
+    total_cost_inr: float
+    total_duration_minutes: int
+    total_co2_kg: float
+    total_walking_m: int
+    transfer_count: int
+    accessibility: AttributeWithState
+    recommendation_reasons: List[str] = Field(default_factory=list)
+    trade_offs: List[str] = Field(default_factory=list)
+    provider_details: Optional[dict] = None
 
 
 # ===========================================================================
@@ -262,13 +294,18 @@ class SearchWeights(_StrictBase):
 
 
 class TransportSearchRequest(_StrictBase):
-    origin: str
-    destination: str
+    origin: Union[str, dict]
+    destination: Union[str, dict]
+    mode: Optional[str] = None
+    vehicle_preferences: Optional[dict] = None
     budget_max: Optional[float] = None
     time_max_hours: Optional[float] = None
     accessibility_required: Optional[List[str]] = Field(default_factory=list)
     weights: Optional[SearchWeights] = None
     include_unverified: Optional[bool] = False
+    passengers: Optional[dict] = None
+    date: Optional[str] = None
+    time: Optional[str] = None
 
 
 class TransportResult(BaseModel):
@@ -283,7 +320,11 @@ class TransportResult(BaseModel):
     accessibility: AttributeWithState
     personal_match_pct: Optional[float] = None
     trade_off_summary: List[str] = Field(default_factory=list)
-    segments: List[Segment] = Field(default_factory=list)
+    recommendation_reasons: List[str] = Field(default_factory=list)
+    total_walking_m: int = 0
+    transfer_count: int = 0
+    segments: List[NormalizedSegment] = Field(default_factory=list)
+    provider_details: Optional[dict] = None
 
 
 class TransportSearchResponse(BaseModel):
@@ -301,6 +342,24 @@ class AccommodationSearchRequest(_StrictBase):
     accessibility_required: Optional[List[str]] = Field(default_factory=list)
     weights: Optional[SearchWeights] = None
     include_unverified: Optional[bool] = False
+    # Optional trip-date fields (Customer Dashboard — backwards-compatible)
+    arrival_date: Optional[str] = None    # YYYY-MM-DD; when supplied overrides +7 day fallback
+    departure_date: Optional[str] = None  # YYYY-MM-DD; must be after arrival_date
+    # Sustainability ranking preference (soft boost only — never a hard filter)
+    sustainability_preferred: Optional[List[str]] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def check_dates(self) -> "AccommodationSearchRequest":
+        from datetime import date as _date
+        if self.arrival_date and self.departure_date:
+            try:
+                arr = _date.fromisoformat(self.arrival_date)
+                dep = _date.fromisoformat(self.departure_date)
+            except ValueError as exc:
+                raise ValueError("arrival_date and departure_date must be YYYY-MM-DD") from exc
+            if dep <= arr:
+                raise ValueError("departure_date must be strictly after arrival_date")
+        return self
 
 
 class HotelResult(BaseModel):
@@ -328,13 +387,17 @@ class AccommodationSearchResponse(BaseModel):
 # LISTINGS — GET /api/listings/{id} and POST /api/listings
 # ===========================================================================
 
-class ListingCreateRequest(_StrictBase):
+class ListingCreateRequest(BaseModel):
     """Manual listing creation — only 'reported' or 'demo_synthetic' accepted."""
+    model_config = ConfigDict(extra="ignore")
     data_state: ListingSubmitDataState
     name: Optional[str] = None
     city: Optional[str] = None
+    description: Optional[str] = None
+    address: Optional[str] = None
     price_inr_per_night: Optional[float] = None
     star_rating: Optional[int] = None
+    # Checklist items — optional so that basic listings without items are accepted
     accessibility_items: List[ChecklistItem] = Field(default_factory=list)
     sustainability_items: List[ChecklistItem] = Field(default_factory=list)
 
@@ -349,7 +412,7 @@ class ListingCreateResponse(BaseModel):
 
 class ListingDetailResponse(BaseModel):
     """Full listing detail — returned by GET /api/listings/{id}."""
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: str
     data_state: DataState

@@ -28,7 +28,7 @@ export function Navbar({ navItems, brandName }: { navItems?: NavItem[], brandNam
           <button 
             onClick={() => navigate('/')} 
             className="flex items-center gap-2 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7C9278] rounded-md"
-            aria-label={t('accessibility.home', 'Green & Inclusive Travel Homepage')}
+            aria-label={brandName || t('accessibility.home', 'Green & Inclusive Travel Homepage')}
           >
             <div className="w-8 h-8 rounded-full bg-[#26382D] text-[#F8F6F3] flex items-center justify-center transition-transform group-hover:scale-105 duration-300 shadow-xs">
               <Leaf className="w-4 h-4" />
@@ -84,6 +84,7 @@ export function Navbar({ navItems, brandName }: { navItems?: NavItem[], brandNam
                 <span>{t('home.nav.forBusinesses', 'For Businesses')}</span>
                 <ArrowUpRight className="w-3.5 h-3.5 text-[#7C9278]" />
               </button>
+
               <span className="w-[1px] h-4 bg-[#D8C9BE]" aria-hidden="true" />
             </>
           )}

@@ -173,6 +173,7 @@ export interface ListingFeatureItem {
 
 export interface ListingPayload {
   _id?: string;
+  id?: string;
   name: string;
   city: string;
   price_inr_per_night: number | null;
@@ -180,11 +181,22 @@ export interface ListingPayload {
   accessibility_items: ListingFeatureItem[];
   sustainability_items: ListingFeatureItem[];
   data_state: 'reported' | 'demo_synthetic';
+  photos?: string[];
+  property_rules?: any;
+  rules?: any;
+  amenities?: string[];
+  rooms?: any[];
 }
 
 export interface ListingResponse extends ListingPayload {
   _id: string;
+  id?: string;
   translations?: Record<string, any>;
+  photos?: string[];
+  property_rules?: any;
+  rules?: any;
+  amenities?: string[];
+  rooms?: any[];
 }
 
 export const mockGetListing = async (id: string): Promise<ListingResponse> => {
@@ -195,10 +207,17 @@ export const mockGetListing = async (id: string): Promise<ListingResponse> => {
     city: 'Goa',
     price_inr_per_night: 3000,
     star_rating: 3,
-    accessibility_items: [],
-    sustainability_items: [],
-    data_state: 'demo_synthetic'
-  };
+    accessibility_items: [
+      { label: 'step_free_entrance', value: true, data_state: 'demo_synthetic' },
+      { label: 'elevator', value: true, data_state: 'demo_synthetic' }
+    ],
+    sustainability_items: [
+      { label: 'waste_program', value: true, data_state: 'demo_synthetic' }
+    ],
+    data_state: 'demo_synthetic',
+    translations: { en: { name: 'Demo Grand Hotel', description: 'This is a demo property showing how your profile will look.' } },
+    photos: ["https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"]
+  } as any;
 };
 
 export const mockCreateListing = async (payload: ListingPayload): Promise<ListingResponse> => {
@@ -215,16 +234,25 @@ export const getListing = async (id: string): Promise<ListingResponse> => {
     if (response.ok) {
       return await response.json();
     }
-    if (response.status === 404 || response.status === 501) {
-      return await mockGetListing(id);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch listing with status ${response.status}`);
     }
     throw new Error(`Failed to fetch listing with status ${response.status}`);
   } catch (error: any) {
-    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
-      return await mockGetListing(id);
-    }
     throw error;
   }
+};
+
+export const getAllListings = async (): Promise<ListingResponse[]> => {
+  const response = await fetch(`${API_BASE_URL}/api/listings`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch all listings: ${response.status}`);
+  }
+  const data = await response.json();
+  if (!data || data.length === 0) {
+    return [await mockGetListing('mock_hotel_014')];
+  }
+  return data;
 };
 
 export const createListing = async (payload: ListingPayload): Promise<ListingResponse> => {
@@ -239,14 +267,11 @@ export const createListing = async (payload: ListingPayload): Promise<ListingRes
     if (response.ok) {
       return await response.json();
     }
-    if (response.status === 404 || response.status === 501) {
-      return await mockCreateListing(payload);
+    if (!response.ok) {
+      throw new Error(`Failed to create listing with status ${response.status}`);
     }
     throw new Error(`Failed to create listing with status ${response.status}`);
   } catch (error: any) {
-    if (error instanceof TypeError && (error.message.includes('Failed to fetch') || error.message.includes('fetch failed') || error.message.includes('Network request failed'))) {
-      return await mockCreateListing(payload);
-    }
     throw error;
   }
 };
@@ -730,6 +755,12 @@ export async function searchTransport(payload: TransportSearchRequest): Promise<
 
 export interface AccommodationSearchRequest extends TransportSearchRequest {
   destination_city: string;
+  // Optional trip dates — when supplied, used for live hotel search (SerpAPI)
+  // instead of the default +7/+9 day fallback. Backwards-compatible.
+  arrival_date?: string;           // YYYY-MM-DD
+  departure_date?: string;         // YYYY-MM-DD
+  // Soft ranking preference — never a hard filter; not_verified items never boosted
+  sustainability_preferred?: string[];
 }
 
 export interface AccommodationItem {
@@ -782,8 +813,7 @@ export async function searchAccommodation(payload: AccommodationSearchRequest): 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn(`Accommodation search failed with status ${response.status}, falling back to mock.`);
-      return getAccommodationMockData(payload);
+      throw new Error(`Accommodation search failed with status ${response.status}`);
     }
 
     const data: AccommodationSearchResponse = await response.json();
@@ -791,8 +821,7 @@ export async function searchAccommodation(payload: AccommodationSearchRequest): 
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name !== "AbortError") {
-      console.warn("Accommodation search network error, falling back to mock.", err);
-      return getAccommodationMockData(payload);
+      throw err;
     }
     throw new Error("Accommodation search timed out");
   }
@@ -867,6 +896,7 @@ export interface ListingDetailResponse {
   amenities?: string[];
   rooms?: any[];
   rules?: any;
+  property_rules?: any;
   address?: string;
   location?: { lat: number; lng: number };
 }
@@ -898,8 +928,7 @@ export async function getListingDetail(id: string): Promise<ListingDetailRespons
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn(`Listing detail fetch failed with status ${response.status}, falling back to mock.`);
-      return getListingDetailMockData(id);
+      throw new Error(`Listing detail fetch failed with status ${response.status}`);
     }
 
     const data: ListingDetailResponse = await response.json();
@@ -907,8 +936,7 @@ export async function getListingDetail(id: string): Promise<ListingDetailRespons
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name !== "AbortError") {
-      console.warn("Listing detail network error, falling back to mock.", err);
-      return getListingDetailMockData(id);
+      throw err;
     }
     throw new Error("Listing detail fetch timed out");
   }
@@ -1204,4 +1232,142 @@ export const uploadPhotoToCloudinary = async (file: File, signatureInfo?: any): 
   await new Promise(resolve => setTimeout(resolve, 1000));
   return { url: URL.createObjectURL(file), public_id: 'mock_id_' + Date.now() };
 };
+
+// =============================================================================
+// B2C — Customer Dashboard Trip API
+// =============================================================================
+
+export interface TripWeights {
+  environmental: number;
+  accessibility: number;
+  affordability: number;
+  convenience: number;
+}
+
+export type DashboardPhase =
+  | 'EMPTY'
+  | 'BASICS_SAVED'
+  | 'ACCESSIBILITY'
+  | 'SUSTAINABILITY'
+  | 'PRIORITIES'
+  | 'SEARCHING'
+  | 'RESULTS'
+  | 'ERROR';
+
+export interface TripState {
+  trip_id: string;
+  user_id: string;
+  destination: string;
+  adults: number;
+  children: number;
+  rooms: number;
+  arrival_date: string;
+  departure_date: string;
+  accessibility_required: string[];
+  sustainability_preferred: string[];
+  budget_max: number | null;
+  weights: TripWeights;
+  include_unverified: boolean;
+  phase: DashboardPhase;
+  last_search_result_count: number | null;
+  created_at: string;
+  last_updated: string;
+}
+
+export interface TripCreatePayload {
+  user_id: string;
+  destination: string;
+  adults: number;
+  children: number;
+  rooms: number;
+  arrival_date: string;
+  departure_date: string;
+}
+
+export interface TripCreateResponse {
+  trip_id: string;
+  phase: DashboardPhase;
+  created_at: string;
+}
+
+export interface TripInteraction {
+  interaction_id: string;
+  event_type: string;
+  timestamp: string;
+  payload: Record<string, unknown>;
+}
+
+export interface TripInteractionPayload {
+  user_id: string;
+  session_id: string;
+  event_type: string;
+  payload: Record<string, unknown> & { client_event_id: string };
+}
+
+export async function createTrip(payload: TripCreatePayload): Promise<TripCreateResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/trips/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Create trip failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function getActiveTrip(userId: string): Promise<{ trip: TripState | null }> {
+  const response = await fetch(`${API_BASE_URL}/api/trips/active?user_id=${encodeURIComponent(userId)}`);
+  if (!response.ok) {
+    throw new Error(`Get active trip failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function patchTripState(
+  tripId: string,
+  partial: Partial<TripState> & { user_id: string }
+): Promise<{ trip_id: string; last_updated: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/trips/${encodeURIComponent(tripId)}/state`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(partial),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Patch trip state failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+export async function postTripInteraction(
+  tripId: string,
+  payload: TripInteractionPayload
+): Promise<{ interaction_id: string; status: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/trips/${encodeURIComponent(tripId)}/interactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  // Fire-and-forget pattern: swallow errors silently in production
+  if (!response.ok) {
+    console.warn(`Interaction post failed: ${response.status}`);
+    return { interaction_id: '', status: 'failed' };
+  }
+  return response.json();
+}
+
+export async function getTripInteractions(
+  tripId: string,
+  userId: string
+): Promise<{ interactions: TripInteraction[] }> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/trips/${encodeURIComponent(tripId)}/interactions?user_id=${encodeURIComponent(userId)}`
+  );
+  if (!response.ok) {
+    throw new Error(`Get interactions failed: ${response.status}`);
+  }
+  return response.json();
+}
 

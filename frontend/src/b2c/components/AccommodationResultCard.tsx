@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AccommodationResult } from '../../lib/api';
-import DataStateBadge from '../../shared/components/DataStateBadge';
+import { DataStateBadge } from '../../shared/components/DataStateBadge';
 import { Star, Image as ImageIcon } from 'lucide-react';
 import { formatCurrencyINR } from '../../lib/formatters';
 
@@ -24,7 +24,7 @@ export default function AccommodationResultCard({ result }: AccommodationResultC
   const accessibilityCount = result.accessibility_items ? result.accessibility_items.length : 0;
   
   const handleCardClick = () => {
-    navigate(`/listings/${result.id}`, { state: location.state });
+    navigate(`/listings/${result.id}`, { state: { ...location.state, hotelResult: result } });
   };
 
   return (
