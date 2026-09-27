@@ -72,7 +72,7 @@ export function AiAnalysisStep({
 
     try {
       // Use the API layer mock (as actual endpoint is missing)
-      const detections = await mockInspectPropertyImage(photo.id, photo.bucket);
+      const detections = await mockInspectPropertyImage(photo.id, photo.bucket, photo.file);
 
       onChange((prev) => ({
         ...prev,

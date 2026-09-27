@@ -72,15 +72,15 @@ async def inspect_property_image(
     # 2. Forward to downstream ai-vision-service
     vision_url = os.getenv("AI_VISION_URL", "http://localhost:8001").rstrip("/")
     
-    # ai-vision-service contract expects: image file + queries[]
-    data = [("queries", q) for q in parsed_queries]
+    # ai-vision-service contract expects: file + queries (JSON string)
+    data = {"queries": json.dumps(parsed_queries)}
     
     try:
         image_bytes = await image.read()
     except Exception as exc:
         raise HTTPException(status_code=400, detail="Failed to read uploaded image.")
         
-    files = {"image": (image.filename or "image.jpg", image_bytes, image.content_type or "image/jpeg")}
+    files = {"file": (image.filename or "image.jpg", image_bytes, image.content_type or "image/jpeg")}
 
     try:
         async with httpx.AsyncClient() as client:
