@@ -88,6 +88,7 @@ export function Navbar({ navItems, brandName }: { navItems?: NavItem[], brandNam
               <span className="w-[1px] h-4 bg-[#D8C9BE]" aria-hidden="true" />
             </>
           )}
+          
 
           {/* Language Switcher */}
           <div className="relative mr-2">
