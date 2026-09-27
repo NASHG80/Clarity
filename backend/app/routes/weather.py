@@ -14,7 +14,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from app.services.weather_service import (
-    fetch_weather,
+    fetch_weather_batch,
     get_route_weather_points,
     compute_weather_impact,
     simulate_weather_scenario,
@@ -69,12 +69,14 @@ async def journey_impact(req: JourneyImpactRequest):
       - route_points: sampled points with per-segment weather + risk colour
       - impact: Digital Twin delay / risk / adjusted ETA
     """
-    # Fetch origin and destination weather concurrently
-    import asyncio
-    origin_data, dest_data = await asyncio.gather(
-        fetch_weather(req.origin_lat, req.origin_lng),
-        fetch_weather(req.dest_lat, req.dest_lng),
-    )
+    from app.services.weather_service import fetch_weather_batch
+    batch_data = await fetch_weather_batch([
+        (req.origin_lat, req.origin_lng),
+        (req.dest_lat, req.dest_lng)
+    ])
+    
+    origin_data = batch_data[0] if len(batch_data) > 0 else {}
+    dest_data = batch_data[1] if len(batch_data) > 1 else origin_data
 
     origin_current = _parse_current(origin_data)
     dest_current = _parse_current(dest_data)

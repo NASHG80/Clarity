@@ -504,9 +504,9 @@ export default function TransportResultsPage() {
                   {selectedOption.mode === 'car' && (
                     <button
                       onClick={() => setShowDigitalTwin(true)}
-                      className="flex items-center gap-2 bg-gradient-to-r from-[#1a3a5c] to-[#2563EB] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
+                      className="flex items-center gap-2 bg-white border border-[#D8C9BE] text-[#26382D] px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#EAF0EB] hover:border-[#7C9278] transition-colors shadow-sm"
                     >
-                      <span>🌐</span> Weather Digital Twin
+                      ☁️ <span>Weather Analysis</span>
                     </button>
                   )}
                 </div>
@@ -537,6 +537,19 @@ export default function TransportResultsPage() {
                         {transfers > 2 && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-amber-600 font-bold">⚠</span> {transfers} transfers — more than a direct option</li>}
                         {reasons.map((r: string, i: number) => <li key={i} className="flex items-start gap-2 text-[#3A5043]"><span className="text-green-600 font-bold">✓</span>{r}</li>)}
                         {tradeoffs.map((t: string, i: number) => <li key={i} className="flex items-start gap-2 text-[#3A5043]"><span className="text-amber-600 font-bold">⚠</span>{t}</li>)}
+                        
+                        {/* Fallback if list is entirely empty */}
+                        {!usesTransit && co2 >= 30 && cost >= 3000 && walkKm === 0 && transfers <= 2 && reasons.length === 0 && tradeoffs.length === 0 && (
+                          <li className="flex items-start gap-2 text-[#3A5043]">
+                            <span className="text-green-600 font-bold">✓</span>
+                            {selectedOption.mode === 'car' ? 'Direct door-to-door journey' : 'Standard route matching your search'}
+                          </li>
+                        )}
+                        {selectedOption.mode === 'car' && transfers === 0 && reasons.length === 0 && (
+                           <li className="flex items-start gap-2 text-[#3A5043]">
+                             <span className="text-green-600 font-bold">✓</span> Comfortable private journey, no transfers required
+                           </li>
+                        )}
                       </ul>
                     </div>
                     <div className="w-full sm:w-44 shrink-0 space-y-2 text-sm flex flex-col justify-between">
