@@ -12,6 +12,7 @@ import FlightCard from '../components/transport/FlightCard';
 import StationAutocomplete from '../components/transport/StationAutocomplete';
 import AirportAutocomplete from '../components/transport/AirportAutocomplete';
 import FlightPriceInsights from '../components/transport/FlightPriceInsights';
+import DigitalTwinPanel from '../components/transport/DigitalTwinPanel';
 import { API_BASE_URL } from '../../lib/api';
 
 export default function TransportResultsPage() {
@@ -33,6 +34,7 @@ export default function TransportResultsPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showDigitalTwin, setShowDigitalTwin] = useState(false);
   // Handlers
   const handleTripSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -482,12 +484,30 @@ export default function TransportResultsPage() {
 
           {step === 'BREAKDOWN' && selectedOption && (
             <div className="w-full">
+              {/* Digital Twin Panel overlay */}
+              {showDigitalTwin && selectedOption.mode === 'car' && (
+                <DigitalTwinPanel
+                  carOption={selectedOption}
+                  onClose={() => setShowDigitalTwin(false)}
+                />
+              )}
+
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <button onClick={() => setStep('RESULTS')} className="text-[#7C9278] hover:text-[#26382D]">
                     <ChevronRight className="w-5 h-5 rotate-180" />
                   </button>
                   <h2 className="font-serif text-2xl text-[#26382D]">Complete Journey</h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  {selectedOption.mode === 'car' && (
+                    <button
+                      onClick={() => setShowDigitalTwin(true)}
+                      className="flex items-center gap-2 bg-gradient-to-r from-[#1a3a5c] to-[#2563EB] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-sm"
+                    >
+                      <span>🌐</span> Weather Digital Twin
+                    </button>
+                  )}
                 </div>
               </div>
 
