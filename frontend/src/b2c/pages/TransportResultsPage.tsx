@@ -199,6 +199,7 @@ export default function TransportResultsPage() {
       setIsCheckingOut(false);
       navigate('/trip-summary', {
         state: {
+          ...(location.state || {}),
           transportResult: selectedOption,
         }
       });

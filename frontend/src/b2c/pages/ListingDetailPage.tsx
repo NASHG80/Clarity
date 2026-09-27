@@ -115,89 +115,34 @@ export default function ListingDetailPage() {
     }
   };
 
-  // Razorpay Test Mode Payment Handler
-  const handleBookNow = async () => {
+  // Continue to Transport Selection
+  const handleBookNow = () => {
     if (!listing || isProcessing) return;
-    setIsProcessing(true);
-    setPaymentError(null);
-
-    const amountInr = Number(listing.price_inr_per_night) || 3500;
-
-    try {
-      // 1. Create order on backend
-      const receiptId = `rcpt_${Date.now()}_${listing.id.slice(0, 8)}`;
-      const order = await createBookingOrder({
-        amount_inr: amountInr,
-        currency: 'INR',
-        receipt_id: receiptId,
-      });
-
-      // 2. Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        throw new Error('Razorpay SDK failed to load. Please check your internet connection.');
-      }
-
-      // 3. Configure Razorpay modal
-      const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TgZyIjprHR1Rn3';
-      const currentTranslation = listing.translations?.[i18n.language] || listing.translations?.['en'];
-      const hotelName = currentTranslation?.name || 'Hotel Stay';
-
-      const options = {
-        key: keyId,
-        amount: order.amount,
-        currency: order.currency,
-        order_id: order.order_id,
-        name: 'CLARITY',
-        description: `Booking for ${hotelName}`,
-        handler: async function (response: any) {
-          setIsProcessing(true);
-          try {
-            const verification = await verifyBookingPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-
-            if (verification.payment_verified) {
-              navigate('/transport', {
-                state: {
-                  ...location.state,
-                  hotelResult: listing,
-                  reservation_status: verification.reservation_status || 'simulated',
-                  payment: response,
-                },
-              });
-            } else {
-              setPaymentError('Payment verification failed. Please try again.');
-              setIsProcessing(false);
-            }
-          } catch (err: any) {
-            setPaymentError(err.message || 'Error verifying payment.');
-            setIsProcessing(false);
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            setIsProcessing(false);
-          },
-        },
-        theme: {
-          color: '#26382D',
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response: any) {
-        setPaymentError(response.error?.description || 'Payment failed. Please try again.');
-        setIsProcessing(false);
-      });
-      rzp.open();
-    } catch (err: any) {
-      setPaymentError(err.message || 'Could not initialize payment.');
-      setIsProcessing(false);
-    }
+    
+    // Instead of processing payment here, we store the selected hotel and move to transport selection.
+    // The actual payment will happen at the end on the TripSummaryPage.
+    navigate('/transport', {
+      state: {
+        ...(location.state || {}),
+        hotelResult: listing,
+        reservation_status: 'pending_checkout',
+      },
+    });
   };
+
+  // Skip Transport and go straight to Checkout for just the hotel
+  const handleCheckoutHotelOnly = () => {
+    if (!listing || isProcessing) return;
+    
+    navigate('/trip-summary', {
+      state: {
+        ...(location.state || {}),
+        hotelResult: listing,
+        reservation_status: 'pending_checkout',
+      },
+    });
+  };
+
 
   if (loading) {
     return (
@@ -252,7 +197,7 @@ export default function ListingDetailPage() {
           listing={listing}
           mode="customer-preview"
           actionButton={
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-col gap-3 w-full">
               {paymentError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-2 rounded-lg text-center">
                   {paymentError}
@@ -262,17 +207,26 @@ export default function ListingDetailPage() {
                 variant="primary"
                 disabled={isProcessing}
                 className="w-full py-3.5 text-sm font-bold shadow-md tracking-wide bg-[#26382D] hover:bg-[#1b2b20] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer text-white rounded-xl"
-                onClick={handleBookNow}
-                id="book-now-btn"
+                onClick={handleCheckoutHotelOnly}
+                id="checkout-hotel-btn"
               >
                 {isProcessing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>Processing Payment...</span>
+                    <span>Processing...</span>
                   </>
                 ) : (
-                  <span>Book Now</span>
+                  <span>Checkout Hotel Only</span>
                 )}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={isProcessing}
+                className="w-full py-3 text-sm font-bold shadow-sm tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer rounded-xl border-2 border-[#26382D] text-[#26382D] hover:bg-[#F8F6F3]"
+                onClick={handleBookNow}
+                id="add-transport-btn"
+              >
+                Add Transport First
               </Button>
             </div>
           }

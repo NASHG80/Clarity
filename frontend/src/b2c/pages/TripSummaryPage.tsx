@@ -77,7 +77,16 @@ export default function TripSummaryPage() {
   const transportCost = transportResult?.cost_inr || 0;
   // @ts-ignore - price_inr_per_night exists on both ListingDetailResponse and AccommodationResult
   const hotelPricePerNight = hotelResult?.price_inr_per_night || 0;
-  const stayNights = stay?.nights || 0;
+  
+  let calculatedNights = stay?.nights;
+  if (!calculatedNights && state.searchPayload?.check_in && state.searchPayload?.check_out) {
+    const start = new Date(state.searchPayload.check_in);
+    const end = new Date(state.searchPayload.check_out);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    calculatedNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+  const stayNights = calculatedNights || 3; // Default to 3 nights if undefined
+  
   const accommodationTotal = hotelPricePerNight * stayNights;
   const experienceTotal = selectedExperiences.reduce((sum, exp) => sum + (exp.cost_inr || 0), 0);
   const tripTotal = transportCost + accommodationTotal + experienceTotal;
@@ -175,20 +184,50 @@ export default function TripSummaryPage() {
                 <span className="text-[10px] font-bold text-[#E88D67] uppercase bg-[#E88D67]/10 px-1.5 py-0.5 rounded">{t('results.badgeDemo', 'DEMO')}</span>
               )}
             </div>
-            <div className="p-5 flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#F8F6F3] flex items-center justify-center shrink-0">
-                  {getModeIcon(transportResult.mode)}
+              <div className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#F8F6F3] flex items-center justify-center shrink-0 mt-1">
+                    {getModeIcon(transportResult.mode)}
+                  </div>
+                  <div>
+                    <div className="text-[#26382D] font-bold capitalize text-lg">
+                      {transportResult.mode} Journey
+                    </div>
+                    
+                    {/* Render segments data if available */}
+                    {/* @ts-ignore */}
+                    {transportResult.segments && transportResult.segments.find(s => s.segment_type === 'main') ? (
+                      <div className="mt-2 space-y-1">
+                        {/* @ts-ignore */}
+                        {(() => {
+                          // @ts-ignore
+                          const mainSeg = transportResult.segments.find(s => s.segment_type === 'main');
+                          return (
+                            <>
+                              <div className="text-sm font-medium text-[#26382D]">
+                                {mainSeg.origin?.name?.split(',')[0]} → {mainSeg.destination?.name?.split(',')[0]}
+                              </div>
+                              <div className="text-xs text-[#7C9278]">
+                                {mainSeg.details?.train_number} {mainSeg.details?.train_name || mainSeg.details?.airline}
+                              </div>
+                              <div className="text-xs font-semibold text-[#A99587] mt-1">
+                                Class / Seat: {mainSeg.details?.classes?.join(', ') || 'Standard'}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ) : (
+                      <div className="text-[#A99587] text-sm mt-0.5">
+                        Duration: {Math.floor((transportResult.duration_minutes || 0) / 60)}h {(transportResult.duration_minutes || 0) % 60}m
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <div className="text-[#26382D] font-medium capitalize">{transportResult.mode}</div>
-                  <div className="text-[#A99587] text-sm mt-0.5">{Math.floor((transportResult.duration_minutes || 0) / 60)}h {(transportResult.duration_minutes || 0) % 60}m</div>
+                <div className="text-right font-medium text-[#26382D] text-lg shrink-0">
+                  {formatCurrency(transportCost)}
                 </div>
               </div>
-              <div className="text-right font-medium text-[#26382D]">
-                {formatCurrency(transportCost)}
-              </div>
-            </div>
           </section>
         )}
 
