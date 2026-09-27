@@ -383,6 +383,12 @@ def compute_weather_impact(
     risk = "HIGH" if "HIGH" in risks else ("MEDIUM" if "MEDIUM" in risks else "LOW")
 
     delay_minutes = int(base_duration_minutes * total_penalty)
+    
+    if risk == "HIGH" and delay_minutes < 60:
+        delay_minutes = 60
+    elif risk == "MEDIUM" and delay_minutes < 15:
+        delay_minutes = 15
+
     adjusted_duration = base_duration_minutes + delay_minutes
 
     # Cost: apply a small surcharge for weather (driver goes slower, more fuel)
