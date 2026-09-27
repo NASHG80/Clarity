@@ -18,6 +18,7 @@ export interface RouteMapProps {
     id: string;
     coordinates?: { lat: number; lng: number }[];
     encodedPolyline?: string;
+    geoJson?: any;
     color?: string;
     weight?: number;
     isSelected?: boolean;
@@ -61,8 +62,29 @@ export default function RouteMap({ center, zoom, markers, routes, selectedSegmen
       routes.forEach(route => {
         let path = route.coordinates;
         if (route.encodedPolyline) {
-          path = window.google.maps.geometry.encoding.decodePath(route.encodedPolyline);
+          path = window.google.maps.geometry.encoding.decodePath(route.encodedPolyline).map(p => ({ lat: p.lat(), lng: p.lng() }));
+        } else if (route.geoJson) {
+           let pts: any[] = [];
+           const extractCoords = (coords: any[]) => {
+             if (typeof coords[0] === 'number') {
+                pts.push({ lng: coords[0], lat: coords[1] });
+             } else if (Array.isArray(coords)) {
+                coords.forEach(extractCoords);
+             }
+           };
+           
+           if (route.geoJson.type === 'FeatureCollection') {
+              route.geoJson.features.forEach((f: any) => {
+                 if (f.geometry && f.geometry.coordinates) {
+                    extractCoords(f.geometry.coordinates);
+                 }
+              });
+           } else if (route.geoJson.type === 'LineString' || route.geoJson.type === 'MultiLineString') {
+              extractCoords(route.geoJson.coordinates);
+           }
+           path = pts;
         }
+        
         if (path) {
           path.forEach((p: any) => {
             // p might be LatLng object or LatLngLiteral. bounds.extend handles both.
@@ -100,7 +122,7 @@ export default function RouteMap({ center, zoom, markers, routes, selectedSegmen
     if (markers && window.google.maps.marker) {
       markers.forEach(markerData => {
         const pinView = new window.google.maps.marker.PinElement({
-          glyphText: markerData.label || '',
+          glyph: markerData.label || '',
           background: '#2563EB',
           borderColor: '#ffffff',
           glyphColor: '#ffffff'
@@ -126,8 +148,29 @@ export default function RouteMap({ center, zoom, markers, routes, selectedSegmen
         
         let path = route.coordinates;
         if (route.encodedPolyline) {
-          path = window.google.maps.geometry.encoding.decodePath(route.encodedPolyline);
+          path = window.google.maps.geometry.encoding.decodePath(route.encodedPolyline).map(p => ({ lat: p.lat(), lng: p.lng() }));
+        } else if (route.geoJson) {
+           let pts: any[] = [];
+           const extractCoords = (coords: any[]) => {
+             if (typeof coords[0] === 'number') {
+                pts.push({ lng: coords[0], lat: coords[1] });
+             } else if (Array.isArray(coords)) {
+                coords.forEach(extractCoords);
+             }
+           };
+           
+           if (route.geoJson.type === 'FeatureCollection') {
+              route.geoJson.features.forEach((f: any) => {
+                 if (f.geometry && f.geometry.coordinates) {
+                    extractCoords(f.geometry.coordinates);
+                 }
+              });
+           } else if (route.geoJson.type === 'LineString' || route.geoJson.type === 'MultiLineString') {
+              extractCoords(route.geoJson.coordinates);
+           }
+           path = pts;
         }
+
 
         const newPolyline = new window.google.maps.Polyline({
           path,

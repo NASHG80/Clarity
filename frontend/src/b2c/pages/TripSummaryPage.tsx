@@ -50,8 +50,8 @@ export default function TripSummaryPage() {
 
   const handleBack = () => navigate(-1);
 
-  // Validate state
-  const isInvalid = !transportResult || !hotelResult || !stay || !stay.nights || stay.nights < 1;
+  // Validate state - allow booking just transport or just hotel
+  const isInvalid = !transportResult && !hotelResult;
 
   if (isInvalid) {
     return (
@@ -74,17 +74,18 @@ export default function TripSummaryPage() {
   }
 
   // Calculations
-  const transportCost = transportResult.cost_inr || 0;
+  const transportCost = transportResult?.cost_inr || 0;
   // @ts-ignore - price_inr_per_night exists on both ListingDetailResponse and AccommodationResult
-  const hotelPricePerNight = hotelResult.price_inr_per_night || 0;
-  const accommodationTotal = hotelPricePerNight * stay.nights;
+  const hotelPricePerNight = hotelResult?.price_inr_per_night || 0;
+  const stayNights = stay?.nights || 0;
+  const accommodationTotal = hotelPricePerNight * stayNights;
   const experienceTotal = selectedExperiences.reduce((sum, exp) => sum + (exp.cost_inr || 0), 0);
   const tripTotal = transportCost + accommodationTotal + experienceTotal;
 
-  const hotelTranslation = hotelResult.translations?.[lang] || hotelResult.translations?.['en'];
+  const hotelTranslation = hotelResult?.translations?.[lang] || hotelResult?.translations?.['en'];
   const hotelName = hotelTranslation?.name || 'Unknown Hotel';
   // @ts-ignore
-  const hotelCity = hotelResult.city || '';
+  const hotelCity = hotelResult?.city || '';
 
   const handlePayment = async () => {
     setPaymentError(null);
@@ -166,59 +167,63 @@ export default function TripSummaryPage() {
       <div className="flex-1 space-y-6">
         
         {/* Transport Section */}
-        <section className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden">
-          <div className="bg-[#F8F6F3] px-5 py-3 border-b border-[#D8C9BE] flex items-center justify-between">
-            <h3 className="font-serif text-lg text-[#26382D]">{t('tripSummary.transport', 'Transport')}</h3>
-            {transportResult.accessibility?.data_state === 'demo_synthetic' && (
-              <span className="text-[10px] font-bold text-[#E88D67] uppercase bg-[#E88D67]/10 px-1.5 py-0.5 rounded">{t('results.badgeDemo', 'DEMO')}</span>
-            )}
-          </div>
-          <div className="p-5 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#F8F6F3] flex items-center justify-center shrink-0">
-                {getModeIcon(transportResult.mode)}
+        {transportResult && (
+          <section className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden">
+            <div className="bg-[#F8F6F3] px-5 py-3 border-b border-[#D8C9BE] flex items-center justify-between">
+              <h3 className="font-serif text-lg text-[#26382D]">{t('tripSummary.transport', 'Transport')}</h3>
+              {transportResult.accessibility?.data_state === 'demo_synthetic' && (
+                <span className="text-[10px] font-bold text-[#E88D67] uppercase bg-[#E88D67]/10 px-1.5 py-0.5 rounded">{t('results.badgeDemo', 'DEMO')}</span>
+              )}
+            </div>
+            <div className="p-5 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F8F6F3] flex items-center justify-center shrink-0">
+                  {getModeIcon(transportResult.mode)}
+                </div>
+                <div>
+                  <div className="text-[#26382D] font-medium capitalize">{transportResult.mode}</div>
+                  <div className="text-[#A99587] text-sm mt-0.5">{Math.floor((transportResult.duration_minutes || 0) / 60)}h {(transportResult.duration_minutes || 0) % 60}m</div>
+                </div>
               </div>
-              <div>
-                <div className="text-[#26382D] font-medium capitalize">{transportResult.mode}</div>
-                <div className="text-[#A99587] text-sm mt-0.5">{Math.floor(transportResult.duration_minutes / 60)}h {transportResult.duration_minutes % 60}m</div>
+              <div className="text-right font-medium text-[#26382D]">
+                {formatCurrency(transportCost)}
               </div>
             </div>
-            <div className="text-right font-medium text-[#26382D]">
-              {formatCurrency(transportCost)}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Accommodation Section */}
-        <section className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden">
-          <div className="bg-[#F8F6F3] px-5 py-3 border-b border-[#D8C9BE] flex items-center justify-between">
-            <h3 className="font-serif text-lg text-[#26382D]">{t('tripSummary.accommodation', 'Accommodation')}</h3>
-            {/* @ts-ignore */}
-            {hotelResult.data_state === 'demo_synthetic' && (
-              <span className="text-[10px] font-bold text-[#E88D67] uppercase bg-[#E88D67]/10 px-1.5 py-0.5 rounded">{t('results.badgeDemo', 'DEMO')}</span>
-            )}
-          </div>
-          <div className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#F8F6F3] flex items-center justify-center shrink-0 mt-1">
-                <Building2 className="w-5 h-5 text-[#A99587]" />
+        {hotelResult && (
+          <section className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden">
+            <div className="bg-[#F8F6F3] px-5 py-3 border-b border-[#D8C9BE] flex items-center justify-between">
+              <h3 className="font-serif text-lg text-[#26382D]">{t('tripSummary.accommodation', 'Accommodation')}</h3>
+              {/* @ts-ignore */}
+              {hotelResult.data_state === 'demo_synthetic' && (
+                <span className="text-[10px] font-bold text-[#E88D67] uppercase bg-[#E88D67]/10 px-1.5 py-0.5 rounded">{t('results.badgeDemo', 'DEMO')}</span>
+              )}
+            </div>
+            <div className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F8F6F3] flex items-center justify-center shrink-0 mt-1">
+                  <Building2 className="w-5 h-5 text-[#A99587]" />
+                </div>
+                <div>
+                  <div className="text-[#26382D] font-medium pr-4">{hotelName}</div>
+                  <div className="text-[#A99587] text-sm mt-0.5 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {hotelCity}
+                  </div>
+                  <div className="text-[#7C9278] text-sm mt-1">
+                    {t('tripSummary.nights', { count: stayNights })} × {formatCurrency(hotelPricePerNight)} {t('tripSummary.perNightLabel', 'per night')}
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="text-[#26382D] font-medium pr-4">{hotelName}</div>
-                <div className="text-[#A99587] text-sm mt-0.5 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {hotelCity}
-                </div>
-                <div className="text-[#7C9278] text-sm mt-1">
-                  {t('tripSummary.nights', { count: stay.nights })} × {formatCurrency(hotelPricePerNight)} {t('tripSummary.perNightLabel', 'per night')}
-                </div>
+              <div className="text-right font-medium text-[#26382D] shrink-0 self-end sm:self-auto">
+                {formatCurrency(accommodationTotal)}
               </div>
             </div>
-            <div className="text-right font-medium text-[#26382D] shrink-0 self-end sm:self-auto">
-              {formatCurrency(accommodationTotal)}
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Experiences Section */}
         <section className="bg-white rounded-2xl border border-[#D8C9BE] shadow-sm overflow-hidden">

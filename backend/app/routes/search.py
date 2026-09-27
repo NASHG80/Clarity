@@ -30,16 +30,7 @@ async def autocomplete_places(q: str):
 
 @router.get("/autocomplete/station")
 async def autocomplete_station(q: str):
-    q = q.lower()
-    stations = [
-        {"code": "LTT", "name": "Mumbai LTT"},
-        {"code": "CSTM", "name": "Mumbai CSMT"},
-        {"code": "BCT", "name": "Mumbai Central"},
-        {"code": "MAO", "name": "Madgaon Jn (Goa)"},
-        {"code": "NDLS", "name": "New Delhi"},
-        {"code": "SBC", "name": "KSR Bengaluru"}
-    ]
-    return [s for s in stations if q in s["name"].lower() or q in s["code"].lower()]
+    return await railradar_autocomplete(q)
 
 @router.get("/autocomplete/airport")
 async def autocomplete_airport(q: str):
@@ -59,6 +50,11 @@ async def get_place_details(place_id: str):
 @router.get("/transport/train/{train_number}/route")
 async def get_train_route(train_number: str):
     return await railradar_train_route(train_number)
+
+@router.get("/transport/train/{train_number}/details")
+async def get_train_details(train_number: str):
+    from app.services.live_api import railradar_train_details
+    return await railradar_train_details(train_number)
 
 @router.get("/transport/train/{train_number}/live")
 async def get_train_live(train_number: str):
@@ -123,6 +119,8 @@ async def search_transport(req: TransportSearchRequest) -> TransportSearchRespon
         # e.g., mapping convenience to fewer transfers or less walking if high
         if req.weights.convenience and req.weights.convenience > 0.5:
             preferences["fewer_transfers"] = True
+        if req.weights.environmental and req.weights.environmental > 0.5:
+            preferences["eco_friendly"] = True
             
     if req.vehicle_preferences:
         preferences.update(req.vehicle_preferences)
@@ -222,12 +220,38 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
             pass
 
     # 1. Fetch seeded
-    query = {}
-    if req.destination_city and req.destination_city != "ALL":
-        query["city"] = req.destination_city
-    seeded_cursor = db.hotels.find(query)
+    if req.destination_city == "ALL":
+        seeded_cursor = db.hotels.find({})
+    else:
+        seeded_cursor = db.hotels.find({
+            "$or": [
+                {"city": {"$regex": req.destination_city, "$options": "i"}},
+                {"name": {"$regex": req.destination_city, "$options": "i"}},
+                {"address": {"$regex": req.destination_city, "$options": "i"}}
+            ]
+        })
+        
+        # If no exact match and destination_city contains commas (e.g. "Candolim, Goa"), try matching the last part
+        if "," in req.destination_city:
+            broad_city = req.destination_city.split(",")[-1].strip()
+            if broad_city:
+                broad_cursor = db.hotels.find({
+                    "$or": [
+                        {"city": {"$regex": broad_city, "$options": "i"}},
+                        {"address": {"$regex": broad_city, "$options": "i"}}
+                    ]
+                })
+                # Combine the results
+                seeded_cursor = list(seeded_cursor) + list(broad_cursor)
+    
     results = []
+    seen_seeded_names = set()
     for doc in seeded_cursor:
+        name = doc.get("name", "").lower()
+        if name in seen_seeded_names:
+            continue
+        seen_seeded_names.add(name)
+        
         if "_id" in doc:
             doc["id"] = str(doc.pop("_id"))
         doc["source"] = "seeded"
@@ -289,19 +313,29 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
         cand["trade_off_summary"] = _build_trade_off_summary(trade_offs_data, cand_id)
         
         try:
+            # Handle live API differences gracefully
+            translations = cand.get("translations")
+            if not translations and cand.get("name"):
+                translations = {"en": {"name": cand.get("name")}}
+            
+            price = cand.get("price_inr_per_night")
+            if price is None:
+                price = cand.get("cost_inr") or 0.0
+
             final_results.append(HotelResult(
                 id=cand_id,
-                translations=cand.get("translations"),
-                city=cand.get("city"),
-                price_inr_per_night=cand.get("price_inr_per_night"),
-                star_rating=cand.get("star_rating"),
-                data_state=cand["data_state"],
+                translations=translations,
+                city=cand.get("city", req.destination_city),
+                price_inr_per_night=price,
+                star_rating=cand.get("star_rating", cand.get("rating")),
+                data_state=cand.get("data_state", "not_verified"),
                 accessibility_items=cand.get("accessibility_items", []),
                 sustainability_items=cand.get("sustainability_items", []),
                 personal_match_pct=cand.get("personal_match_pct"),
                 trade_off_summary=cand.get("trade_off_summary", [])
             ))
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.error(f"Failed to map hotel {cand_id}: {e}")
         
     return AccommodationSearchResponse(results=final_results)

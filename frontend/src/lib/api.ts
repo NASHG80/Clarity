@@ -778,8 +778,17 @@ export async function searchTransport(payload: TransportSearchRequest): Promise<
 // B2C — Accommodation Search (A14)
 // =============================================================================
 
-export interface AccommodationSearchRequest extends TransportSearchRequest {
+export interface AccommodationSearchRequest {
   destination_city: string;
+  budget_max?: number;
+  accessibility_required?: string[];
+  weights?: {
+    sustainability?: number;
+    accessibility?: number;
+    cost?: number;
+    convenience?: number;
+  };
+  include_unverified?: boolean;
   // Optional trip dates — when supplied, used for live hotel search (SerpAPI)
   // instead of the default +7/+9 day fallback. Backwards-compatible.
   arrival_date?: string;           // YYYY-MM-DD
@@ -812,7 +821,7 @@ export interface AccommodationSearchResponse {
 
 export async function searchAccommodation(payload: AccommodationSearchRequest): Promise<AccommodationSearchResponse> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   const requestOptions: RequestInit = {
     method: "POST",
@@ -862,7 +871,7 @@ function getAccommodationMockData(payload: AccommodationSearchRequest): Accommod
           hi: { name: "सुलभ रिज़ॉर्ट और स्पा" },
           mr: { name: "सुलभ रिसॉर्ट आणि स्पा" }
         },
-        city: payload.destination_city || payload.destination,
+        city: payload.destination_city || (payload as any).destination,
         price_inr_per_night: 8500,
         star_rating: 4,
         photos: ["https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800"],
@@ -883,7 +892,7 @@ function getAccommodationMockData(payload: AccommodationSearchRequest): Accommod
           en: { name: "City Center Budget Inn" }
           // intentionally missing HI/MR to test fallback
         },
-        city: payload.destination_city || payload.destination,
+        city: payload.destination_city || (payload as any).destination,
         price_inr_per_night: 3200,
         star_rating: 3,
         photos: [],

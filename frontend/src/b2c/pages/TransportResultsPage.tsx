@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../../shared/components/Navbar';
 import RouteMap from '../components/RouteMap';
 import { 
   Train, Plane, Car, Navigation, MapPin, 
-  Leaf, Sliders, ChevronRight, User, Info, MessageCircle, AlertCircle, Loader
+  Leaf, Sliders, ChevronRight, User, Info, MessageCircle, AlertCircle, Loader, ArrowRight
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import TrainCard from '../components/transport/TrainCard';
@@ -16,8 +16,8 @@ import { API_BASE_URL } from '../../lib/api';
 
 export default function TransportResultsPage() {
   const navigate = useNavigate();
-  const { t } = useTranslation('b2c');
-
+  const location = useLocation();
+  const { t, i18n } = useTranslation('b2c');
   // Workflows states
   const [step, setStep] = useState<'TRIP_FORM' | 'MODE_SELECT' | 'MODE_FORM' | 'RESULTS' | 'BREAKDOWN'>('TRIP_FORM');
   const [trip, setTrip] = useState<any>(null);
@@ -25,12 +25,13 @@ export default function TransportResultsPage() {
   const [results, setResults] = useState<any[]>([]);
   const [selectedOption, setSelectedOption] = useState<any>(null);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
+  const [selectedSubStep, setSelectedSubStep] = useState<{polyline: string, label: string} | null>(null);
 
   // Chat State
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   // Handlers
   const handleTripSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,12 +65,14 @@ export default function TransportResultsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          origin: formData.get('board') || trip?.origin || "Borivali",
-          destination: formData.get('dest') || trip?.destination || "Hotel XYZ, Goa",
+          origin: trip?.origin || "Borivali",
+          destination: trip?.destination || "Hotel XYZ, Goa",
           mode: selectedMode?.toLowerCase() || "train",
           date: formData.get('date') || trip?.date || "2026-09-27",
           vehicle_preferences: {
-             fuel_type: formData.get('fuel_type') || "petrol"
+             fuel_type: formData.get('fuel_type') || "petrol",
+             board_station: formData.get('board_code') || formData.get('board'),
+             dest_station: formData.get('dest_code') || formData.get('dest'),
           }
         })
       });
@@ -103,6 +106,10 @@ export default function TransportResultsPage() {
     setIsLoading(true);
     setStep('RESULTS');
     try {
+      const boardCode = (document.querySelector('input[name="board_code"]') as HTMLInputElement)?.value
+                     || (document.querySelector('input[name="board"]') as HTMLInputElement)?.value;
+      const destCode = (document.querySelector('input[name="dest_code"]') as HTMLInputElement)?.value
+                    || (document.querySelector('input[name="dest"]') as HTMLInputElement)?.value;
       const res = await fetch(`${API_BASE_URL}/api/search/transport`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,10 +119,19 @@ export default function TransportResultsPage() {
           mode: selectedMode?.toLowerCase() || "train",
           date: trip?.date || "2026-09-27",
           weights: weights,
+          budget_max: formData.get('budget') ? parseFloat(formData.get('budget') as string) : undefined,
           vehicle_preferences: {
              fuel_type: (document.querySelector('select[name="fuel_type"]') as HTMLSelectElement)?.value || 'petrol',
              avoid_tolls: formData.get('avoidTolls') === 'on',
              avoid_highways: formData.get('avoidHighways') === 'on',
+             eco_friendly: prefs.includes('Lowest CO₂'),
+             less_walking: prefs.includes('Less walking'),
+             fewer_transfers: prefs.includes('Fewer transfers'),
+             fastest: prefs.includes('Fastest'),
+             lowest_cost: prefs.includes('Lowest cost'),
+             wheelchair_accessible: prefs.includes('Wheelchair accessible'),
+             board_station: boardCode,
+             dest_station: destCode,
           }
         })
       });
@@ -142,6 +158,18 @@ export default function TransportResultsPage() {
     }, 800);
   };
 
+  const handleProceedToCheckout = () => {
+    setIsCheckingOut(true);
+    setTimeout(() => {
+      setIsCheckingOut(false);
+      navigate('/trip-summary', {
+        state: {
+          transportResult: selectedOption,
+        }
+      });
+    }, 1500);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F6F3] font-sans">
       <Navbar />
@@ -162,19 +190,45 @@ export default function TransportResultsPage() {
 
             <div>
               <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Route Preference</h3>
-              <div className="space-y-2">
-                {['Best route', 'Fastest', 'Lowest cost', 'Lowest CO₂', 'Less walking', 'Fewer transfers', 'Wheelchair accessible'].map(pref => (
-                  <label key={pref} className="flex items-center gap-3"><input type="checkbox" name="routePref" defaultChecked={pref==='Best route'} className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">{pref}</span></label>
+              <div className="space-y-3">
+                {[
+                  { id: 'Best route', label: 'Best route', desc: 'Balanced journey recommendations' },
+                  { id: 'Fastest', label: 'Fastest', desc: 'Direct cabs to minimise travel time' },
+                  { id: 'Lowest cost', label: 'Lowest cost', desc: 'Public transit to minimise cost' },
+                  { id: 'Lowest CO₂', label: 'Lowest CO₂', desc: 'Public transit to reduce emissions' },
+                  { id: 'Less walking', label: 'Less walking', desc: 'Use cabs to avoid walking to transit' },
+                  { id: 'Fewer transfers', label: 'Fewer transfers', desc: 'Direct door-to-station cabs' }
+                ].map(pref => (
+                  <label key={pref.id} className="flex items-start gap-3 cursor-pointer group">
+                    <div className="pt-0.5">
+                      <input type="checkbox" name="routePref" value={pref.id} defaultChecked={pref.id==='Best route'} className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded cursor-pointer" />
+                    </div>
+                    <div>
+                      <div className="text-[#26382D] text-sm font-medium">{pref.label}</div>
+                      <div className="text-[#7C9278] text-xs leading-tight">{pref.desc}</div>
+                    </div>
+                  </label>
                 ))}
               </div>
             </div>
             
             <div>
               <h3 className="text-sm font-bold text-[#26382D] uppercase tracking-wider mb-3">Accessibility</h3>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Step-free</span></label>
-                <label className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Less walking</span></label>
-                <label className="flex items-center gap-3"><input type="checkbox" className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded" /><span className="text-[#26382D] text-sm">Accessible transfers</span></label>
+              <div className="space-y-3">
+                {[
+                  { id: 'Step-free', label: 'Step-free', desc: 'Requires flat access throughout' },
+                  { id: 'Wheelchair accessible', label: 'Wheelchair accessible', desc: 'Routes via cabs and accessible stations' }
+                ].map(pref => (
+                  <label key={pref.id} className="flex items-start gap-3 cursor-pointer group">
+                    <div className="pt-0.5">
+                      <input type="checkbox" name="routePref" value={pref.id} className="w-4 h-4 text-[#7C9278] border-[#D8C9BE] rounded cursor-pointer" />
+                    </div>
+                    <div>
+                      <div className="text-[#26382D] text-sm font-medium">{pref.label}</div>
+                      <div className="text-[#7C9278] text-xs leading-tight">{pref.desc}</div>
+                    </div>
+                  </label>
+                ))}
               </div>
             </div>
 
@@ -212,7 +266,7 @@ export default function TransportResultsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#7C9278] uppercase mb-1.5">To</label>
-                  <input name="destination" defaultValue="Hotel XYZ, Goa" className="w-full border-b-2 border-[#D8C9BE] py-2 focus:border-[#26382D] outline-none text-[#26382D]" />
+                  <input name="destination" defaultValue={location.state?.hotelResult?.translations?.en?.name || location.state?.hotelResult?.city || "Goa"} className="w-full border-b-2 border-[#D8C9BE] py-2 focus:border-[#26382D] outline-none text-[#26382D]" />
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
@@ -360,9 +414,14 @@ export default function TransportResultsPage() {
                 </div>
               ) : (
                 <>
-                  {results.length > 0 && results.some(r => r.mode === 'flight') && (
-                    <FlightPriceInsights insights={{ destination: trip?.destination || "your destination", low: 4500, high: 6500 }} />
-                  )}
+                  {(() => {
+                    const flightWithInsights = results.find(r => r.mode === 'flight' && r.provider_details?.price_insights);
+                    const priceInsights = flightWithInsights?.provider_details?.price_insights;
+                    if (priceInsights) {
+                      return <FlightPriceInsights insights={priceInsights} destination={trip?.destination} />;
+                    }
+                    return null;
+                  })()}
                   {results.length === 0 ? (
                     <div className="bg-white border border-[#D8C9BE] rounded-2xl p-8 text-center text-[#7C9278]">
                       No routes found.
@@ -440,117 +499,311 @@ export default function TransportResultsPage() {
               </div>
 
               {/* Recommendation Analysis Box */}
-              <div className="bg-[#EAF0EB] border border-[#C5D9CB] rounded-2xl p-5 sm:p-6 mb-8 flex flex-col sm:flex-row gap-6">
-                <div className="flex-1">
-                  <h3 className="flex items-center gap-2 font-bold text-[#1F4029] mb-2"><Info className="w-5 h-5"/> Why this route is recommended</h3>
-                  <p className="text-sm text-[#3A5043] leading-relaxed mb-4">
-                    This option stays within your transport budget and has a lower estimated CO₂ impact than the available flight options.
-                    <br/><br/>
-                    <strong>Trade-off:</strong> It takes longer and requires additional transfers.
-                  </p>
-                </div>
-                <div className="w-full sm:w-48 shrink-0 space-y-2 text-sm">
-                  <div className="flex justify-between text-[#1F4029]"><span>Time</span><strong>{Math.floor(selectedOption.duration_minutes/60)}h {selectedOption.duration_minutes%60}m</strong></div>
-                  <div className="flex justify-between text-[#1F4029]"><span>Cost</span><strong>₹{selectedOption.cost_inr?.toFixed(2) || '0.00'}</strong></div>
-                  <div className="flex justify-between text-[#1F4029]"><span>CO₂e</span><strong>{selectedOption.emissions?.co2e_kg?.toFixed(1)} kg</strong></div>
-                  <div className="flex justify-between text-[#1F4029]"><span>Walking</span><strong>{(selectedOption.total_walking_m/1000).toFixed(1)} km</strong></div>
-                  <div className="flex justify-between text-[#1F4029]"><span>Transfers</span><strong>{selectedOption.transfer_count}</strong></div>
-                </div>
-              </div>
+              {(() => {
+                const co2 = selectedOption.emissions?.co2e_kg ?? 0;
+                const cost = selectedOption.cost_inr ?? 0;
+                const walkKm = (selectedOption.total_walking_m ?? 0) / 1000;
+                const transfers = selectedOption.transfer_count ?? 0;
+                const durationH = Math.floor(selectedOption.duration_minutes / 60);
+                const durationM = selectedOption.duration_minutes % 60;
+                const reasons = selectedOption.recommendation_reasons || [];
+                const tradeoffs = selectedOption.trade_off_summary || [];
+                const firstMile = selectedOption.segments?.find((s: any) => s.segment_type === 'first_mile');
+                const lastMile = selectedOption.segments?.find((s: any) => s.segment_type === 'last_mile');
+                const usesTransit = firstMile?.mode === 'TRANSIT' || lastMile?.mode === 'TRANSIT';
+                return (
+                  <div className="bg-[#EAF0EB] border border-[#C5D9CB] rounded-2xl p-5 sm:p-6 mb-8 flex flex-col sm:flex-row gap-6">
+                    <div className="flex-1">
+                      <h3 className="flex items-center gap-2 font-bold text-[#1F4029] mb-3"><Info className="w-5 h-5"/> Why this route?</h3>
+                      <ul className="space-y-1.5 text-sm">
+                        {usesTransit && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-green-600 font-bold">✓</span> Uses public transit for first/last mile — lower emissions</li>}
+                        {co2 < 30 && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-green-600 font-bold">✓</span> Low estimated CO₂: {co2.toFixed(1)} kg total journey</li>}
+                        {cost < 3000 && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-green-600 font-bold">✓</span> Budget-friendly: ₹{cost.toFixed(0)} door-to-door</li>}
+                        {walkKm > 0 && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-[#A99587] font-bold">ℹ</span> ~{walkKm.toFixed(1)} km walking total</li>}
+                        {transfers > 2 && <li className="flex items-start gap-2 text-[#1F4029]"><span className="text-amber-600 font-bold">⚠</span> {transfers} transfers — more than a direct option</li>}
+                        {reasons.map((r: string, i: number) => <li key={i} className="flex items-start gap-2 text-[#3A5043]"><span className="text-green-600 font-bold">✓</span>{r}</li>)}
+                        {tradeoffs.map((t: string, i: number) => <li key={i} className="flex items-start gap-2 text-[#3A5043]"><span className="text-amber-600 font-bold">⚠</span>{t}</li>)}
+                      </ul>
+                    </div>
+                    <div className="w-full sm:w-44 shrink-0 space-y-2 text-sm flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between text-[#1F4029]"><span>Total Time</span><strong>{durationH}h {durationM}m</strong></div>
+                        <div className="flex justify-between text-[#1F4029] border-t border-[#C5D9CB] pt-2"><span>Total Cost</span><strong>₹{cost.toFixed(0)}</strong></div>
+                        <div className="flex justify-between text-[#1F4029] border-t border-[#C5D9CB] pt-2"><span>CO₂</span><strong>{co2.toFixed(1)} kg</strong></div>
+                        <div className="flex justify-between text-[#1F4029] border-t border-[#C5D9CB] pt-2"><span>Walking</span><strong>{walkKm.toFixed(1)} km</strong></div>
+                        <div className="flex justify-between text-[#1F4029] border-t border-[#C5D9CB] pt-2"><span>Transfers</span><strong>{transfers}</strong></div>
+                      </div>
+                      <button 
+                        onClick={handleProceedToCheckout}
+                        disabled={isCheckingOut}
+                        className="mt-4 w-full bg-[#26382D] text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#1a261f] transition-colors disabled:opacity-50"
+                      >
+                        {isCheckingOut ? (
+                          <>
+                            <Loader className="w-4 h-4 animate-spin" /> 
+                            <span className="text-sm">
+                              {selectedOption?.mode === 'flight' ? 'Confirming price with airline...' : 'Confirming price...'}
+                            </span>
+                          </>
+                        ) : (
+                          <>Proceed to Book <ArrowRight className="w-4 h-4" /></>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Door-to-door layout with Map */}
               <div className="flex flex-col xl:flex-row gap-6 lg:gap-8">
                 {/* Timeline */}
                 <div className="flex-1 w-full xl:max-w-md bg-white border border-[#D8C9BE] rounded-2xl shadow-sm overflow-hidden">
                   <div className="p-4 bg-[#F8F6F3] border-b border-[#D8C9BE]">
-                    <h3 className="font-bold text-[#26382D] uppercase tracking-wider text-xs">Door-to-door Segments</h3>
+                    <h3 className="font-bold text-[#26382D] uppercase tracking-wider text-xs">Your Journey</h3>
                   </div>
-                  <div className="p-4 lg:p-6 space-y-0 relative">
-                    <div className="absolute top-8 bottom-8 left-[39px] lg:left-[47px] w-[2px] bg-[#D8C9BE]" />
-                    
-                    {selectedOption.segments.map((seg: any) => (
-                      <div 
-                        key={seg.id} 
-                        onClick={() => setSelectedSegmentId(seg.id)}
-                        className={`relative pl-14 pr-2 py-5 cursor-pointer rounded-xl transition-all border ${selectedSegmentId === seg.id ? 'bg-[#F8F6F3] border-[#7C9278] shadow-sm' : 'border-transparent hover:bg-[#F8F6F3]/50'}`}
-                      >
-                        <div className={`absolute left-4 lg:left-6 top-[26px] w-[14px] h-[14px] rounded-full border-2 border-white ${seg.mode === 'WALK' ? 'bg-[#A9B8A3]' : 'bg-[#26382D]'}`} />
-                        
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold text-[#7C9278] uppercase tracking-widest">{seg.mode} • {seg.provider}</span>
-                        </div>
-                        <div className="font-medium text-[#26382D] text-lg leading-tight mb-2">
-                          <div className="mb-0.5 text-[#7C9278] text-sm font-normal">START &rarr; <span className="font-medium text-[#26382D]">{seg.origin?.name}</span></div>
-                          <div className="text-[#7C9278] text-sm font-normal">END &rarr; <span className="font-medium text-[#26382D]">{seg.destination?.name}</span></div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#7C9278] mt-3 bg-white p-3 rounded-lg border border-[#D8C9BE]">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] uppercase font-bold text-[#A99587]">Time</span>
-                            <span className="font-medium text-[#26382D]">{seg.duration_minutes >= 60 ? `${Math.floor(seg.duration_minutes/60)}h ${seg.duration_minutes%60}m` : `${seg.duration_minutes} min`}</span>
-                          </div>
-                          {seg.distance_km > 0 && (
-                            <div className="flex flex-col border-l border-[#D8C9BE] pl-4">
-                              <span className="text-[10px] uppercase font-bold text-[#A99587]">Distance</span>
-                              <span className="font-medium text-[#26382D]">{seg.distance_km.toFixed(1)} km</span>
-                            </div>
-                          )}
-                          {seg.cost_inr > 0 && (
-                            <div className="flex flex-col border-l border-[#D8C9BE] pl-4">
-                              <span className="text-[10px] uppercase font-bold text-[#A99587]">Cost</span>
-                              <span className="font-medium text-[#26382D]">₹{seg.cost_inr?.toFixed(2) || '0.00'}</span>
-                            </div>
-                          )}
-                          <div className="flex flex-col border-l border-[#D8C9BE] pl-4">
-                            <span className="text-[10px] uppercase font-bold text-[#A99587]">Est. CO₂</span>
-                            <span className="font-medium text-[#26382D]">{seg.co2_kg?.toFixed(1) || 0} kg</span>
-                          </div>
-                        </div>
+                  <div className="p-4 lg:p-6">
+                    {(() => {
+                      const firstMile = selectedOption.segments.find((s:any) => s.segment_type === 'first_mile');
+                      const mainSeg = selectedOption.segments.find((s:any) => s.segment_type === 'main');
+                      const lastMile = selectedOption.segments.find((s:any) => s.segment_type === 'last_mile');
 
-                        {selectedSegmentId === seg.id && seg.geometry && (
-                          <div className="mt-4 flex items-start gap-3 p-3 bg-[#EAF0EB] rounded-lg">
-                             <MapPin className="w-4 h-4 text-[#3A5043] shrink-0 mt-0.5" />
-                             <div>
-                               <div className="text-sm font-bold text-[#1F4029] mb-1">Why this segment matters</div>
-                               <div className="text-xs text-[#3A5043]">This is the {seg.mode} portion connecting you through your journey. Route focused on the right.</div>
+                      const renderSubSteps = (segment: any, title: string) => {
+                        if (!segment) return null;
+                        
+                        // MAIN TRAIN
+                        if (segment.segment_type === 'main' && segment.mode === 'TRAIN') {
+                           return (
+                             <div className="mb-6 relative">
+                               <div className="bg-[#26382D] text-white px-5 py-2 text-sm font-bold tracking-wider rounded-t-xl flex justify-between">
+                                 <span>🚆 {segment.origin?.name?.split(' ')[0] || 'START'} &rarr; {segment.destination?.name?.split(' ')[0] || 'END'}</span>
+                               </div>
+                               <div className={`bg-white border-x border-b p-5 rounded-b-xl shadow-sm cursor-pointer transition-colors ${selectedSegmentId === segment.id ? 'border-[#7C9278] ring-1 ring-[#7C9278]' : 'border-[#D8C9BE] hover:border-[#7C9278]'}`} onClick={() => setSelectedSegmentId(segment.id)}>
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                      <h4 className="font-bold text-[#26382D] text-lg">{segment.details?.train_number || ''} {segment.details?.train_name || 'Train'}</h4>
+                                      <div className="text-xs text-[#7C9278]">{segment.details?.classes?.join(' • ')}</div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="font-bold text-[#26382D] text-lg">₹{segment.cost_inr}</div>
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-between items-center text-sm font-medium text-[#26382D] mb-4">
+                                    <div className="text-left w-20">
+                                      <div className="text-lg">{segment.details?.departure_time || segment.origin?.time || ''}</div>
+                                      <div className="text-xs text-[#7C9278]">{segment.origin?.name}</div>
+                                    </div>
+                                    <div className="flex-1 px-2 text-center">
+                                      <div className="text-xs text-[#7C9278] mb-1">{Math.floor(segment.duration_minutes/60)}h {segment.duration_minutes%60}m</div>
+                                      <div className="w-full border-t border-dashed border-[#D8C9BE]"></div>
+                                      <div className="text-xs text-[#A99587] mt-1">{segment.distance_km?.toFixed(0)} km</div>
+                                    </div>
+                                    <div className="text-right w-20">
+                                      <div className="text-lg">{segment.details?.arrival_time || segment.destination?.time || ''}</div>
+                                      <div className="text-xs text-[#7C9278]">{segment.destination?.name}</div>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-4 pt-3 border-t border-[#F8F6F3]">
+                                    <button className="text-sm font-semibold text-[#2563EB] hover:underline">View train details</button>
+                                    {segment.details?.live_status && <button className="text-sm font-semibold text-green-600 hover:underline">Track live</button>}
+                                  </div>
+                               </div>
                              </div>
+                           );
+                        }
+
+                        // FLIGHT MAIN
+                        if (segment.segment_type === 'main' && segment.mode === 'FLIGHT') {
+                          return (
+                            <div className="mb-6 relative" onClick={() => setSelectedSegmentId(segment.id)}>
+                              <div className={`bg-white border p-5 rounded-xl shadow-sm cursor-pointer transition-colors ${selectedSegmentId === segment.id ? 'border-[#7C9278] ring-1 ring-[#7C9278] bg-[#F8F6F3]' : 'border-[#D8C9BE] hover:border-[#7C9278]'}`}>
+                                <div className="font-bold text-[#26382D] text-lg mb-2">✈️ Flight {segment.details?.flight_number || ''}</div>
+                                <div className="text-sm text-[#7C9278]">{segment.origin?.name} &rarr; {segment.destination?.name}</div>
+                                <div className="text-sm font-semibold text-[#26382D] mt-2">{Math.floor(segment.duration_minutes/60)}h {segment.duration_minutes%60}m</div>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // FIRST MILE / LAST MILE / DRIVE
+                        const hasSubsteps = segment.sub_steps && segment.sub_steps.length > 0;
+                        const isDrive = segment.mode === 'DRIVE';
+                        const modeIcon = isDrive ? '🚕' : segment.mode === 'TRANSIT' ? '🚌' : '🚶';
+                        const modeLabel = isDrive ? 'Cab / Car' : segment.mode === 'TRANSIT' ? 'Public Transit' : 'Walk';
+
+                        return (
+                          <div className="mb-6">
+                            <div className="text-xs font-bold text-[#7C9278] uppercase tracking-wider mb-3">{title}</div>
+                            
+                            {/* DRIVE: single clean summary card — no sub-steps */}
+                            {isDrive && (
+                              <div
+                                onClick={() => { setSelectedSegmentId(segment.id); setSelectedSubStep(null); }}
+                                className={`relative pl-12 pr-4 py-4 cursor-pointer rounded-xl transition-all border ${selectedSegmentId === segment.id && !selectedSubStep ? 'bg-[#FEF3C7] border-[#f59e0b] shadow-sm' : 'bg-white border-[#D8C9BE] hover:bg-[#FEF9EE]'}`}
+                              >
+                                <div className="absolute left-4 top-5 text-lg">🚕</div>
+                                <div className="font-semibold text-[#26382D]">Cab / Car</div>
+                                <div className="text-sm text-[#3A5043] mt-0.5">{segment.origin?.name} → {segment.destination?.name}</div>
+                                <div className="flex gap-4 mt-2 text-xs text-[#7C9278]">
+                                  <span>{Math.floor(segment.duration_minutes/60) > 0 ? `${Math.floor(segment.duration_minutes/60)}h ` : ''}{segment.duration_minutes % 60}m</span>
+                                  <span>•</span>
+                                  <span>{segment.distance_km?.toFixed(1)} km</span>
+                                  {segment.co2_kg != null && <><span>•</span><span>{segment.co2_kg.toFixed(1)} kg CO₂</span></>}
+                                </div>
+                                {segment.co2_kg != null && (
+                                  <div className="mt-2 text-xs text-amber-600 font-medium">ℹ Emissions estimated · Switch to Lowest CO₂ for greener options</div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* TRANSIT: expandable sub-steps with per-step map focus */}
+                            {!isDrive && !hasSubsteps && (
+                              <div
+                                onClick={() => { setSelectedSegmentId(segment.id); setSelectedSubStep(null); }}
+                                className={`relative pl-12 pr-4 py-4 cursor-pointer rounded-xl transition-all border ${selectedSegmentId === segment.id ? 'bg-[#EAF0EB] border-[#7C9278]' : 'bg-white border-[#D8C9BE] hover:bg-[#F8F6F3]'}`}
+                              >
+                                <div className="absolute left-4 top-5 text-lg">{modeIcon}</div>
+                                <div className="font-medium text-[#26382D]">{modeLabel}</div>
+                                <div className="text-sm text-[#3A5043]">{segment.origin?.name} → {segment.destination?.name}</div>
+                                <div className="text-xs text-[#7C9278] mt-1">{Math.floor(segment.duration_minutes/60) > 0 ? `${Math.floor(segment.duration_minutes/60)}h ` : ''}{segment.duration_minutes%60}m • {segment.distance_km?.toFixed(1)} km</div>
+                              </div>
+                            )}
+
+                            {!isDrive && hasSubsteps && (
+                              <div
+                                className="relative rounded-xl border border-[#D8C9BE] bg-white overflow-hidden"
+                                onClick={() => { setSelectedSegmentId(segment.id); setSelectedSubStep(null); }}
+                              >
+                                {/* Connector line */}
+                                <div className="absolute top-10 bottom-10 left-[28px] w-[2px] bg-[#D8C9BE]" />
+
+                                {/* Origin dot */}
+                                <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+                                  <div className="w-3 h-3 rounded-full bg-[#26382D] border-2 border-white shadow z-10 shrink-0" />
+                                  <span className="text-sm font-semibold text-[#26382D]">{segment.origin?.name}</span>
+                                </div>
+
+                                {segment.sub_steps.map((step: any, i: number) => {
+                                  const isWalk = step.travelMode === 'WALK';
+                                  const vType = step.transitDetails?.transitLine?.vehicle?.type || 'Transit';
+                                  const lineName = step.transitDetails?.transitLine?.name || '';
+                                  const modeTitle = isWalk ? 'Walk' : lineName ? `${vType} ${lineName}` : vType;
+                                  const instruction = step.navigationInstruction?.instructions || modeTitle;
+                                  const duration = step.localizedValues?.staticDuration?.text || '';
+                                  const dist = step.localizedValues?.distance?.text || '';
+                                  const stepPolyline = step.polyline?.encodedPolyline || '';
+                                  const isStepSelected = selectedSubStep?.polyline === stepPolyline && stepPolyline;
+
+                                  return (
+                                    <div
+                                      key={i}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedSegmentId(segment.id);
+                                        if (stepPolyline) {
+                                          setSelectedSubStep({ polyline: stepPolyline, label: modeTitle });
+                                        } else {
+                                          setSelectedSubStep(null);
+                                        }
+                                      }}
+                                      className={`relative pl-12 pr-4 py-3 cursor-pointer transition-colors border-t border-[#F8F6F3] ${
+                                        isStepSelected ? (isWalk ? 'bg-[#F0FDF4]' : 'bg-[#EFF6FF]') : 'hover:bg-[#F8F6F3]'
+                                      }`}
+                                    >
+                                      <div className={`absolute left-[22px] top-[18px] w-3 h-3 rounded-full border-2 border-white z-10 ${
+                                        isWalk ? 'bg-[#22c55e]' : 'bg-[#2563EB]'
+                                      }`} />
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                          <div className="font-semibold text-[#26382D] capitalize text-sm">{modeTitle}</div>
+                                          <div className="text-xs text-[#3A5043] mt-0.5" dangerouslySetInnerHTML={{ __html: instruction }} />
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                          <div className="text-sm font-semibold text-[#26382D]">{duration}</div>
+                                          <div className="text-xs text-[#7C9278]">{dist}</div>
+                                        </div>
+                                      </div>
+                                      {isStepSelected && (
+                                        <div className="mt-1.5 text-xs text-[#2563EB] font-medium">↑ Focused on map</div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+
+                                {/* Destination dot */}
+                                <div className="flex items-center gap-3 px-4 pb-4 pt-2">
+                                  <div className="w-3 h-3 rounded-full bg-[#7C9278] border-2 border-white shadow z-10 shrink-0" />
+                                  <span className="text-sm font-semibold text-[#26382D]">{segment.destination?.name}</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        );
+                      };
+
+                      return (
+                        <>
+                          {renderSubSteps(firstMile, "First Mile")}
+                          {renderSubSteps(mainSeg, "Main Transport")}
+                          {renderSubSteps(lastMile, "Last Mile")}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
-                {/* Map */}
-                <div className="flex-1 w-full xl:w-auto h-[400px] xl:h-[auto] xl:min-h-[600px] bg-[#EAF0EB] rounded-2xl overflow-hidden border border-[#D8C9BE] sticky top-24">
+                {/* Map — focuses on selected sub-step polyline OR full segment geometry */}
+                <div className="flex-1 w-full xl:w-auto h-[420px] xl:h-[auto] xl:min-h-[640px] bg-[#EAF0EB] rounded-2xl overflow-hidden border border-[#D8C9BE] sticky top-24 flex flex-col">
+                  {selectedSubStep && (
+                    <div className="flex items-center justify-between px-4 py-2 bg-[#26382D] text-white text-xs font-semibold">
+                      <span>📍 {selectedSubStep.label}</span>
+                      <button onClick={() => setSelectedSubStep(null)} className="text-white/70 hover:text-white underline">Show full journey</button>
+                    </div>
+                  )}
+                  <div className="flex-1">
                   <RouteMap 
                     center={{ lat: 19.229, lng: 72.857 }} 
                     zoom={10} 
-                    routes={selectedOption.segments.filter((s:any) => s.geometry).map((s:any) => ({
-                      id: s.id,
-                      encodedPolyline: typeof s.geometry === 'string' ? s.geometry : undefined,
-                      geoJson: typeof s.geometry === 'object' ? s.geometry : undefined,
-                      color: s.mode === 'WALK' ? '#93C5FD' : '#2563EB',
-                      isSelected: selectedSegmentId === s.id
-                    }))} 
-                    markers={[
+                    routes={
+                      selectedSubStep
+                        // When a sub-step is selected: show only that sub-step's polyline
+                        ? [{ id: 'substep', encodedPolyline: selectedSubStep.polyline, color: '#2563EB', weight: 6, isSelected: true }]
+                        // Otherwise show all segment geometries
+                        : selectedOption.segments.filter((s:any) => s.geometry).map((s:any) => {
+                            const modeColor = 
+                              s.mode === 'TRAIN' ? '#1e3a5f' :
+                              s.mode === 'WALK' ? '#22c55e' :
+                              s.mode === 'TRANSIT' ? '#2563EB' :
+                              s.mode === 'DRIVE' ? '#f59e0b' : '#7C9278';
+                            return {
+                              id: s.id,
+                              encodedPolyline: typeof s.geometry === 'string' ? s.geometry : undefined,
+                              geoJson: typeof s.geometry === 'object' ? s.geometry : undefined,
+                              color: modeColor,
+                              weight: s.segment_type === 'main' ? 7 : 5,
+                              isSelected: selectedSegmentId === s.id
+                            };
+                          })
+                    } 
+                    markers={selectedSubStep ? [] : [
                       ...(selectedOption.segments?.[0]?.origin?.lat && selectedOption.segments?.[0]?.origin?.lng ? [{
                         id: 'start',
                         position: { lat: selectedOption.segments[0].origin.lat, lng: selectedOption.segments[0].origin.lng },
-                        label: 'A'
+                        label: '🏠'
                       }] : []),
                       ...(selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lat && selectedOption.segments?.[selectedOption.segments.length - 1]?.destination?.lng ? [{
                         id: 'end',
                         position: { lat: selectedOption.segments[selectedOption.segments.length - 1].destination.lat, lng: selectedOption.segments[selectedOption.segments.length - 1].destination.lng },
-                        label: 'B'
+                        label: '🏨'
                       }] : [])
                     ]}
-                    selectedSegmentId={selectedSegmentId || undefined} 
+                    selectedSegmentId={selectedSubStep ? 'substep' : (selectedSegmentId || undefined)} 
                   />
+                  </div>
                 </div>
               </div>
             </div>
           )}
+
 
         </main>
       </div>
@@ -604,4 +857,4 @@ export default function TransportResultsPage() {
       </div>
     </div>
   );
-}
+}
