@@ -23,8 +23,19 @@ export default function AccommodationResultCard({ result }: AccommodationResultC
   const isDemoRoot = result.data_state === 'demo_synthetic';
   const accessibilityCount = result.accessibility_items ? result.accessibility_items.length : 0;
   
+  const [photoIndex, setPhotoIndex] = React.useState(0);
+  const [imageFailed, setImageFailed] = React.useState(false);
+
   const handleCardClick = () => {
     navigate(`/listings/${result.id}`, { state: { ...location.state, hotelResult: result } });
+  };
+
+  const handleImageError = () => {
+    if (result.photos && photoIndex < result.photos.length - 1) {
+      setPhotoIndex(photoIndex + 1);
+    } else {
+      setImageFailed(true);
+    }
   };
 
   return (
@@ -34,21 +45,18 @@ export default function AccommodationResultCard({ result }: AccommodationResultC
     >
       {/* Photos Section */}
       <div className="w-full md:w-72 h-48 md:h-auto bg-[#F8F6F3] flex-shrink-0 relative">
-        {result.photos && result.photos.length > 0 ? (
+        {result.photos && result.photos.length > 0 && !imageFailed ? (
           <img
-            src={result.photos[0]}
+            src={result.photos[photoIndex]}
             alt={name}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              // Neutral failure treatment
-              (e.target as HTMLImageElement).style.display = 'none';
-              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-            }}
+            onError={handleImageError}
           />
-        ) : null}
-        <div className={`absolute inset-0 flex items-center justify-center text-[#A99587] ${(result.photos && result.photos.length > 0) ? 'hidden' : ''}`}>
-          <ImageIcon className="w-10 h-10 opacity-30" />
-        </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-[#A99587]">
+            <ImageIcon className="w-10 h-10 opacity-30" />
+          </div>
+        )}
         {isDemoRoot && (
           <div className="absolute top-3 left-3 bg-[#E88D67] text-white text-xs font-bold px-2 py-1 rounded shadow-sm">
             {t('results.badgeDemo', 'DEMO')}

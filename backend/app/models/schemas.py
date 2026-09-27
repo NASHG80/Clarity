@@ -376,6 +376,7 @@ class HotelResult(BaseModel):
     sustainability_items: List[ChecklistItem] = Field(default_factory=list)
     personal_match_pct: Optional[float] = None
     trade_off_summary: List[str] = Field(default_factory=list)
+    photos: Optional[List[str]] = Field(default_factory=list)
 
 
 class AccommodationSearchResponse(BaseModel):

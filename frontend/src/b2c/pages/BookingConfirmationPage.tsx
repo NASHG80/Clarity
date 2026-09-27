@@ -106,7 +106,6 @@ export default function BookingConfirmationPage() {
 
       {/* DESKTOP LAYOUT */}
       <div className="hidden md:flex flex-col min-h-screen bg-[#F8F6F3] font-sans">
-        <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-8">
           <div className="w-full max-w-3xl bg-white rounded-3xl shadow-sm border border-[#D8C9BE] overflow-hidden flex">
             {/* Left pane: Confirmation Status */}

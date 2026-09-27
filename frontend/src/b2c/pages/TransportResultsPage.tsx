@@ -489,12 +489,6 @@ export default function TransportResultsPage() {
                   </button>
                   <h2 className="font-serif text-2xl text-[#26382D]">Complete Journey</h2>
                 </div>
-                <button
-                  onClick={() => navigate('/journey', { state: { result: selectedOption } })}
-                  className="bg-[#26382D] text-white px-6 py-2.5 rounded-xl font-medium text-sm hover:bg-[#1a261f]"
-                >
-                  Select & Continue
-                </button>
               </div>
 
               {/* Recommendation Analysis Box */}

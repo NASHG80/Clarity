@@ -332,7 +332,8 @@ async def search_accommodation(req: AccommodationSearchRequest) -> Accommodation
                 accessibility_items=cand.get("accessibility_items", []),
                 sustainability_items=cand.get("sustainability_items", []),
                 personal_match_pct=cand.get("personal_match_pct"),
-                trade_off_summary=cand.get("trade_off_summary", [])
+                trade_off_summary=cand.get("trade_off_summary", []),
+                photos=cand.get("photos", [])
             ))
         except Exception as e:
             import logging

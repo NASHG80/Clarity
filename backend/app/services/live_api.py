@@ -156,7 +156,8 @@ async def fetch_serpapi_hotels(destination: str, check_in: str, check_out: str) 
             "rating": prop.get("overall_rating"),
             "accessibility_items": [],
             "sustainability_items": [],
-            "source": "live"
+            "source": "live",
+            "photos": [img.get("thumbnail") or img.get("original_image") for img in prop.get("images", [])] if prop.get("images") else []
         })
     return results
 
