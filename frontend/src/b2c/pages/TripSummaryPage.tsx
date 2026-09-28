@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { TransportResult, ExperienceResult, ListingDetailResponse, AccommodationResult, TransportSearchRequest, createBookingOrder, verifyBookingPayment } from '../../lib/api';
+import { TransportResult, ExperienceResult, ListingDetailResponse, AccommodationResult, TransportSearchRequest, AccommodationSearchRequest, createBookingOrder, verifyBookingPayment } from '../../lib/api';
 import { loadRazorpayScript } from '../../lib/razorpay';
 import { formatCurrencyINR } from '../../lib/formatters';
 import { ArrowLeft, AlertCircle, Train, Plane, Bus, Car, Building2, MapPin, CheckCircle2, Loader2 } from 'lucide-react';
@@ -10,7 +10,7 @@ import Navbar from '../../shared/components/Navbar';
 import BottomNavBar from '../../shared/components/BottomNavBar';
 
 interface TripSummaryState {
-  searchPayload?: TransportSearchRequest;
+  searchPayload?: TransportSearchRequest | AccommodationSearchRequest;
   stay?: { nights: number };
   transportResult?: TransportResult;
   hotelResult?: ListingDetailResponse | AccommodationResult;
@@ -79,9 +79,9 @@ export default function TripSummaryPage() {
   const hotelPricePerNight = hotelResult?.price_inr_per_night || 0;
   
   let calculatedNights = stay?.nights;
-  if (!calculatedNights && state.searchPayload?.check_in && state.searchPayload?.check_out) {
-    const start = new Date(state.searchPayload.check_in);
-    const end = new Date(state.searchPayload.check_out);
+  if (!calculatedNights && state.searchPayload && 'arrival_date' in state.searchPayload && state.searchPayload.arrival_date && state.searchPayload.departure_date) {
+    const start = new Date(state.searchPayload.arrival_date);
+    const end = new Date(state.searchPayload.departure_date);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     calculatedNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
@@ -194,34 +194,16 @@ export default function TripSummaryPage() {
                       {transportResult.mode} Journey
                     </div>
                     
-                    {/* Render segments data if available */}
-                    {/* @ts-ignore */}
-                    {transportResult.segments && transportResult.segments.find(s => s.segment_type === 'main') ? (
-                      <div className="mt-2 space-y-1">
-                        {/* @ts-ignore */}
-                        {(() => {
-                          // @ts-ignore
-                          const mainSeg = transportResult.segments.find(s => s.segment_type === 'main');
-                          return (
-                            <>
-                              <div className="text-sm font-medium text-[#26382D]">
-                                {mainSeg.origin?.name?.split(',')[0]} → {mainSeg.destination?.name?.split(',')[0]}
-                              </div>
-                              <div className="text-xs text-[#7C9278]">
-                                {mainSeg.details?.train_number} {mainSeg.details?.train_name || mainSeg.details?.airline}
-                              </div>
-                              <div className="text-xs font-semibold text-[#A99587] mt-1">
-                                Class / Seat: {mainSeg.details?.classes?.join(', ') || 'Standard'}
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    ) : (
+                    <div className="mt-2 space-y-1">
+                      {state.searchPayload && 'origin' in state.searchPayload && state.searchPayload.origin && state.searchPayload.destination && (
+                        <div className="text-sm font-medium text-[#26382D]">
+                          {state.searchPayload.origin} → {state.searchPayload.destination}
+                        </div>
+                      )}
                       <div className="text-[#A99587] text-sm mt-0.5">
                         Duration: {Math.floor((transportResult.duration_minutes || 0) / 60)}h {(transportResult.duration_minutes || 0) % 60}m
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
                 <div className="text-right font-medium text-[#26382D] text-lg shrink-0">
